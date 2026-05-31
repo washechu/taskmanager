@@ -21,9 +21,24 @@ interface TaskFiltersProps {
   onChange: (filters: TaskFilterState) => void
 }
 
-export const SELECT_CLASS =
-  'rounded-lg border border-gray-200 bg-white py-1.5 pl-3 pr-8 text-xs ' +
+const SELECT_CLASS =
+  'rounded-lg border border-gray-200 bg-white py-1.5 pl-3 pr-3 text-xs ' +
   'dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300'
+
+const LABEL_CLASS = 'text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500'
+
+const Divider = () => (
+  <span className="hidden h-6 w-px self-center bg-gray-200 dark:bg-gray-700 md:inline-block" />
+)
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex items-center gap-1.5">
+      <span className={LABEL_CLASS}>{label}</span>
+      {children}
+    </label>
+  )
+}
 
 export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
   const { tags: allTags } = useTags()
@@ -39,73 +54,72 @@ export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 py-2">
-      {/* Category tabs */}
-      <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
-        {(['all', 'personal', 'family'] as const).map(cat => (
-          <button
-            key={cat}
-            onClick={() => set('category', cat)}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
-              filters.category === cat
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
-            }`}
+    <div className="py-3">
+      {/* Primary filter row: category tabs | secondary filters */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        {/* Category tabs */}
+        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
+          {(['all', 'personal', 'family'] as const).map(cat => (
+            <button
+              key={cat}
+              onClick={() => set('category', cat)}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
+                filters.category === cat
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
+              }`}
+            >
+              {cat === 'all' ? 'Все' : CATEGORIES[cat].label}
+            </button>
+          ))}
+        </div>
+
+        <Divider />
+
+        <Field label="Проект">
+          <select
+            value={filters.projectId}
+            onChange={e => set('projectId', e.target.value as string)}
+            className={SELECT_CLASS}
           >
-            {cat === 'all' ? 'Все' : CATEGORIES[cat].label}
-          </button>
-        ))}
+            <option value="all">Все</option>
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.title}</option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Ответственный">
+          <select
+            value={filters.assignee}
+            onChange={e => set('assignee', e.target.value as Assignee | 'all')}
+            className={SELECT_CLASS}
+          >
+            <option value="all">Все</option>
+            {Object.entries(ASSIGNEES).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Сортировка">
+          <select
+            value={filters.sort}
+            onChange={e => set('sort', e.target.value as SortKey)}
+            className={SELECT_CLASS}
+          >
+            <option value="created">По дате создания</option>
+            <option value="priority">По приоритету</option>
+            <option value="due_date">По дедлайну</option>
+            <option value="title">По названию</option>
+          </select>
+        </Field>
       </div>
 
-      {/* Project select */}
-      <label className="flex items-center gap-1">
-        <span className="text-xs text-gray-500">Проект:</span>
-        <select
-          value={filters.projectId}
-          onChange={e => set('projectId', e.target.value as string)}
-          className={SELECT_CLASS}
-        >
-          <option value="all">Все</option>
-          {projects.map(p => (
-            <option key={p.id} value={p.id}>{p.title}</option>
-          ))}
-        </select>
-      </label>
-
-      {/* Assignee */}
-      <label className="flex items-center gap-1">
-        <span className="text-xs text-gray-500">Ответственный:</span>
-        <select
-          value={filters.assignee}
-          onChange={e => set('assignee', e.target.value as Assignee | 'all')}
-          className={SELECT_CLASS}
-        >
-          <option value="all">Все</option>
-          {Object.entries(ASSIGNEES).map(([k, v]) => (
-            <option key={k} value={k}>{v.label}</option>
-          ))}
-        </select>
-      </label>
-
-      {/* Sort */}
-      <label className="flex items-center gap-1">
-        <span className="text-xs text-gray-500">Сортировка:</span>
-        <select
-          value={filters.sort}
-          onChange={e => set('sort', e.target.value as SortKey)}
-          className={SELECT_CLASS}
-        >
-          <option value="created">По дате создания</option>
-          <option value="priority">По приоритету</option>
-          <option value="due_date">По дедлайну</option>
-          <option value="title">По названию</option>
-        </select>
-      </label>
-
-      {/* Tags */}
+      {/* Tags row — separated below */}
       {allTags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1">
-          <span className="text-xs text-gray-500">Теги:</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <span className={LABEL_CLASS}>Теги</span>
           {allTags.map(tag => (
             <TagChip
               key={tag.id}
@@ -146,7 +160,7 @@ export function applyTaskFilters<T extends { category: string; project_id: strin
         return a.due_date.localeCompare(b.due_date)
       case 'title':
         return a.title.localeCompare(b.title)
-      default: // created
+      default:
         return b.created_at.localeCompare(a.created_at)
     }
   })

@@ -16,15 +16,30 @@ interface ProjectFiltersProps {
 }
 
 const SELECT_CLASS =
-  'rounded-lg border border-gray-200 bg-white py-1.5 pl-3 pr-8 text-xs ' +
+  'rounded-lg border border-gray-200 bg-white py-1.5 pl-3 pr-3 text-xs ' +
   'dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300'
+
+const LABEL_CLASS = 'text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500'
+
+const Divider = () => (
+  <span className="hidden h-6 w-px self-center bg-gray-200 dark:bg-gray-700 md:inline-block" />
+)
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex items-center gap-1.5">
+      <span className={LABEL_CLASS}>{label}</span>
+      {children}
+    </label>
+  )
+}
 
 export function ProjectFilters({ filters, onChange }: ProjectFiltersProps) {
   const set = <K extends keyof ProjectFilterState>(key: K, value: ProjectFilterState[K]) =>
     onChange({ ...filters, [key]: value })
 
   return (
-    <div className="flex flex-wrap items-center gap-2 py-2">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 py-3">
       <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
         {(['all', 'personal', 'family'] as const).map(cat => (
           <button
@@ -41,8 +56,9 @@ export function ProjectFilters({ filters, onChange }: ProjectFiltersProps) {
         ))}
       </div>
 
-      <label className="flex items-center gap-1">
-        <span className="text-xs text-gray-500">Ответственный:</span>
+      <Divider />
+
+      <Field label="Ответственный">
         <select
           value={filters.assignee}
           onChange={e => set('assignee', e.target.value as Assignee | 'all')}
@@ -53,10 +69,9 @@ export function ProjectFilters({ filters, onChange }: ProjectFiltersProps) {
             <option key={k} value={k}>{v.label}</option>
           ))}
         </select>
-      </label>
+      </Field>
 
-      <label className="flex items-center gap-1">
-        <span className="text-xs text-gray-500">Сортировка:</span>
+      <Field label="Сортировка">
         <select
           value={filters.sort}
           onChange={e => set('sort', e.target.value as ProjectSortKey)}
@@ -67,7 +82,7 @@ export function ProjectFilters({ filters, onChange }: ProjectFiltersProps) {
           <option value="status">По статусу</option>
           <option value="title">По названию</option>
         </select>
-      </label>
+      </Field>
     </div>
   )
 }
