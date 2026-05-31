@@ -15,9 +15,10 @@ interface TaskModalProps {
   onUpdate: (id: string, updates: Partial<Task>) => Promise<{ error: unknown }>
   onDelete: (id: string) => Promise<{ error: unknown }>
   onClose: () => void
+  onProjectOpen?: (projectId: string) => void
 }
 
-export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onClose }: TaskModalProps) {
+export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onClose, onProjectOpen }: TaskModalProps) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const { tags: allTags } = useTags()
@@ -111,9 +112,14 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                 {task.project_id && (
                   <div>
                     <span className="text-xs text-gray-400">Проект</span>
-                    <p className="font-medium text-gray-700 dark:text-gray-200">
+                    <button
+                      onClick={() => onProjectOpen?.(task.project_id!)}
+                      className="block text-left font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                      disabled={!onProjectOpen}
+                    >
                       {projects.find(p => p.id === task.project_id)?.title ?? '—'}
-                    </p>
+                      {onProjectOpen && ' →'}
+                    </button>
                   </div>
                 )}
               </div>

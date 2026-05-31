@@ -5,14 +5,11 @@ import type { Project } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
 
-export type SortKey = 'created' | 'due_date' | 'priority' | 'title'
-
 export interface TaskFilterState {
   category: Category | 'all'
   projectId: string | 'all'
   assignee: Assignee | 'all'
   tags: string[]
-  sort: SortKey
 }
 
 interface TaskFiltersProps {
@@ -55,9 +52,7 @@ export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
 
   return (
     <div className="py-3">
-      {/* Primary filter row: category tabs | secondary filters */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-        {/* Category tabs */}
         <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
           {(['all', 'personal', 'family'] as const).map(cat => (
             <button
@@ -101,22 +96,8 @@ export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
             ))}
           </select>
         </Field>
-
-        <Field label="Сортировка">
-          <select
-            value={filters.sort}
-            onChange={e => set('sort', e.target.value as SortKey)}
-            className={SELECT_CLASS}
-          >
-            <option value="created">По дате создания</option>
-            <option value="priority">По приоритету</option>
-            <option value="due_date">По дедлайну</option>
-            <option value="title">По названию</option>
-          </select>
-        </Field>
       </div>
 
-      {/* Tags row — separated below */}
       {allTags.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className={LABEL_CLASS}>Теги</span>
@@ -135,33 +116,18 @@ export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
   )
 }
 
-export function applyTaskFilters<T extends { category: string; project_id: string | null; assignee: string | null; priority: string; tags: string[]; due_date: string | null; created_at: string; title: string }>(
+export function applyTaskFilters<T extends { category: string; project_id: string | null; assignee: string | null; tags: string[]; created_at: string }>(
   tasks: T[],
   filters: TaskFilterState,
 ): T[] {
-  const filtered = tasks.filter(task => {
-    if (filters.category !== 'all' && task.category !== filters.category) return false
-    if (filters.projectId !== 'all' && task.project_id !== filters.projectId) return false
-    if (filters.assignee !== 'all' && task.assignee !== filters.assignee) return false
-    if (filters.tags.length > 0 && !filters.tags.every(t => task.tags.includes(t))) return false
-    return true
-  })
-
-  const priorityRank: Record<string, number> = { high: 0, medium: 1, low: 2 }
-
-  return [...filtered].sort((a, b) => {
-    switch (filters.sort) {
-      case 'priority':
-        return priorityRank[a.priority] - priorityRank[b.priority]
-      case 'due_date':
-        if (!a.due_date && !b.due_date) return 0
-        if (!a.due_date) return 1
-        if (!b.due_date) return -1
-        return a.due_date.localeCompare(b.due_date)
-      case 'title':
-        return a.title.localeCompare(b.title)
-      default:
-        return b.created_at.localeCompare(a.created_at)
-    }
-  })
+  return tasks
+    .filter(task => {
+      if (filters.category !== 'all' && task.category !== filters.category) return false
+      if (filters.projectId !== 'all' && task.project_id !== filters.projectId) return false
+      if (filters.assignee !== 'all' && task.assignee !== filters.assignee) return false
+      if (filters.tags.length > 0 && !filters.tags.every(t => task.tags.includes(t))) return false
+      return true
+    })
+    // newest first by default; per-column priority sort kicks in inside Kanban columns
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
 }

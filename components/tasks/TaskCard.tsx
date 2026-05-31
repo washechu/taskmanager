@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { TagChip } from '@/components/ui/TagChip'
-import { CATEGORIES, STATUSES, ASSIGNEES, STATUS_ORDER, type Task, type Status } from '@/lib/types'
+import { CATEGORIES, ASSIGNEES, type Task, type Status } from '@/lib/types'
 import type { Project } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 
@@ -12,10 +12,12 @@ interface TaskCardProps {
   task: Task
   projects: Project[]
   onOpen: (task: Task) => void
-  onStatusChange: (id: string, status: Status) => void
+  // Kept for backwards compat with KanbanBoard — not used anymore on card itself
+  onStatusChange?: (id: string, status: Status) => void
+  onProjectOpen?: (projectId: string) => void
 }
 
-export function TaskCard({ task, projects, onOpen, onStatusChange }: TaskCardProps) {
+export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   })
@@ -55,6 +57,16 @@ export function TaskCard({ task, projects, onOpen, onStatusChange }: TaskCardPro
         </button>
       </div>
 
+      {/* Description preview (max 2 lines) */}
+      {task.description && task.description.trim().length > 0 && (
+        <p
+          className="mt-1 line-clamp-2 pl-6 text-xs text-gray-500 dark:text-gray-400"
+          title={task.description}
+        >
+          {task.description}
+        </p>
+      )}
+
       {/* Meta */}
       <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-6">
         <PriorityBadge priority={task.priority} />
@@ -62,9 +74,13 @@ export function TaskCard({ task, projects, onOpen, onStatusChange }: TaskCardPro
           {CATEGORIES[task.category].label}
         </span>
         {project && (
-          <span className="truncate rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-            {project.title}
-          </span>
+          <button
+            onClick={e => { e.stopPropagation(); onProjectOpen?.(project.id) }}
+            className="max-w-[160px] truncate rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600 hover:bg-indigo-100 hover:underline dark:bg-indigo-950 dark:text-indigo-400 dark:hover:bg-indigo-900"
+            title={`Перейти к проекту: ${project.title}`}
+          >
+            📁 {project.title}
+          </button>
         )}
         {task.assignee && (
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
@@ -82,20 +98,6 @@ export function TaskCard({ task, projects, onOpen, onStatusChange }: TaskCardPro
         {task.tags.length > 3 && (
           <span className="text-xs text-gray-400">+{task.tags.length - 3}</span>
         )}
-      </div>
-
-      {/* Quick status change */}
-      <div className="mt-2 pl-6">
-        <select
-          value={task.status}
-          onChange={e => onStatusChange(task.id, e.target.value as Status)}
-          onClick={e => e.stopPropagation()}
-          className="w-full rounded-md border border-gray-100 bg-gray-50 py-1 pl-2 pr-7 text-xs text-gray-500 outline-none hover:border-gray-300 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400"
-        >
-          {STATUS_ORDER.map(s => (
-            <option key={s} value={s}>{STATUSES[s].label}</option>
-          ))}
-        </select>
       </div>
     </div>
   )

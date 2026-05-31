@@ -17,6 +17,7 @@ interface ProjectModalProps {
   onUpdate: (id: string, updates: Partial<Project>) => Promise<{ error: unknown }>
   onDelete: (id: string) => Promise<{ error: unknown }>
   onClose: () => void
+  onTaskOpen?: (taskId: string) => void
 }
 
 const SELECT_CLASS =
@@ -134,7 +135,7 @@ export function ProjectForm({
   )
 }
 
-export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose }: ProjectModalProps) {
+export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTaskOpen }: ProjectModalProps) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -220,15 +221,22 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose }: Pr
                       style={{ width: `${(doneTasks / projectTasks.length) * 100}%` }}
                     />
                   </div>
-                  <ul className="mt-2 space-y-1">
-                    {projectTasks.slice(0, 10).map(t => (
-                      <li key={t.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                        <span>{t.status === 'done' ? '✅' : '⬜'}</span>
-                        {t.title}
+                  <ul className="mt-2 space-y-0.5">
+                    {projectTasks.slice(0, 15).map(t => (
+                      <li key={t.id}>
+                        <button
+                          onClick={() => onTaskOpen?.(t.id)}
+                          disabled={!onTaskOpen}
+                          className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-xs text-gray-600 hover:bg-gray-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-400 disabled:hover:bg-transparent"
+                        >
+                          <span>{t.status === 'done' ? '✅' : '⬜'}</span>
+                          <span className="flex-1 truncate">{t.title}</span>
+                          {onTaskOpen && <span className="opacity-60">→</span>}
+                        </button>
                       </li>
                     ))}
-                    {projectTasks.length > 10 && (
-                      <li className="text-xs text-gray-400">…ещё {projectTasks.length - 10}</li>
+                    {projectTasks.length > 15 && (
+                      <li className="px-1.5 text-xs text-gray-400">…ещё {projectTasks.length - 15}</li>
                     )}
                   </ul>
                 </div>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { KanbanBoard } from '@/components/tasks/KanbanBoard'
 import { CalendarView } from '@/components/tasks/CalendarView'
 import { ListView } from '@/components/tasks/ListView'
@@ -18,18 +18,40 @@ const DEFAULT_FILTERS: TaskFilterState = {
   projectId: 'all',
   assignee: 'all',
   tags: [],
-  sort: 'created',
 }
 
 function TasksPageInner() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const view = (searchParams.get('view') ?? 'kanban') as 'kanban' | 'list' | 'calendar'
+  const openTaskId = searchParams.get('open')
 
   const { tasks, loading, createTask, updateTask, deleteTask, moveTask } = useTasks()
   const { projects } = useProjects()
   const currentUser = useCurrentUser()
   const [filters, setFilters] = useState<TaskFilterState>(DEFAULT_FILTERS)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+
+  // Auto-open task if ?open=<id> in URL (used for cross-navigation from Project modal)
+  useEffect(() => {
+    if (!openTaskId) return
+    const task = tasks.find(t => t.id === openTaskId)
+    if (task) setSelectedTask(task)
+  }, [openTaskId, tasks])
+
+  const closeTaskModal = () => {
+    setSelectedTask(null)
+    // Strip ?open=... from URL to avoid reopen on revisit
+    if (openTaskId) {
+      const sp = new URLSearchParams(searchParams.toString())
+      sp.delete('open')
+      router.replace(`/tasks${sp.toString() ? `?${sp}` : ''}`, { scroll: false })
+    }
+  }
+
+  const navigateToProject = (projectId: string) => {
+    router.push(`/projects?open=${projectId}`)
+  }
 
   const filteredTasks = applyTaskFilters(tasks, filters)
   const hasFilters = filters.category !== 'all' || filters.projectId !== 'all' ||
@@ -39,18 +61,11 @@ function TasksPageInner() {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Планировщик</h1>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              Конкретные дела с дедлайном. Объединяются в проекты.
-            </p>
-          </div>
-          {currentUser.assignee && (
-            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-              {currentUser.assignee === 'nick' ? 'Никита' : 'Галочка'}
-            </span>
-          )}
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Задачи</h1>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            Конкретные дела с дедлайном. Объединяются в проекты.
+          </p>
         </div>
         {!currentUser.loading && !currentUser.assignee && (
           <p className="mt-2 rounded-md bg-yellow-50 px-2 py-1 text-xs text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400">
@@ -94,6 +109,7 @@ function TasksPageInner() {
             onUpdate={updateTask}
             onDelete={deleteTask}
             onCreate={createTask}
+            onProjectOpen={navigateToProject}
           />
         ) : view === 'list' ? (
           <ListView
@@ -122,7 +138,8 @@ function TasksPageInner() {
             return result
           }}
           onDelete={deleteTask}
-          onClose={() => setSelectedTask(null)}
+          onClose={closeTaskModal}
+          onProjectOpen={navigateToProject}
         />
       )}
     </div>

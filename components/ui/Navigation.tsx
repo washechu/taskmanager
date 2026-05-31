@@ -18,7 +18,7 @@ interface NavLink {
 const links: NavLink[] = [
   {
     href: '/tasks',
-    label: 'Планировщик',
+    label: 'Задачи',
     subs: [
       { view: 'kanban',   label: 'Канбан'    },
       { view: 'list',     label: 'Список'    },

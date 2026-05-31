@@ -10,6 +10,18 @@ interface TagPickerProps {
   onChange: (tags: string[]) => void
 }
 
+// Solid color samples for the color picker dots
+const COLOR_DOT: Record<string, string> = {
+  gray:   'bg-gray-400',
+  red:    'bg-red-500',
+  orange: 'bg-orange-500',
+  yellow: 'bg-yellow-400',
+  green:  'bg-green-500',
+  blue:   'bg-blue-500',
+  purple: 'bg-purple-500',
+  pink:   'bg-pink-500',
+}
+
 export function TagPicker({ selected, onChange }: TagPickerProps) {
   const { tags, createTag } = useTags()
   const [newTagName, setNewTagName] = useState('')
@@ -24,7 +36,6 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
     const name = newTagName.trim()
     if (!name) return
     if (tags.some(t => t.name === name)) {
-      // tag exists — just select it
       if (!selected.includes(name)) onChange([...selected, name])
     } else {
       const { data } = await createTag(name, newTagColor)
@@ -51,7 +62,6 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
         ))}
       </div>
 
-      {/* Add custom tag */}
       {!creating ? (
         <button
           type="button"
@@ -61,7 +71,7 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
           + Добавить тег
         </button>
       ) : (
-        <div className="mt-2 rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+        <div className="mt-2 rounded-lg border border-gray-200 p-2.5 dark:border-gray-700">
           <div className="flex gap-2">
             <input
               autoFocus
@@ -90,21 +100,28 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
               ✕
             </button>
           </div>
-          {/* Color picker */}
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {Object.entries(TAG_COLORS).map(([key, c]) => (
-              <button
-                type="button"
-                key={key}
-                onClick={() => setNewTagColor(key)}
-                className={`rounded-full px-2 py-0.5 text-xs ${c.bg} ${c.text} ${
-                  newTagColor === key ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-gray-900' : ''
-                }`}
-                title={c.label}
-              >
-                {newTagName.trim() || 'пример'}
-              </button>
-            ))}
+          {/* Color picker — just circles */}
+          <div className="mt-2.5 flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-gray-400">Цвет:</span>
+            <div className="flex gap-1.5">
+              {Object.entries(TAG_COLORS).map(([key]) => {
+                const active = newTagColor === key
+                return (
+                  <button
+                    type="button"
+                    key={key}
+                    onClick={() => setNewTagColor(key)}
+                    className={`h-5 w-5 rounded-full ${COLOR_DOT[key]} transition-transform ${
+                      active
+                        ? 'ring-2 ring-offset-2 ring-blue-500 ring-offset-white dark:ring-offset-gray-900 scale-110'
+                        : 'hover:scale-110'
+                    }`}
+                    title={TAG_COLORS[key].label}
+                    aria-label={TAG_COLORS[key].label}
+                  />
+                )
+              })}
+            </div>
           </div>
         </div>
       )}

@@ -14,17 +14,31 @@ const headerColors: Record<Status, string> = {
   paused:      'border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30',
 }
 
+const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 }
+
 interface KanbanColumnProps {
   status: Status
   tasks: Task[]
   projects: Project[]
+  prioritySort: 'none' | 'desc' | 'asc'
+  onTogglePrioritySort: () => void
   onTaskOpen: (task: Task) => void
-  onStatusChange: (id: string, status: Status) => void
+  onProjectOpen: (projectId: string) => void
   onAddTask: (status: Status) => void
 }
 
-export function KanbanColumn({ status, tasks, projects, onTaskOpen, onStatusChange, onAddTask }: KanbanColumnProps) {
+export function KanbanColumn({
+  status, tasks, projects, prioritySort, onTogglePrioritySort,
+  onTaskOpen, onProjectOpen, onAddTask,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
+
+  const sortedTasks = prioritySort === 'none'
+    ? tasks
+    : [...tasks].sort((a, b) => {
+        const cmp = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
+        return prioritySort === 'desc' ? cmp : -cmp
+      })
 
   return (
     <div className="flex w-72 flex-shrink-0 flex-col rounded-xl border border-gray-200 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-950/50">
@@ -34,17 +48,35 @@ export function KanbanColumn({ status, tasks, projects, onTaskOpen, onStatusChan
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             {STATUSES[status].label}
           </h3>
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/80 text-xs font-medium text-gray-500 dark:bg-gray-900/80">
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white/80 px-1.5 text-xs font-medium text-gray-500 dark:bg-gray-900/80">
             {tasks.length}
           </span>
         </div>
-        <button
-          onClick={() => onAddTask(status)}
-          className="rounded-md p-1 text-gray-400 hover:bg-white/60 hover:text-gray-600 dark:hover:bg-gray-900/60"
-          title="Добавить задачу"
-        >
-          +
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onTogglePrioritySort}
+            className={`rounded-md px-1.5 py-1 text-xs transition-colors ${
+              prioritySort !== 'none'
+                ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300'
+                : 'text-gray-400 hover:bg-white/60 hover:text-gray-600 dark:hover:bg-gray-900/60'
+            }`}
+            title={
+              prioritySort === 'none'  ? 'Сортировка по приоритету выключена' :
+              prioritySort === 'desc'  ? 'Сначала высокий приоритет' :
+                                         'Сначала низкий приоритет'
+            }
+            aria-label="Сортировать по приоритету"
+          >
+            {prioritySort === 'asc' ? '↑' : '↓'}
+          </button>
+          <button
+            onClick={() => onAddTask(status)}
+            className="rounded-md p-1 text-gray-400 hover:bg-white/60 hover:text-gray-600 dark:hover:bg-gray-900/60"
+            title="Добавить задачу"
+          >
+            +
+          </button>
+        </div>
       </div>
 
       {/* Tasks */}
@@ -55,24 +87,20 @@ export function KanbanColumn({ status, tasks, projects, onTaskOpen, onStatusChan
         }`}
         style={{ minHeight: 120 }}
       >
-        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-          {tasks.map(task => (
+        <SortableContext items={sortedTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+          {sortedTasks.map(task => (
             <TaskCard
               key={task.id}
               task={task}
               projects={projects}
               onOpen={onTaskOpen}
-              onStatusChange={onStatusChange}
+              onProjectOpen={onProjectOpen}
             />
           ))}
         </SortableContext>
 
         {tasks.length === 0 && (
-          <EmptyState
-            text="Задач нет"
-            actionLabel="+ Добавить"
-            onAction={() => onAddTask(status)}
-          />
+          <EmptyState text="Задач нет" />
         )}
       </div>
     </div>

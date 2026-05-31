@@ -26,12 +26,24 @@ interface KanbanBoardProps {
   onUpdate: (id: string, updates: Partial<Task>) => Promise<{ error: unknown }>
   onDelete: (id: string) => Promise<{ error: unknown }>
   onCreate: (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => Promise<{ data: Task | null; error: unknown }>
+  onProjectOpen?: (projectId: string) => void
 }
 
-export function KanbanBoard({ tasks, projects, currentUser, onMove, onUpdate, onDelete, onCreate }: KanbanBoardProps) {
+type PrioritySort = 'none' | 'desc' | 'asc'
+
+export function KanbanBoard({
+  tasks, projects, currentUser, onMove, onUpdate, onDelete, onCreate, onProjectOpen,
+}: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [creatingStatus, setCreatingStatus] = useState<Status | null>(null)
+  const [prioritySort, setPrioritySort] = useState<PrioritySort>('none')
+
+  const cyclePrioritySort = () => {
+    setPrioritySort(cur =>
+      cur === 'none' ? 'desc' : cur === 'desc' ? 'asc' : 'none'
+    )
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -73,8 +85,10 @@ export function KanbanBoard({ tasks, projects, currentUser, onMove, onUpdate, on
               status={status}
               tasks={tasks.filter(t => t.status === status)}
               projects={projects}
+              prioritySort={prioritySort}
+              onTogglePrioritySort={cyclePrioritySort}
               onTaskOpen={task => setSelectedTask(task)}
-              onStatusChange={(id, s) => onMove(id, s)}
+              onProjectOpen={(id) => onProjectOpen?.(id)}
               onAddTask={s => setCreatingStatus(s)}
             />
           ))}
@@ -87,7 +101,6 @@ export function KanbanBoard({ tasks, projects, currentUser, onMove, onUpdate, on
                 task={activeTask}
                 projects={projects}
                 onOpen={() => {}}
-                onStatusChange={() => {}}
               />
             </div>
           )}
@@ -107,6 +120,7 @@ export function KanbanBoard({ tasks, projects, currentUser, onMove, onUpdate, on
           }}
           onDelete={onDelete}
           onClose={() => setSelectedTask(null)}
+          onProjectOpen={onProjectOpen}
         />
       )}
 
