@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import {
-  STATUSES, CATEGORIES, STATUS_ORDER,
-  type Project, type Status, type Category
+  STATUSES, CATEGORIES, ASSIGNEES, STATUS_ORDER,
+  type Project, type Status, type Category, type Assignee,
 } from '@/lib/types'
 import type { Task } from '@/lib/types'
 
@@ -19,25 +19,37 @@ interface ProjectModalProps {
   onClose: () => void
 }
 
-function ProjectForm({
+const SELECT_CLASS =
+  'w-full rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-8 text-sm ' +
+  'outline-none focus:ring-2 focus:ring-blue-500 ' +
+  'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200'
+
+export function ProjectForm({
   initial,
+  defaultAssignee,
   onSubmit,
   onCancel,
+  submitLabel = 'Сохранить',
 }: {
   initial?: Partial<ProjectFormData>
+  defaultAssignee?: Assignee | null
   onSubmit: (data: ProjectFormData) => Promise<void>
   onCancel: () => void
+  submitLabel?: string
 }) {
   const [form, setForm] = useState<ProjectFormData>({
     title: initial?.title ?? '',
     description: initial?.description ?? null,
     status: initial?.status ?? 'todo',
     category: initial?.category ?? 'personal',
+    assignee: initial?.assignee ?? defaultAssignee ?? null,
     start_date: initial?.start_date ?? null,
     due_date: initial?.due_date ?? null,
   })
   const [saving, setSaving] = useState(false)
   const set = <K extends keyof ProjectFormData>(k: K, v: ProjectFormData[K]) => setForm(f => ({ ...f, [k]: v }))
+
+  const needsAssignee = form.category === 'family' && !form.assignee
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,18 +75,32 @@ function ProjectForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Статус</label>
-          <select value={form.status} onChange={e => set('status', e.target.value as Status)}
-            className="w-full rounded-lg border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+          <select value={form.status} onChange={e => set('status', e.target.value as Status)} className={SELECT_CLASS}>
             {STATUS_ORDER.map(s => <option key={s} value={s}>{STATUSES[s].label}</option>)}
           </select>
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Категория</label>
-          <select value={form.category} onChange={e => set('category', e.target.value as Category)}
-            className="w-full rounded-lg border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+          <select value={form.category} onChange={e => set('category', e.target.value as Category)} className={SELECT_CLASS}>
             {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
         </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            Ответственный {form.category === 'family' && <span className="text-red-500">*</span>}
+          </label>
+          <select
+            value={form.assignee ?? ''}
+            onChange={e => set('assignee', (e.target.value as Assignee) || null)}
+            className={`${SELECT_CLASS} ${needsAssignee ? 'border-red-400' : ''}`}
+          >
+            <option value="">Не назначен</option>
+            {Object.entries(ASSIGNEES).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
+            ))}
+          </select>
+        </div>
+        <div />{/* spacer */}
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Начало</label>
           <input type="date" value={form.start_date ?? ''} onChange={e => set('start_date', e.target.value || null)}
@@ -90,6 +116,7 @@ function ProjectForm({
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Описание</label>
         <textarea value={form.description ?? ''} onChange={e => set('description', e.target.value || null)} rows={3}
+          placeholder="Цель проекта, к чему он ведёт"
           className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" />
       </div>
 
@@ -100,7 +127,7 @@ function ProjectForm({
         </button>
         <button type="submit" disabled={saving || !form.title.trim()}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-          {saving ? 'Сохранение...' : 'Сохранить'}
+          {saving ? 'Сохранение...' : submitLabel}
         </button>
       </div>
     </form>
@@ -156,8 +183,13 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose }: Pr
               <div className="flex flex-wrap gap-2">
                 <StatusBadge status={project.status} />
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                  {CATEGORIES[project.category].icon} {CATEGORIES[project.category].label}
+                  {CATEGORIES[project.category].label}
                 </span>
+                {project.assignee && (
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                    {ASSIGNEES[project.assignee].label}
+                  </span>
+                )}
               </div>
 
               {project.description && (

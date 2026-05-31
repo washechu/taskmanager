@@ -1,14 +1,18 @@
 'use client'
 
-import { CATEGORIES, PRIORITIES, DEFAULT_TAGS, type Category, type Priority, type Assignee } from '@/lib/types'
+import { CATEGORIES, ASSIGNEES, type Category, type Assignee } from '@/lib/types'
 import type { Project } from '@/lib/types'
+import { useTags } from '@/lib/hooks/useTags'
+import { TagChip } from '@/components/ui/TagChip'
+
+export type SortKey = 'created' | 'due_date' | 'priority' | 'title'
 
 export interface TaskFilterState {
   category: Category | 'all'
   projectId: string | 'all'
   assignee: Assignee | 'all'
-  priority: Priority | 'all'
   tags: string[]
+  sort: SortKey
 }
 
 interface TaskFiltersProps {
@@ -17,7 +21,13 @@ interface TaskFiltersProps {
   onChange: (filters: TaskFilterState) => void
 }
 
+export const SELECT_CLASS =
+  'rounded-lg border border-gray-200 bg-white py-1.5 pl-3 pr-8 text-xs ' +
+  'dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300'
+
 export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
+  const { tags: allTags } = useTags()
+
   const set = <K extends keyof TaskFilterState>(key: K, value: TaskFilterState[K]) =>
     onChange({ ...filters, [key]: value })
 
@@ -27,11 +37,6 @@ export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
       : [...filters.tags, tag]
     set('tags', tags)
   }
-
-  const hasFilters = filters.category !== 'all' || filters.projectId !== 'all' ||
-    filters.assignee !== 'all' || filters.priority !== 'all' || filters.tags.length > 0
-
-  const reset = () => onChange({ category: 'all', projectId: 'all', assignee: 'all', priority: 'all', tags: [] })
 
   return (
     <div className="flex flex-wrap items-center gap-2 py-2">
@@ -53,79 +58,96 @@ export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
       </div>
 
       {/* Project select */}
-      <select
-        value={filters.projectId}
-        onChange={e => set('projectId', e.target.value as string)}
-        className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-      >
-        <option value="all">Все проекты</option>
-        {projects.map(p => (
-          <option key={p.id} value={p.id}>{p.title}</option>
-        ))}
-      </select>
+      <label className="flex items-center gap-1">
+        <span className="text-xs text-gray-500">Проект:</span>
+        <select
+          value={filters.projectId}
+          onChange={e => set('projectId', e.target.value as string)}
+          className={SELECT_CLASS}
+        >
+          <option value="all">Все</option>
+          {projects.map(p => (
+            <option key={p.id} value={p.id}>{p.title}</option>
+          ))}
+        </select>
+      </label>
 
       {/* Assignee */}
-      <select
-        value={filters.assignee}
-        onChange={e => set('assignee', e.target.value as Assignee | 'all')}
-        className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-      >
-        <option value="all">Все</option>
-        <option value="nick">Ник</option>
-        <option value="galya">Галя</option>
-      </select>
+      <label className="flex items-center gap-1">
+        <span className="text-xs text-gray-500">Ответственный:</span>
+        <select
+          value={filters.assignee}
+          onChange={e => set('assignee', e.target.value as Assignee | 'all')}
+          className={SELECT_CLASS}
+        >
+          <option value="all">Все</option>
+          {Object.entries(ASSIGNEES).map(([k, v]) => (
+            <option key={k} value={k}>{v.label}</option>
+          ))}
+        </select>
+      </label>
 
-      {/* Priority */}
-      <select
-        value={filters.priority}
-        onChange={e => set('priority', e.target.value as Priority | 'all')}
-        className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-      >
-        <option value="all">Все приоритеты</option>
-        {Object.entries(PRIORITIES).map(([k, v]) => (
-          <option key={k} value={k}>{v.label}</option>
-        ))}
-      </select>
+      {/* Sort */}
+      <label className="flex items-center gap-1">
+        <span className="text-xs text-gray-500">Сортировка:</span>
+        <select
+          value={filters.sort}
+          onChange={e => set('sort', e.target.value as SortKey)}
+          className={SELECT_CLASS}
+        >
+          <option value="created">По дате создания</option>
+          <option value="priority">По приоритету</option>
+          <option value="due_date">По дедлайну</option>
+          <option value="title">По названию</option>
+        </select>
+      </label>
 
       {/* Tags */}
-      <div className="flex flex-wrap gap-1">
-        {DEFAULT_TAGS.map(tag => (
-          <button
-            key={tag}
-            onClick={() => toggleTag(tag)}
-            className={`rounded-full px-2 py-0.5 text-xs transition-colors ${
-              filters.tags.includes(tag)
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400'
-            }`}
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
-
-      {hasFilters && (
-        <button
-          onClick={reset}
-          className="text-xs text-gray-400 underline hover:text-gray-600"
-        >
-          Сбросить
-        </button>
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="text-xs text-gray-500">Теги:</span>
+          {allTags.map(tag => (
+            <TagChip
+              key={tag.id}
+              name={tag.name}
+              color={tag.color}
+              selected={filters.tags.includes(tag.name)}
+              onClick={() => toggleTag(tag.name)}
+            />
+          ))}
+        </div>
       )}
     </div>
   )
 }
 
-export function applyTaskFilters<T extends { category: string; project_id: string | null; assignee: string | null; priority: string; tags: string[] }>(
+export function applyTaskFilters<T extends { category: string; project_id: string | null; assignee: string | null; priority: string; tags: string[]; due_date: string | null; created_at: string; title: string }>(
   tasks: T[],
-  filters: TaskFilterState
+  filters: TaskFilterState,
 ): T[] {
-  return tasks.filter(task => {
+  const filtered = tasks.filter(task => {
     if (filters.category !== 'all' && task.category !== filters.category) return false
     if (filters.projectId !== 'all' && task.project_id !== filters.projectId) return false
     if (filters.assignee !== 'all' && task.assignee !== filters.assignee) return false
-    if (filters.priority !== 'all' && task.priority !== filters.priority) return false
     if (filters.tags.length > 0 && !filters.tags.every(t => task.tags.includes(t))) return false
     return true
+  })
+
+  const priorityRank: Record<string, number> = { high: 0, medium: 1, low: 2 }
+
+  return [...filtered].sort((a, b) => {
+    switch (filters.sort) {
+      case 'priority':
+        return priorityRank[a.priority] - priorityRank[b.priority]
+      case 'due_date':
+        if (!a.due_date && !b.due_date) return 0
+        if (!a.due_date) return 1
+        if (!b.due_date) return -1
+        return a.due_date.localeCompare(b.due_date)
+      case 'title':
+        return a.title.localeCompare(b.title)
+      default: // created
+        return b.created_at.localeCompare(a.created_at)
+    }
   })
 }

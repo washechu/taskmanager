@@ -3,7 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { CATEGORIES, type Project } from '@/lib/types'
+import { CATEGORIES, ASSIGNEES, type Project } from '@/lib/types'
 import type { Task } from '@/lib/types'
 
 interface ProjectCardProps {
@@ -52,9 +52,14 @@ export function ProjectCard({ project, tasks, onOpen }: ProjectCardProps) {
 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <StatusBadge status={project.status} />
-            <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-              {CATEGORIES[project.category].icon} {CATEGORIES[project.category].label}
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+              {CATEGORIES[project.category].label}
             </span>
+            {project.assignee && (
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                {ASSIGNEES[project.assignee].label}
+              </span>
+            )}
             {projectTasks.length > 0 && (
               <span className="text-xs text-gray-400">
                 {doneTasks}/{projectTasks.length} задач

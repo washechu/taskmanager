@@ -103,7 +103,7 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
                   {project?.title ?? '—'}
                 </td>
                 <td className="hidden px-3 py-2 text-sm text-gray-500 md:table-cell">
-                  {task.assignee === 'nick' ? 'Ник' : task.assignee === 'galya' ? 'Галя' : '—'}
+                  {task.assignee === 'nick' ? 'Никита' : task.assignee === 'galya' ? 'Галочка' : '—'}
                 </td>
                 <td className={`px-3 py-2 text-sm ${overdue ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
                   {task.due_date ?? '—'}

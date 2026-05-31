@@ -1,7 +1,7 @@
 {
-  "name": "Таски",
-  "short_name": "Таски",
-  "description": "Персональный таск-менеджер Ника и Гали",
+  "name": "Планировщик",
+  "short_name": "Планировщик",
+  "description": "Персональный планировщик Никиты и Галочки",
   "start_url": "/tasks",
   "scope": "/",
   "display": "standalone",

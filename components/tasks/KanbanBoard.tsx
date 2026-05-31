@@ -123,6 +123,7 @@ export function KanbanBoard({ tasks, projects, currentUser, onMove, onUpdate, on
             <TaskForm
               initial={{ status: creatingStatus }}
               projects={projects}
+              defaultAssignee={currentUser}
               onSubmit={handleCreate}
               onCancel={() => setCreatingStatus(null)}
               submitLabel="Создать"

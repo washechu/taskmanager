@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { TaskForm } from './TaskForm'
 import { CommentSection } from './CommentSection'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { TagChip } from '@/components/ui/TagChip'
+import { useTags } from '@/lib/hooks/useTags'
 import type { Task, Project, Assignee } from '@/lib/types'
 
 interface TaskModalProps {
@@ -18,6 +20,7 @@ interface TaskModalProps {
 export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onClose }: TaskModalProps) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const { tags: allTags } = useTags()
 
   const handleUpdate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
     await onUpdate(task.id, data)
@@ -101,7 +104,7 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                   <div>
                     <span className="text-xs text-gray-400">Ответственный</span>
                     <p className="font-medium text-gray-700 dark:text-gray-200">
-                      {task.assignee === 'nick' ? 'Ник' : 'Галя'}
+                      {task.assignee === 'nick' ? 'Никита' : 'Галочка'}
                     </p>
                   </div>
                 )}
@@ -118,9 +121,7 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
               {task.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {task.tags.map(tag => (
-                    <span key={tag} className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                      {tag}
-                    </span>
+                    <TagChip key={tag} name={tag} tags={allTags} size="sm" />
                   ))}
                 </div>
               )}

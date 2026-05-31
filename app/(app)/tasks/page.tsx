@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { KanbanBoard } from '@/components/tasks/KanbanBoard'
 import { CalendarView } from '@/components/tasks/CalendarView'
 import { ListView } from '@/components/tasks/ListView'
-import { GanttView } from '@/components/tasks/GanttView'
 import { TaskModal } from '@/components/tasks/TaskModal'
 import { TaskFilters, applyTaskFilters, type TaskFilterState } from '@/components/tasks/TaskFilters'
+import { MobileViewTabs } from '@/components/ui/Navigation'
 import { useTasks } from '@/lib/hooks/useTasks'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
@@ -16,69 +17,53 @@ const DEFAULT_FILTERS: TaskFilterState = {
   category: 'all',
   projectId: 'all',
   assignee: 'all',
-  priority: 'all',
   tags: [],
+  sort: 'created',
 }
 
-type View = 'kanban' | 'list' | 'calendar' | 'gantt'
+function TasksPageInner() {
+  const searchParams = useSearchParams()
+  const view = (searchParams.get('view') ?? 'kanban') as 'kanban' | 'list' | 'calendar'
 
-const VIEWS: { id: View; label: string; icon: string }[] = [
-  { id: 'kanban',   label: 'Канбан',    icon: '🗂️' },
-  { id: 'list',     label: 'Список',    icon: '📋' },
-  { id: 'calendar', label: 'Календарь', icon: '📅' },
-  { id: 'gantt',    label: 'Гант',      icon: '📊' },
-]
-
-export default function TasksPage() {
   const { tasks, loading, createTask, updateTask, deleteTask, moveTask } = useTasks()
   const { projects } = useProjects()
   const currentUser = useCurrentUser()
   const [filters, setFilters] = useState<TaskFilterState>(DEFAULT_FILTERS)
-  const [view, setView] = useState<View>('kanban')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   const filteredTasks = applyTaskFilters(tasks, filters)
-  const hasFilters = Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v !== 'all')
+  const hasFilters = filters.category !== 'all' || filters.projectId !== 'all' ||
+    filters.assignee !== 'all' || filters.tags.length > 0
 
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Задачи</h1>
-            {/* View switcher */}
-            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
-              {VIEWS.map(v => (
-                <button
-                  key={v.id}
-                  onClick={() => setView(v.id)}
-                  className={`px-2.5 py-1 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
-                    view === v.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  <span className="mr-1">{v.icon}</span>
-                  <span className="hidden sm:inline">{v.label}</span>
-                </button>
-              ))}
-            </div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Планировщик</h1>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              Конкретные дела с дедлайном. Объединяются в проекты.
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            {currentUser.assignee && (
-              <span className="text-xs text-gray-400">
-                {currentUser.assignee === 'nick' ? 'Ник' : 'Галя'}
-              </span>
-            )}
-            <span className="text-sm text-gray-400">{filteredTasks.length} задач</span>
-          </div>
+          {currentUser.assignee && (
+            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+              {currentUser.assignee === 'nick' ? 'Никита' : 'Галочка'}
+            </span>
+          )}
         </div>
         {!currentUser.loading && !currentUser.assignee && (
-          <p className="mt-1 rounded-md bg-yellow-50 px-2 py-1 text-xs text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400">
-            ⚠️ Email <b>{currentUser.email}</b> не распознан как Ник или Галя. Проверь переменные окружения.
+          <p className="mt-2 rounded-md bg-yellow-50 px-2 py-1 text-xs text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400">
+            ⚠️ Email <b>{currentUser.email}</b> не распознан. Проверь переменные окружения.
           </p>
         )}
+        <div className="mt-2">
+          <MobileViewTabs basePath="/tasks" subs={[
+            { view: 'kanban',   label: 'Канбан'    },
+            { view: 'list',     label: 'Список'    },
+            { view: 'calendar', label: 'Календарь' },
+          ]} />
+        </div>
         <TaskFilters filters={filters} projects={projects} onChange={setFilters} />
       </div>
 
@@ -117,14 +102,8 @@ export default function TasksPage() {
             onTaskOpen={setSelectedTask}
             onStatusChange={moveTask}
           />
-        ) : view === 'calendar' ? (
-          <CalendarView
-            tasks={filteredTasks}
-            projects={projects}
-            onTaskOpen={setSelectedTask}
-          />
         ) : (
-          <GanttView
+          <CalendarView
             tasks={filteredTasks}
             projects={projects}
             onTaskOpen={setSelectedTask}
@@ -132,7 +111,6 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* Shared task modal for non-Kanban views */}
       {selectedTask && (
         <TaskModal
           task={selectedTask}
@@ -148,5 +126,13 @@ export default function TasksPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-sm text-gray-400">Загрузка...</div>}>
+      <TasksPageInner />
+    </Suspense>
   )
 }

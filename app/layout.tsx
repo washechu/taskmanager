@@ -2,14 +2,14 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Таски',
-  description: 'Персональный таск-менеджер Ника и Гали',
+  title: 'Планировщик',
+  description: 'Персональный планировщик Никиты и Галочки',
   manifest: '/manifest.json',
-  applicationName: 'Таски',
+  applicationName: 'Планировщик',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Таски',
+    title: 'Планировщик',
   },
   icons: {
     icon: [

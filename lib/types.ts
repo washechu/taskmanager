@@ -25,6 +25,7 @@ export interface Project {
   description: string | null
   status: Status
   category: Category
+  assignee: Assignee | null
   start_date: string | null
   due_date: string | null
   created_at: string
@@ -58,12 +59,26 @@ export const CATEGORIES: Record<Category, { label: string; icon: string }> = {
 }
 
 export const ASSIGNEES: Record<Assignee, { label: string }> = {
-  nick:  { label: 'Ник'  },
-  galya: { label: 'Галя' },
+  nick:  { label: 'Никита'  },
+  galya: { label: 'Галочка' },
 }
 
-export const DEFAULT_TAGS = [
-  'Джиу-джитсу', 'Выходные', 'Спорт', 'Дом', 'С Галей', 'Чарли',
-]
+export interface Tag {
+  id: string
+  name: string
+  color: string
+  created_at: string
+}
+
+export const TAG_COLORS: Record<string, { label: string; bg: string; text: string }> = {
+  gray:   { label: 'Серый',     bg: 'bg-gray-100   dark:bg-gray-800',   text: 'text-gray-700   dark:text-gray-300'   },
+  red:    { label: 'Красный',   bg: 'bg-red-100    dark:bg-red-950',    text: 'text-red-700    dark:text-red-300'    },
+  orange: { label: 'Оранжевый', bg: 'bg-orange-100 dark:bg-orange-950', text: 'text-orange-700 dark:text-orange-300' },
+  yellow: { label: 'Жёлтый',    bg: 'bg-yellow-100 dark:bg-yellow-950', text: 'text-yellow-700 dark:text-yellow-300' },
+  green:  { label: 'Зелёный',   bg: 'bg-green-100  dark:bg-green-950',  text: 'text-green-700  dark:text-green-300'  },
+  blue:   { label: 'Синий',     bg: 'bg-blue-100   dark:bg-blue-950',   text: 'text-blue-700   dark:text-blue-300'   },
+  purple: { label: 'Фиолет.',   bg: 'bg-purple-100 dark:bg-purple-950', text: 'text-purple-700 dark:text-purple-300' },
+  pink:   { label: 'Розовый',   bg: 'bg-pink-100   dark:bg-pink-950',   text: 'text-pink-700   dark:text-pink-300'   },
+}
 
 export const STATUS_ORDER: Status[] = ['todo', 'in_progress', 'done', 'paused']
