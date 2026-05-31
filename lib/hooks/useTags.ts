@@ -1,29 +1,47 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Tag } from '@/lib/types'
 
 export function useTags() {
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  // Memoize the client so the effect doesn't re-subscribe on every render
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchTags = useCallback(async () => {
-    const { data } = await supabase.from('tags').select('*').order('name')
-    if (data) setTags(data)
-    setLoading(false)
+    try {
+      const { data, error } = await supabase.from('tags').select('*').order('name')
+      if (error) {
+        // Table might not exist yet (migration 003 not run) — fail silently
+        console.warn('[useTags] fetch failed:', error.message)
+      } else if (data) {
+        setTags(data as Tag[])
+      }
+    } catch (err) {
+      console.warn('[useTags] unexpected error:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [supabase])
 
   useEffect(() => {
     fetchTags()
-    const channel = supabase
-      .channel('tags-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tags' }, () => {
-        fetchTags()
-      })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    try {
+      channel = supabase
+        .channel('tags-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tags' }, () => {
+          fetchTags()
+        })
+        .subscribe()
+    } catch (err) {
+      console.warn('[useTags] subscription failed:', err)
+    }
+    return () => {
+      if (channel) supabase.removeChannel(channel)
+    }
   }, [fetchTags, supabase])
 
   const createTag = useCallback(async (name: string, color: string) => {
@@ -34,7 +52,7 @@ export function useTags() {
       .insert({ name: trimmed, color })
       .select()
       .single()
-    if (data) setTags(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    if (data) setTags(prev => [...prev, data as Tag].sort((a, b) => a.name.localeCompare(b.name)))
     return { data, error }
   }, [supabase])
 
