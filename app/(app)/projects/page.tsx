@@ -2,10 +2,19 @@
 
 import { useState } from 'react'
 import { ProjectKanban } from '@/components/projects/ProjectKanban'
+import { ProjectGantt } from '@/components/projects/ProjectGantt'
+import { ProjectModal } from '@/components/projects/ProjectModal'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useTasks } from '@/lib/hooks/useTasks'
 import { STATUSES, CATEGORIES, STATUS_ORDER, type Status, type Category } from '@/lib/types'
 import type { Project } from '@/lib/types'
+
+type ProjectView = 'kanban' | 'gantt'
+
+const VIEWS: { id: ProjectView; label: string; icon: string }[] = [
+  { id: 'kanban', label: 'Канбан', icon: '🗂️' },
+  { id: 'gantt',  label: 'Гант',   icon: '📊' },
+]
 
 function CreateProjectModal({
   onSubmit,
@@ -82,17 +91,37 @@ export default function ProjectsPage() {
   const { projects, loading, createProject, updateProject, deleteProject } = useProjects()
   const { tasks } = useTasks()
   const [creating, setCreating] = useState(false)
+  const [view, setView] = useState<ProjectView>('kanban')
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Проекты</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Проекты</h1>
+            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
+              {VIEWS.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => setView(v.id)}
+                  className={`px-2.5 py-1 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
+                    view === v.id
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <span className="mr-1">{v.icon}</span>
+                  <span className="hidden sm:inline">{v.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             onClick={() => setCreating(true)}
             className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
           >
-            + Создать проект
+            + Проект
           </button>
         </div>
       </div>
@@ -102,7 +131,7 @@ export default function ProjectsPage() {
           <div className="flex h-full items-center justify-center">
             <p className="text-sm text-gray-400">Загрузка...</p>
           </div>
-        ) : (
+        ) : view === 'kanban' ? (
           <ProjectKanban
             projects={projects}
             tasks={tasks}
@@ -111,8 +140,27 @@ export default function ProjectsPage() {
             onDelete={deleteProject}
             onCreate={() => setCreating(true)}
           />
+        ) : (
+          <ProjectGantt
+            projects={projects}
+            onProjectOpen={setSelectedProject}
+          />
         )}
       </div>
+
+      {selectedProject && (
+        <ProjectModal
+          project={selectedProject}
+          tasks={tasks}
+          onUpdate={async (id, updates) => {
+            const result = await updateProject(id, updates)
+            setSelectedProject(prev => prev ? { ...prev, ...updates } : null)
+            return result
+          }}
+          onDelete={deleteProject}
+          onClose={() => setSelectedProject(null)}
+        />
+      )}
 
       {creating && (
         <CreateProjectModal
