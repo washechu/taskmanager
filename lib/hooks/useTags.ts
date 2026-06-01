@@ -64,11 +64,33 @@ export function useTags() {
   }, [supabase, fetchTags])
 
   const deleteTag = useCallback(async (id: string) => {
+    const tag = tags.find(t => t.id === id)
     setTags(prev => prev.filter(t => t.id !== id))
     const { error } = await supabase.from('tags').delete().eq('id', id)
-    if (error) fetchTags()
+    if (error) {
+      fetchTags()
+      return { error }
+    }
+    // Strip the (now-deleted) tag name from any tasks still referencing it,
+    // so we don't leave orphan names rendering as gray chips.
+    if (tag) {
+      const { data: affected } = await supabase
+        .from('tasks')
+        .select('id, tags')
+        .contains('tags', [tag.name])
+      if (affected?.length) {
+        await Promise.all(
+          affected.map(t =>
+            supabase
+              .from('tasks')
+              .update({ tags: (t.tags as string[]).filter(name => name !== tag.name) })
+              .eq('id', t.id)
+          )
+        )
+      }
+    }
     return { error }
-  }, [supabase, fetchTags])
+  }, [supabase, fetchTags, tags])
 
   return { tags, loading, createTag, updateTag, deleteTag }
 }

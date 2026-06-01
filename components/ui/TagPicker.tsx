@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from './TagChip'
-import { TAG_COLORS } from '@/lib/types'
+import { TAG_COLORS, type Tag } from '@/lib/types'
 
 interface TagPickerProps {
   selected: string[]
@@ -23,13 +23,24 @@ const COLOR_DOT: Record<string, string> = {
 }
 
 export function TagPicker({ selected, onChange }: TagPickerProps) {
-  const { tags, createTag } = useTags()
+  const { tags, createTag, deleteTag } = useTags()
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('blue')
   const [creating, setCreating] = useState(false)
+  const [managing, setManaging] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<Tag | null>(null)
 
   const toggle = (name: string) => {
     onChange(selected.includes(name) ? selected.filter(t => t !== name) : [...selected, name])
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    const name = pendingDelete.name
+    await deleteTag(pendingDelete.id)
+    // Drop it from the current selection too, if present
+    if (selected.includes(name)) onChange(selected.filter(t => t !== name))
+    setPendingDelete(null)
   }
 
   const handleAdd = async () => {
@@ -56,20 +67,57 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
             key={tag.id}
             name={tag.name}
             color={tag.color}
-            selected={selected.includes(tag.name)}
-            onClick={() => toggle(tag.name)}
+            selected={!managing && selected.includes(tag.name)}
+            onClick={managing ? undefined : () => toggle(tag.name)}
+            onRemove={managing ? () => setPendingDelete(tag) : undefined}
           />
         ))}
       </div>
 
+      {/* Delete confirmation */}
+      {pendingDelete && (
+        <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2.5 dark:border-red-900 dark:bg-red-950/40">
+          <p className="text-xs text-red-700 dark:text-red-300">
+            Удалить тег «{pendingDelete.name}»? Он исчезнет у всех задач.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={confirmDelete}
+              className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+            >
+              Удалить
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingDelete(null)}
+              className="rounded-md px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
+
       {!creating ? (
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="mt-2 text-xs text-blue-600 hover:underline dark:text-blue-400"
-        >
-          + Добавить тег
-        </button>
+        <div className="mt-2 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => { setCreating(true); setManaging(false); setPendingDelete(null) }}
+            className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+          >
+            + Добавить тег
+          </button>
+          {tags.length > 0 && (
+            <button
+              type="button"
+              onClick={() => { setManaging(m => !m); setPendingDelete(null) }}
+              className="text-xs text-gray-500 hover:underline dark:text-gray-400"
+            >
+              {managing ? 'Готово' : 'Изменить'}
+            </button>
+          )}
+        </div>
       ) : (
         <div className="mt-2 rounded-lg border border-gray-200 p-2.5 dark:border-gray-700">
           <div className="flex gap-2">
