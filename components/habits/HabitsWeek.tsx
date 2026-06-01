@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import {
-  startOfWeek, addWeeks, addDays, format, isToday, isSameDay, isAfter, startOfDay,
+  startOfWeek, addWeeks, addDays, format, isSameDay, isAfter, startOfDay,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -19,6 +19,17 @@ const HABIT_BG: Record<string, string> = {
   purple: 'bg-purple-500',
   pink:   'bg-pink-500',
 }
+const HABIT_DOT: Record<string, string> = {
+  gray:   'bg-gray-400',
+  red:    'bg-red-500',
+  orange: 'bg-orange-500',
+  yellow: 'bg-yellow-400',
+  green:  'bg-green-500',
+  blue:   'bg-blue-600',
+  purple: 'bg-purple-500',
+  pink:   'bg-pink-500',
+}
+const HABIT_BAR: Record<string, string> = HABIT_BG
 
 const fmtKey = (d: Date) => format(d, 'yyyy-MM-dd')
 
@@ -27,7 +38,6 @@ function computeStreak(habit: Habit, doneSet: Set<string>): number {
   if (habit.weekdays.length === 0) return 0
   let streak = 0
   let cursor = startOfDay(new Date())
-  // не более года назад
   for (let i = 0; i < 366; i++) {
     if (habit.weekdays.includes(isoWeekday(cursor))) {
       if (doneSet.has(fmtKey(cursor))) streak++
@@ -36,6 +46,49 @@ function computeStreak(habit: Habit, doneSet: Set<string>): number {
     cursor = addDays(cursor, -1)
   }
   return streak
+}
+
+function DayCell({
+  date, done, color, today, future, onToggle,
+}: {
+  date: Date
+  done: boolean
+  color: string
+  today: Date
+  future: boolean
+  onToggle: () => void
+}) {
+  const isNow = isSameDay(date, today)
+  const missed = !done && !future && !isNow
+
+  const circle = done
+    ? `${HABIT_BG[color] ?? HABIT_BG.blue} text-white shadow-sm`
+    : future
+      ? 'border border-gray-200 text-transparent opacity-50 dark:border-gray-700'
+      : isNow
+        ? 'border-2 border-blue-500 text-blue-500 dark:text-blue-400'
+        : 'border-2 border-dashed border-red-300 text-red-400 dark:border-red-900/70 dark:text-red-500/70' // пропущено
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className={`text-[11px] uppercase tracking-wide ${
+        isNow ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-400'
+      }`}>
+        {format(date, 'EEEEEE', { locale: ru })}
+      </span>
+      <button
+        onClick={() => !future && onToggle()}
+        disabled={future}
+        aria-label={fmtKey(date)}
+        className={`flex h-11 w-11 items-center justify-center rounded-full text-base transition-all active:scale-90 disabled:cursor-default ${circle}`}
+      >
+        {done ? '✓' : missed ? '·' : ''}
+      </button>
+      <span className={`text-[11px] ${isNow ? 'font-medium text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+        {format(date, 'd')}
+      </span>
+    </div>
+  )
 }
 
 export function HabitsWeek({
@@ -51,24 +104,17 @@ export function HabitsWeek({
 }) {
   const [anchor, setAnchor] = useState(() => new Date())
   const weekStart = startOfWeek(anchor, { weekStartsOn: 1 })
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const today = startOfDay(new Date())
 
-  // Быстрый поиск отметок по habit_id
   const doneByHabit = new Map<string, Set<string>>()
   for (const l of logs) {
     if (!doneByHabit.has(l.habit_id)) doneByHabit.set(l.habit_id, new Set())
     doneByHabit.get(l.habit_id)!.add(l.date)
   }
 
-  if (habits.length === 0) {
-    return (
-      <EmptyState text="Привычек пока нет — добавь первую через кнопку справа внизу" />
-    )
-  }
-
   return (
-    <div>
+    <div className="mx-auto max-w-2xl">
       {/* Toolbar: навигация по неделям */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-1">
@@ -94,93 +140,67 @@ export function HabitsWeek({
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="min-w-[34rem]">
-          {/* Заголовок: дни недели */}
-          <div className="flex items-center border-b border-gray-200 pb-2 dark:border-gray-800">
-            <div className="flex-1 min-w-0" />
-            <div className="flex gap-1">
-              {days.map(d => (
-                <div key={d.toISOString()} className="w-10 text-center">
-                  <div className="text-[11px] uppercase tracking-wide text-gray-400">
-                    {format(d, 'EEEEEE', { locale: ru })}
-                  </div>
-                  <div className={`text-xs font-medium ${
-                    isToday(d) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
-                  }`}>
-                    {format(d, 'd')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {habits.length === 0 ? (
+        <EmptyState text="Привычек пока нет — добавь первую через кнопку справа внизу" />
+      ) : (
+        <div className="space-y-3">
+          {habits.map(habit => {
+            const doneSet = doneByHabit.get(habit.id) ?? new Set<string>()
+            const streak = computeStreak(habit, doneSet)
+            // Только запланированные дни этой недели, в порядке Пн→Вс
+            const scheduledDays = weekDays.filter(d => habit.weekdays.includes(isoWeekday(d)))
+            const total = scheduledDays.length
+            const doneCount = scheduledDays.filter(d => doneSet.has(fmtKey(d))).length
+            const pct = total ? Math.round((doneCount / total) * 100) : 0
 
-          {/* Строки привычек */}
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {habits.map(habit => {
-              const doneSet = doneByHabit.get(habit.id) ?? new Set<string>()
-              const streak = computeStreak(habit, doneSet)
-              // прогресс за неделю: запланированные дни ≤ сегодня
-              const planned = days.filter(d => habit.weekdays.includes(isoWeekday(d)) && !isAfter(startOfDay(d), today))
-              const doneCount = planned.filter(d => doneSet.has(fmtKey(d))).length
-
-              return (
-                <div key={habit.id} className="flex items-center py-2.5">
-                  <button
-                    onClick={() => onOpen(habit)}
-                    className="flex-1 min-w-0 pr-3 text-left"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${HABIT_BG[habit.color] ?? HABIT_BG.blue}`} />
-                      <span className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{habit.title}</span>
-                    </div>
-                    <div className="mt-0.5 flex items-center gap-2 pl-[1.125rem] text-[11px] text-gray-400">
-                      <span>{doneCount}/{planned.length || habit.weekdays.length} за неделю</span>
-                      {streak > 0 && <span className="text-orange-500">🔥 {streak}</span>}
-                    </div>
+            return (
+              <div
+                key={habit.id}
+                className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+              >
+                {/* Шапка карточки */}
+                <div className="flex items-start justify-between gap-3">
+                  <button onClick={() => onOpen(habit)} className="flex min-w-0 items-center gap-2.5 text-left">
+                    <span className={`h-3 w-3 flex-shrink-0 rounded-full ${HABIT_DOT[habit.color] ?? HABIT_DOT.blue}`} />
+                    <span className="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">{habit.title}</span>
                   </button>
-
-                  <div className="flex gap-1">
-                    {days.map(d => {
-                      const scheduled = habit.weekdays.includes(isoWeekday(d))
-                      const dayStart = startOfDay(d)
-                      const future = isAfter(dayStart, today)
-                      const key = fmtKey(d)
-                      const done = doneSet.has(key)
-
-                      if (!scheduled) {
-                        return (
-                          <div key={key} className="flex h-10 w-10 items-center justify-center">
-                            <span className="h-1 w-1 rounded-full bg-gray-200 dark:bg-gray-700" />
-                          </div>
-                        )
-                      }
-                      return (
-                        <div key={key} className="flex h-10 w-10 items-center justify-center">
-                          <button
-                            onClick={() => !future && onToggle(habit.id, key)}
-                            disabled={future}
-                            aria-label={`${habit.title} — ${key}`}
-                            className={`flex h-8 w-8 items-center justify-center rounded-full text-sm transition-all ${
-                              done
-                                ? `${HABIT_BG[habit.color] ?? HABIT_BG.blue} text-white`
-                                : future
-                                  ? 'border border-dashed border-gray-200 text-transparent dark:border-gray-700'
-                                  : `border-2 ${isSameDay(d, today) ? 'border-blue-400' : 'border-gray-300 dark:border-gray-600'} text-gray-300 hover:border-blue-400 dark:text-gray-600`
-                            }`}
-                          >
-                            {done ? '✓' : ''}
-                          </button>
-                        </div>
-                      )
-                    })}
-                  </div>
+                  {streak > 0 && (
+                    <span className="flex-shrink-0 text-xs font-medium text-orange-500">🔥 {streak}</span>
+                  )}
                 </div>
-              )
-            })}
-          </div>
+
+                {/* Прогресс недели */}
+                <div className="mt-2.5 flex items-center gap-2.5">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div
+                      className={`h-full rounded-full ${HABIT_BAR[habit.color] ?? HABIT_BAR.blue} transition-all`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="flex-shrink-0 text-[11px] tabular-nums text-gray-400">
+                    {doneCount}/{total} на неделе
+                  </span>
+                </div>
+
+                {/* Дни (только запланированные) */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {scheduledDays.map(d => (
+                    <DayCell
+                      key={fmtKey(d)}
+                      date={d}
+                      color={habit.color}
+                      today={today}
+                      done={doneSet.has(fmtKey(d))}
+                      future={isAfter(startOfDay(d), today)}
+                      onToggle={() => onToggle(habit.id, fmtKey(d))}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
-      </div>
+      )}
     </div>
   )
 }
