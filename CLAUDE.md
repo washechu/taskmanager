@@ -290,7 +290,7 @@ export const TAG_COLORS = {
 ### Виды и URL
 - На `/tasks` и `/projects` вид переключается через `?view=xxx` (`useSearchParams`).
 - Sidebar (Desktop): подпункты видов под активным разделом, кликают на ссылки с `?view=`.
-- Mobile: `MobileViewTabs` в шапке страницы (sidebar свёрнут в bottom nav).
+- Mobile: `MobileViewTabs` в шапке страницы (sidebar свёрнут в bottom nav). Реализован как сегментированный контрол (iOS-стиль): серая дорожка-трек с равными по ширине сегментами через `grid` (`gridTemplateColumns: repeat(N, 1fr)`, где N = число видов). Не скроллится горизонтально — все вкладки (4 у Задач, 2 у Проектов) всегда влезают по ширине экрана. Активная вкладка — белая «таблетка» с тенью.
 - Страницы используют `<Suspense>` обёртки для `useSearchParams` (требование Next 14).
 
 ### Cross-navigation (Задача ↔ Проект)

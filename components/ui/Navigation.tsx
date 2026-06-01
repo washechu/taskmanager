@@ -143,17 +143,20 @@ export function MobileViewTabs({
   const currentView = searchParams.get('view') ?? 'kanban'
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto md:hidden">
+    <div
+      className="grid gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800 md:hidden"
+      style={{ gridTemplateColumns: `repeat(${subs.length}, minmax(0, 1fr))` }}
+    >
       {subs.map(sub => {
         const active = currentView === sub.view
         return (
           <Link
             key={sub.view}
             href={`${basePath}?view=${sub.view}`}
-            className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-1 py-2 text-center text-[13px] font-medium transition-colors ${
               active
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white'
+                : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             {sub.label}
