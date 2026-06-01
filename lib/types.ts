@@ -71,6 +71,41 @@ export interface Tag {
   created_at: string
 }
 
+// Регулярные задачи / привычки. Расписание — конкретные дни недели (ISO 1..7).
+export interface Habit {
+  id: string
+  title: string
+  description: string | null
+  category: Category
+  assignee: Assignee | null
+  weekdays: number[]   // ISO weekday numbers 1=Пн … 7=Вс
+  color: string        // палитра TAG_COLORS
+  archived: boolean
+  created_at: string
+  updated_at: string
+}
+
+// Наличие лога = привычка выполнена в этот день.
+export interface HabitLog {
+  id: string
+  habit_id: string
+  date: string         // yyyy-MM-dd
+  created_at: string
+}
+
+export const WEEKDAYS: { value: number; short: string; label: string }[] = [
+  { value: 1, short: 'Пн', label: 'Понедельник' },
+  { value: 2, short: 'Вт', label: 'Вторник'     },
+  { value: 3, short: 'Ср', label: 'Среда'       },
+  { value: 4, short: 'Чт', label: 'Четверг'     },
+  { value: 5, short: 'Пт', label: 'Пятница'     },
+  { value: 6, short: 'Сб', label: 'Суббота'     },
+  { value: 7, short: 'Вс', label: 'Воскресенье' },
+]
+
+/** JS Date → ISO weekday (1=Пн … 7=Вс) */
+export const isoWeekday = (d: Date): number => ((d.getDay() + 6) % 7) + 1
+
 export const TAG_COLORS: Record<string, { label: string; bg: string; text: string }> = {
   gray:   { label: 'Серый',     bg: 'bg-gray-100   dark:bg-gray-800',   text: 'text-gray-700   dark:text-gray-300'   },
   red:    { label: 'Красный',   bg: 'bg-red-100    dark:bg-red-950',    text: 'text-red-700    dark:text-red-300'    },

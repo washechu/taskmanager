@@ -42,6 +42,7 @@
 │   ├── (app)/
 │   │   ├── tasks/page.tsx        # Задачи (Канбан / Список / Календарь / Аналитика)
 │   │   ├── projects/page.tsx     # Проекты (Канбан / Гант)
+│   │   ├── habits/page.tsx       # Привычки (недельный чеклист по дням недели)
 │   │   └── layout.tsx            # Layout с навигацией + auth guard
 │   ├── layout.tsx                # PWA metadata, viewport, icons
 │   ├── globals.css               # Кастомные стили селектов и пр.
@@ -65,6 +66,9 @@
 │   │   ├── ProjectModal.tsx      # Модалка проекта + ProjectForm (экспорт)
 │   │   ├── ProjectFilters.tsx    # Фильтры + rightAction для +Проект
 │   │   └── ProjectGantt.tsx      # Иерархический Гант: проекты + вложенные задачи
+│   ├── habits/
+│   │   ├── HabitsWeek.tsx        # Недельная сетка-чеклист + навигация по неделям + streak
+│   │   └── HabitModal.tsx        # Модалка привычки (view + edit) + HabitForm (экспорт)
 │   └── ui/
 │       ├── Fab.tsx               # Floating Action Button (создание задачи/проекта)
 │       ├── Navigation.tsx        # Sidebar/bottom nav (с эмодзи) + экспорт MobileViewTabs
@@ -81,6 +85,7 @@
 │   │   ├── useProjects.ts        # CRUD + Realtime
 │   │   ├── useComments.ts        # CRUD + Realtime (вкл. kind)
 │   │   ├── useTags.ts            # CRUD + Realtime
+│   │   ├── useHabits.ts          # CRUD привычек + habit_logs + toggleLog + Realtime
 │   │   └── useCurrentUser.ts     # email → assignee (по env vars)
 │   ├── diffTask.ts               # Утилита: разница старой и новой задачи → audit-строки
 │   └── types.ts                  # Type-ы и enum-словари (STATUSES, PRIORITIES, etc.)
@@ -92,7 +97,8 @@
 │   ├── 001_initial.sql           # Базовая схема + RLS + Realtime publications
 │   ├── 002_fix_comment_policy.sql # RLS для real-email пользователей
 │   ├── 003_tags_and_project_assignee.sql # Таблица tags + projects.assignee
-│   └── 004_comment_kind.sql      # comments.kind ('user'/'audit')
+│   ├── 004_comment_kind.sql      # comments.kind ('user'/'audit')
+│   └── 005_habits.sql            # Таблицы habits + habit_logs (привычки)
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -192,6 +198,30 @@ create table tags (
   created_at timestamptz default now()
 );
 
+-- Привычки / регулярные задачи (м.005)
+create table habits (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  category text not null check (category in ('personal', 'family')),
+  assignee text check (assignee in ('nick', 'galya')),
+  weekdays int[] not null default '{}',   -- ISO дни недели 1=Пн … 7=Вс
+  color text not null default 'blue'
+    check (color in ('gray','red','orange','yellow','green','blue','purple','pink')),
+  archived boolean not null default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Отметки выполнения: наличие строки = привычка выполнена в этот день (м.005)
+create table habit_logs (
+  id uuid primary key default gen_random_uuid(),
+  habit_id uuid not null references habits(id) on delete cascade,
+  date date not null,
+  created_at timestamptz default now(),
+  unique (habit_id, date)
+);
+
 -- Индексы
 create index on tasks(status);
 create index on tasks(category);
@@ -199,16 +229,19 @@ create index on tasks(project_id);
 create index on tasks(due_date);
 create index on comments(task_id);
 create index on tags(name);
+create index on habits(assignee);
+create index on habit_logs(habit_id);
+create index on habit_logs(date);
 ```
 
 ### RLS
 
-- **tasks, projects, tags:** read+write для всех authenticated.
+- **tasks, projects, tags, habits, habit_logs:** read+write для всех authenticated.
 - **comments:** read+insert для всех, **delete** только своих *user*-комментариев (audit-комментарии неудаляемы). Поле `auth.email()` сверяется с реальными email-ами Никиты/Галочки (см. миграцию 002 и 004).
 
 ### Realtime
 
-Все таблицы (`tasks`, `projects`, `comments`, `tags`) добавлены в `supabase_realtime` publication.
+Все таблицы (`tasks`, `projects`, `comments`, `tags`, `habits`, `habit_logs`) добавлены в `supabase_realtime` publication.
 
 ### Применение миграций
 
@@ -384,6 +417,18 @@ export const TAG_COLORS = {
 - Confirm: «Проект будет удалён. Связанные задачи останутся, но потеряют привязку.»
 - `project_id` в задачах становится `null` (через `ON DELETE SET NULL` в схеме).
 
+### Привычки (регулярные задачи)
+Отдельный раздел `/habits` (иконка 🔁 в навигации, под Проектами). Намеренно **не** часть канбана задач — регулярные дела засоряли бы доску. Это модель «habit + чеклист», а не «материализация задач».
+
+- **Модель:** `habits` (название, категория, ответственный, `weekdays int[]` ISO 1=Пн…7=Вс, цвет из палитры тегов, `archived`) + `habit_logs` (по строке на выполненный день). **Наличие строки в `habit_logs` = выполнено**, отдельного флага `done` нет — снятие отметки удаляет строку. `unique(habit_id, date)` защищает от дублей.
+- **Расписание — конкретные дни недели** (не «N раз в неделю»). Выбор дней в `HabitForm` — 7 кнопок-тогглов.
+- **Хук `useHabits`:** грузит активные (`archived=false`) привычки + все логи, подписан на оба `postgres_changes`. `toggleLog(habitId, date)` — оптимистично вставляет/удаляет лог. CRUD привычек по образцу `useProjects`.
+- **`HabitsWeek`** — недельная сетка-чеклист: слева привычка (точка цвета + название + «N/M за неделю» + 🔥streak), справа 7 ячеек на дни. Запланированные дни кликабельны (кроме будущих — их нельзя «выполнить»), невыбранные дни — точка-заглушка. Навигация по неделям ←/→ + «Сегодня» (как в Календаре, `weekStartsOn:1`).
+- **Streak** считается в `computeStreak`: идём назад по дням от сегодня, на каждом запланированном дне проверяем лог; первый пропуск обрывает серию (лимит 366 дней).
+- **`isoWeekday(date)`** в `types.ts` конвертит JS `getDay()` (0=Вс) в ISO (1=Пн…7=Вс): `((getDay()+6)%7)+1`.
+- На странице — те же фильтры, что у задач/проектов: категория-вкладки + ответственный. Создание через `Fab label="Привычка"`. У раздела нет под-видов (`subs`), поэтому `MobileViewTabs` не рендерится.
+- Удаление привычки (модалка → 🗑️ → confirm) каскадно сносит `habit_logs` (`ON DELETE CASCADE`).
+
 ### Дизайн-система: отступы и иерархия в панелях фильтров
 
 | Размер | Tailwind | Когда применять |
@@ -452,7 +497,7 @@ export const TAG_COLORS = {
 - Push-уведомления и напоминания
 - Вложения / файлы
 - ~~История изменений задач~~ → **есть** через audit-комментарии (см. выше)
-- Повторяющиеся задачи
+- ~~Повторяющиеся задачи~~ → **есть** через раздел «Привычки» (см. ниже)
 - Третий пользователь и более
 - Мобильное нативное приложение
 - ~~Аналитика~~ → **есть для задач** (см. раздел «Аналитика» выше), для проектов — TODO

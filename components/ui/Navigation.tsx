@@ -37,6 +37,11 @@ const links: NavLink[] = [
       { view: 'gantt',  label: 'Гант'   },
     ],
   },
+  {
+    href: '/habits',
+    label: 'Привычки',
+    icon: '🔁',
+  },
 ]
 
 export function Navigation() {
