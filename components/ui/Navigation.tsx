@@ -20,9 +20,10 @@ const links: NavLink[] = [
     href: '/tasks',
     label: 'Задачи',
     subs: [
-      { view: 'kanban',   label: 'Канбан'    },
-      { view: 'list',     label: 'Список'    },
-      { view: 'calendar', label: 'Календарь' },
+      { view: 'kanban',    label: 'Канбан'    },
+      { view: 'list',      label: 'Список'    },
+      { view: 'calendar',  label: 'Календарь' },
+      { view: 'analytics', label: 'Аналитика' },
     ],
   },
   {

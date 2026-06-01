@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { KanbanBoard } from '@/components/tasks/KanbanBoard'
 import { CalendarView } from '@/components/tasks/CalendarView'
 import { ListView } from '@/components/tasks/ListView'
+import { AnalyticsView } from '@/components/tasks/AnalyticsView'
 import { TaskModal } from '@/components/tasks/TaskModal'
 import { TaskForm } from '@/components/tasks/TaskForm'
 import { TaskFilters, applyTaskFilters, type TaskFilterState } from '@/components/tasks/TaskFilters'
@@ -26,7 +27,7 @@ const DEFAULT_FILTERS: TaskFilterState = {
 function TasksPageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const view = (searchParams.get('view') ?? 'kanban') as 'kanban' | 'list' | 'calendar'
+  const view = (searchParams.get('view') ?? 'kanban') as 'kanban' | 'list' | 'calendar' | 'analytics'
   const openTaskId = searchParams.get('open')
   const createForProjectId = searchParams.get('create')
 
@@ -118,9 +119,10 @@ function TasksPageInner() {
         )}
         <div className="mt-2">
           <MobileViewTabs basePath="/tasks" subs={[
-            { view: 'kanban',   label: 'Канбан'    },
-            { view: 'list',     label: 'Список'    },
-            { view: 'calendar', label: 'Календарь' },
+            { view: 'kanban',    label: 'Канбан'    },
+            { view: 'list',      label: 'Список'    },
+            { view: 'calendar',  label: 'Календарь' },
+            { view: 'analytics', label: 'Аналитика' },
           ]} />
         </div>
         <TaskFilters
@@ -174,8 +176,14 @@ function TasksPageInner() {
             onTaskOpen={setSelectedTask}
             onStatusChange={handleMove}
           />
-        ) : (
+        ) : view === 'calendar' ? (
           <CalendarView
+            tasks={filteredTasks}
+            projects={projects}
+            onTaskOpen={setSelectedTask}
+          />
+        ) : (
+          <AnalyticsView
             tasks={filteredTasks}
             projects={projects}
             onTaskOpen={setSelectedTask}
