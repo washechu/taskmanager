@@ -17,15 +17,15 @@ import {
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
 
-type Period = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all'
+type Period = 'week' | 'month' | 'quarter' | 'year' | 'all' | 'custom'
 
 const PERIODS: { id: Period; label: string }[] = [
-  { id: 'today',   label: 'Сегодня'   },
   { id: 'week',    label: 'Эта неделя' },
   { id: 'month',   label: 'Этот месяц' },
   { id: 'quarter', label: 'Квартал'    },
   { id: 'year',    label: 'Год'        },
   { id: 'all',     label: 'Всё время'  },
+  { id: 'custom',  label: 'Период'     },
 ]
 
 const STATUS_HEX: Record<Status, string> = {
@@ -50,19 +50,31 @@ interface AnalyticsViewProps {
 
 export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
   const [period, setPeriod] = useState<Period>('month')
+  // ISO yyyy-MM-dd strings for the custom range pickers
+  const todayIso = format(new Date(), 'yyyy-MM-dd')
+  const monthAgoIso = format(startOfMonth(new Date()), 'yyyy-MM-dd')
+  const [customFrom, setCustomFrom] = useState<string>(monthAgoIso)
+  const [customTo,   setCustomTo]   = useState<string>(todayIso)
 
   /* ── Compute period bounds ────────────────────────────── */
   const { rangeStart, rangeEnd } = useMemo(() => {
     const now = new Date()
     switch (period) {
-      case 'today':   return { rangeStart: startOfDay(now),     rangeEnd: endOfDay(now)     }
       case 'week':    return { rangeStart: startOfWeek(now, { weekStartsOn: 1 }), rangeEnd: endOfWeek(now, { weekStartsOn: 1 }) }
       case 'month':   return { rangeStart: startOfMonth(now),   rangeEnd: endOfMonth(now)   }
       case 'quarter': return { rangeStart: startOfQuarter(now), rangeEnd: endOfQuarter(now) }
       case 'year':    return { rangeStart: startOfYear(now),    rangeEnd: endOfYear(now)    }
+      case 'custom': {
+        // Validate / fall back to safe range
+        const from = customFrom ? startOfDay(parseISO(customFrom)) : new Date(0)
+        const to   = customTo   ? endOfDay(parseISO(customTo))     : now
+        return from > to
+          ? { rangeStart: to, rangeEnd: from }
+          : { rangeStart: from, rangeEnd: to }
+      }
       default:        return { rangeStart: new Date(0),         rangeEnd: now               }
     }
-  }, [period])
+  }, [period, customFrom, customTo])
 
   /* ── Filter tasks by period (created in period) ───────── */
   const tasksInPeriod = useMemo(() =>
@@ -118,10 +130,6 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
 
   /* ── Stacked bar: tasks created per bucket, by status ──── */
   const { barData, bucketLabel } = useMemo(() => {
-    if (period === 'today') {
-      // Single bucket — show by hour breakdown is overkill; use a single bar
-      return { barData: [], bucketLabel: '' }
-    }
     // Pick bucket size based on period span
     const days = differenceInDays(rangeEnd, rangeStart)
     let buckets: Date[]
@@ -194,6 +202,25 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
             </button>
           ))}
         </div>
+
+        {period === 'custom' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-gray-400">с</span>
+            <input
+              type="date"
+              value={customFrom}
+              onChange={e => setCustomFrom(e.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+            />
+            <span className="text-[11px] uppercase tracking-wide text-gray-400">по</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={e => setCustomTo(e.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+            />
+          </div>
+        )}
       </div>
 
       {/* KPI cards */}
@@ -250,8 +277,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
       </div>
 
       {/* Stacked bar chart */}
-      {period !== 'today' && (
-        <Card title={`Создано задач (по ${bucketLabel}м)`}>
+      <Card title={`Создано задач (по ${bucketLabel}м)`}>
           {barData.length === 0 ? (
             <EmptyChart />
           ) : (
@@ -273,7 +299,6 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
             </ResponsiveContainer>
           )}
         </Card>
-      )}
 
       {/* Lists row */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">

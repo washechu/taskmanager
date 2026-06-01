@@ -47,7 +47,39 @@ select {
 
 select::-ms-expand { display: none; }
 
-/* Slightly tighter padding for date inputs (their native picker icon is fine) */
+/* ── Date input normalization ──
+ * iOS Safari renders date inputs with very compact/light empty state,
+ * which makes them look "different" from text inputs in the same form.
+ * Force a consistent minimum height, font-size and color.
+ */
 input[type="date"] {
-  min-height: 36px;
+  min-height: 40px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* iOS adds an internal "spinner" wrapper that we can't easily override;
+ * make the empty placeholder text the same color as other inputs. */
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: inherit;
+}
+
+input[type="date"]:not([value=""])::-webkit-datetime-edit-text,
+input[type="date"]:not([value=""])::-webkit-datetime-edit-month-field,
+input[type="date"]:not([value=""])::-webkit-datetime-edit-day-field,
+input[type="date"]:not([value=""])::-webkit-datetime-edit-year-field {
+  color: inherit;
+}
+
+/* The calendar picker icon — make it a bit more visible in dark mode */
+@media (prefers-color-scheme: dark) {
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+  }
 }

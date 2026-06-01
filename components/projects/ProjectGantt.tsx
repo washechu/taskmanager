@@ -49,6 +49,16 @@ function rangeOf(start: string | null, end: string | null): Range | null {
 export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }: ProjectGanttProps) {
   const [slice, setSlice] = useState<Slice>('month')
   const [anchor, setAnchor] = useState(new Date())
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  const toggleCollapsed = (id: string) => {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   // Build hierarchical groups: project + its dated tasks
   const groups = useMemo(() => {
@@ -91,6 +101,12 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
       return !hasDatedTasks
     }),
     [projects, tasks]
+  )
+
+  // Tasks without dates — show in sidebar (mirrors Calendar behavior)
+  const undatedTasks = useMemo(() =>
+    tasks.filter(t => !t.start_date && !t.due_date),
+    [tasks]
   )
 
   // Visible date range based on current slice
@@ -151,7 +167,8 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
     )
   }
 
-  const hasContent = groups.length > 0 || undatedProjects.length > 0
+  const hasContent = groups.length > 0 || undatedProjects.length > 0 || undatedTasks.length > 0
+  const hasSidebar = undatedProjects.length > 0 || undatedTasks.length > 0
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -228,63 +245,125 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
                 </div>
 
                 {/* Groups */}
-                {groups.map(({ project, taskRanges }) => (
-                  <div key={project?.id ?? 'no-project'}>
-                    {/* Project row */}
-                    <div className="flex border-b border-gray-100 bg-gray-50/40 hover:bg-gray-100/60 dark:border-gray-800 dark:bg-gray-800/30 dark:hover:bg-gray-800/60">
-                      <button
-                        onClick={() => project && onProjectOpen(project)}
-                        disabled={!project}
-                        className="sticky left-0 z-10 flex items-center gap-2 border-r border-gray-200 bg-gray-50/40 px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:text-blue-600 dark:border-gray-800 dark:bg-gray-800/30 dark:text-gray-300 dark:hover:text-blue-400 disabled:hover:text-gray-700"
-                        style={{ width: LABEL_WIDTH }}
-                      >
-                        <span>📁</span>
-                        <span className="truncate">{project?.title ?? 'Без проекта'}</span>
-                      </button>
-                      <div className="relative" style={{ width: totalWidth, height: 36 }} />
-                      {/* Project bar intentionally not rendered — only task bars per spec */}
-                    </div>
-                    {/* Task sub-rows */}
-                    {taskRanges.map(({ task, range }) => (
-                      <div key={task.id} className="flex border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/40">
-                        <button
-                          onClick={() => onTaskOpen?.(task.id)}
-                          disabled={!onTaskOpen}
-                          className="sticky left-0 flex items-center gap-2 truncate border-r border-gray-200 bg-white px-3 py-2 pl-8 text-left text-xs text-gray-600 hover:text-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-blue-400 disabled:hover:text-gray-600"
+                {groups.map(({ project, taskRanges }) => {
+                  const groupKey = project?.id ?? 'no-project'
+                  const isCollapsed = collapsed.has(groupKey)
+                  return (
+                    <div key={groupKey}>
+                      {/* Project row */}
+                      <div className="flex border-b border-gray-100 bg-gray-50/40 hover:bg-gray-100/60 dark:border-gray-800 dark:bg-gray-800/30 dark:hover:bg-gray-800/60">
+                        <div
+                          className="sticky left-0 z-10 flex items-center gap-1 border-r border-gray-200 bg-gray-50/40 px-2 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-800/30 dark:text-gray-300"
                           style={{ width: LABEL_WIDTH }}
                         >
-                          <span className={`h-2 w-2 flex-shrink-0 rounded-full ${STATUS_COLORS[task.status]}`} />
-                          <span className="truncate">{task.title}</span>
-                        </button>
-                        <div className="relative" style={{ width: totalWidth, height: 32 }}>
-                          {renderBar(range, STATUS_COLORS[task.status], 'opacity-70')}
+                          {taskRanges.length > 0 ? (
+                            <button
+                              onClick={() => toggleCollapsed(groupKey)}
+                              className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                              title={isCollapsed ? 'Развернуть' : 'Свернуть'}
+                            >
+                              {isCollapsed ? '▶' : '▼'}
+                            </button>
+                          ) : (
+                            <span className="w-5 flex-shrink-0" />
+                          )}
+                          <button
+                            onClick={() => project && onProjectOpen(project)}
+                            disabled={!project}
+                            className="flex flex-1 items-center gap-1.5 truncate text-left hover:text-blue-600 dark:hover:text-blue-400 disabled:hover:text-gray-700"
+                          >
+                            <span>📁</span>
+                            <span className="truncate">{project?.title ?? 'Без проекта'}</span>
+                            {taskRanges.length > 0 && (
+                              <span className="text-[10px] font-normal text-gray-400">({taskRanges.length})</span>
+                            )}
+                          </button>
                         </div>
+                        <div className="relative" style={{ width: totalWidth, height: 36 }} />
+                        {/* Project bar intentionally not rendered — only task bars per spec */}
                       </div>
-                    ))}
-                  </div>
-                ))}
+                      {/* Task sub-rows — hidden when collapsed */}
+                      {!isCollapsed && taskRanges.map(({ task, range }) => (
+                        <div key={task.id} className="flex border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/40">
+                          <button
+                            onClick={() => onTaskOpen?.(task.id)}
+                            disabled={!onTaskOpen}
+                            className="sticky left-0 flex items-center gap-2 truncate border-r border-gray-200 bg-white px-3 py-2 pl-10 text-left text-xs text-gray-600 hover:text-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-blue-400 disabled:hover:text-gray-600"
+                            style={{ width: LABEL_WIDTH }}
+                          >
+                            <span className={`h-2 w-2 flex-shrink-0 rounded-full ${STATUS_COLORS[task.status]}`} />
+                            <span className="truncate">{task.title}</span>
+                          </button>
+                          <div className="relative" style={{ width: totalWidth, height: 32 }}>
+                            {renderBar(range, STATUS_COLORS[task.status], 'opacity-70')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
         </div>
 
-        {/* Sidebar — projects without any dates */}
-        {undatedProjects.length > 0 && (
-          <div className="flex max-h-64 w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 lg:max-h-none lg:w-64">
+        {/* Sidebar — undated projects & tasks */}
+        {hasSidebar && (
+          <div className="flex max-h-96 w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 lg:max-h-none lg:w-64">
             <div className="border-b border-gray-100 px-3 py-2.5 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-white">
-              Без дат ({undatedProjects.length})
+              Без дат ({undatedProjects.length + undatedTasks.length})
             </div>
-            <div className="flex-1 space-y-1.5 overflow-y-auto p-2">
-              {undatedProjects.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => onProjectOpen(p)}
-                  className="block w-full truncate rounded-lg border border-gray-100 bg-gray-50 p-2 text-left text-xs hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
-                >
-                  <span className={`mr-1.5 inline-block h-2 w-2 rounded-full align-middle ${STATUS_COLORS[p.status]}`} />
-                  <span className="text-gray-700 dark:text-gray-300">{p.title}</span>
-                </button>
-              ))}
+            <div className="flex-1 space-y-3 overflow-y-auto p-2">
+              {undatedProjects.length > 0 && (
+                <div>
+                  <p className="mb-1 px-1 text-[11px] uppercase tracking-wide text-gray-400">
+                    Проекты ({undatedProjects.length})
+                  </p>
+                  <div className="space-y-1.5">
+                    {undatedProjects.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => onProjectOpen(p)}
+                        className="block w-full truncate rounded-lg border border-gray-100 bg-gray-50 p-2 text-left text-xs hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
+                      >
+                        <span className={`mr-1.5 inline-block h-2 w-2 rounded-full align-middle ${STATUS_COLORS[p.status]}`} />
+                        <span className="text-gray-700 dark:text-gray-300">📁 {p.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {undatedTasks.length > 0 && (
+                <div>
+                  <p className="mb-1 px-1 text-[11px] uppercase tracking-wide text-gray-400">
+                    Задачи ({undatedTasks.length})
+                  </p>
+                  <div className="space-y-1.5">
+                    {undatedTasks.map(t => {
+                      const proj = projects.find(p => p.id === t.project_id)
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => onTaskOpen?.(t.id)}
+                          disabled={!onTaskOpen}
+                          className="block w-full rounded-lg border border-gray-100 bg-gray-50 p-2 text-left text-xs hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 disabled:opacity-50"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className={`h-2 w-2 flex-shrink-0 rounded-full ${STATUS_COLORS[t.status]}`} />
+                            <span className="truncate text-gray-700 dark:text-gray-300">{t.title}</span>
+                          </div>
+                          {proj && (
+                            <div className="mt-0.5 truncate pl-3.5 text-[10px] text-gray-400">
+                              {proj.title}
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -98,7 +98,7 @@ function TasksPageInner() {
     setCreating(null)
   }
 
-  const filteredTasks = applyTaskFilters(tasks, filters)
+  const filteredTasks = applyTaskFilters(tasks, filters, currentUser.assignee)
   const hasFilters = filters.category !== 'all' || filters.projectId !== 'all' ||
     filters.assignee !== 'all' || filters.tags.length > 0
 
@@ -128,6 +128,7 @@ function TasksPageInner() {
         <TaskFilters
           filters={filters}
           projects={projects}
+          currentUserAssignee={currentUser.assignee}
           onChange={setFilters}
           rightAction={
             <button
