@@ -6,19 +6,24 @@ import { HabitModal, HabitForm } from '@/components/habits/HabitModal'
 import { Fab } from '@/components/ui/Fab'
 import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import type { Habit } from '@/lib/types'
+import { isoWeekday, type Habit } from '@/lib/types'
 
 export default function HabitsPage() {
   const { habits, logs, loading, createHabit, updateHabit, deleteHabit, toggleLog } = useHabits()
   const currentUser = useCurrentUser()
   const [creating, setCreating] = useState(false)
   const [selected, setSelected] = useState<Habit | null>(null)
+  const [scope, setScope] = useState<'all' | 'today'>('all')
 
   // Показываем только привычки текущего пользователя (чужие смотреть незачем).
   // Если пользователь не распознан (email не совпал) — показываем все, чтобы не было пусто.
-  const filtered = currentUser.assignee
+  const mine = currentUser.assignee
     ? habits.filter(h => h.assignee === currentUser.assignee)
     : habits
+
+  // «Сегодня» — только те, у кого сегодняшний день в расписании.
+  const todayIso = isoWeekday(new Date())
+  const filtered = scope === 'today' ? mine.filter(h => h.weekdays.includes(todayIso)) : mine
 
   return (
     <div className="flex h-full flex-col">
@@ -28,6 +33,22 @@ export default function HabitsPage() {
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Регулярные дела по дням недели — тренировки, занятия, ритуалы.
           </p>
+        </div>
+
+        <div className="mt-4 flex w-max overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+          {([['all', 'Все привычки'], ['today', 'Сегодня']] as const).map(([val, label]) => (
+            <button
+              key={val}
+              onClick={() => setScope(val)}
+              className={`flex h-10 items-center px-4 text-sm font-medium transition-colors ${
+                scope === val
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -42,6 +63,7 @@ export default function HabitsPage() {
             logs={logs}
             onToggle={toggleLog}
             onOpen={setSelected}
+            emptyText={scope === 'today' ? 'На сегодня привычек по расписанию нет' : undefined}
           />
         )}
       </div>

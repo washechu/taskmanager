@@ -112,12 +112,13 @@ function HabitCardHeader({ habit, streak, doneCount, total, unit }: {
 }
 
 export function HabitsView({
-  habits, logs, onToggle, onOpen,
+  habits, logs, onToggle, onOpen, emptyText,
 }: {
   habits: Habit[]
   logs: HabitLog[]
   onToggle: (habitId: string, date: string) => void
   onOpen: (habit: Habit) => void
+  emptyText?: string
 }) {
   const [mode, setMode] = useState<Mode>('week')
   const [anchor, setAnchor] = useState(() => new Date())
@@ -183,7 +184,7 @@ export function HabitsView({
       </div>
 
       {habits.length === 0 ? (
-        <EmptyState text="Привычек пока нет — добавь первую через кнопку справа внизу" />
+        <EmptyState text={emptyText ?? 'Привычек пока нет — добавь первую через кнопку справа внизу'} />
       ) : (
         <div className="space-y-3">
           {habits.map(habit => {
