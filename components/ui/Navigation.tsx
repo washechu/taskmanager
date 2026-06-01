@@ -115,12 +115,12 @@ export function Navigation() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex flex-1 items-center justify-center py-4 text-base font-medium transition-colors ${
+              className={`flex flex-1 items-center justify-center py-3 text-sm font-medium transition-colors ${
                 active
                   ? 'text-blue-700 dark:text-blue-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
-              style={{ minHeight: 64 }}
+              style={{ minHeight: 56 }}
             >
               {link.label}
             </Link>
