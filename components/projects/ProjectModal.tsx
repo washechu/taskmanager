@@ -246,7 +246,7 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
                           >
                             <span className={`h-2 w-2 flex-shrink-0 rounded-full ${
                               t.status === 'done' ? 'bg-green-500' :
-                              t.status === 'in_progress' ? 'bg-blue-500' :
+                              t.status === 'in_progress' ? 'bg-yellow-500' :
                               t.status === 'paused' ? 'bg-orange-500' :
                               'bg-gray-400'
                             }`} />

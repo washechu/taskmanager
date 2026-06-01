@@ -26,7 +26,7 @@ const SLICES: { id: Slice; label: string }[] = [
 
 const STATUS_COLORS: Record<Status, string> = {
   todo:        'bg-gray-400',
-  in_progress: 'bg-blue-500',
+  in_progress: 'bg-yellow-500',
   done:        'bg-green-500',
   paused:      'bg-orange-500',
 }

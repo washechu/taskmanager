@@ -7,7 +7,7 @@ import {
 } from 'recharts'
 import {
   startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
-  startOfQuarter, endOfQuarter, startOfYear, endOfYear, eachWeekOfInterval,
+  eachWeekOfInterval,
   eachDayOfInterval, eachMonthOfInterval, format, parseISO, differenceInDays,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -17,20 +17,18 @@ import {
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
 
-type Period = 'week' | 'month' | 'quarter' | 'year' | 'all' | 'custom'
+type Period = 'week' | 'month' | 'all' | 'custom'
 
 const PERIODS: { id: Period; label: string }[] = [
   { id: 'week',    label: 'Эта неделя' },
   { id: 'month',   label: 'Этот месяц' },
-  { id: 'quarter', label: 'Квартал'    },
-  { id: 'year',    label: 'Год'        },
   { id: 'all',     label: 'Всё время'  },
   { id: 'custom',  label: 'Период'     },
 ]
 
 const STATUS_HEX: Record<Status, string> = {
   todo:        '#9ca3af',
-  in_progress: '#3b82f6',
+  in_progress: '#eab308',
   done:        '#22c55e',
   paused:      '#f97316',
 }
@@ -62,8 +60,6 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
     switch (period) {
       case 'week':    return { rangeStart: startOfWeek(now, { weekStartsOn: 1 }), rangeEnd: endOfWeek(now, { weekStartsOn: 1 }) }
       case 'month':   return { rangeStart: startOfMonth(now),   rangeEnd: endOfMonth(now)   }
-      case 'quarter': return { rangeStart: startOfQuarter(now), rangeEnd: endOfQuarter(now) }
-      case 'year':    return { rangeStart: startOfYear(now),    rangeEnd: endOfYear(now)    }
       case 'custom': {
         // Validate / fall back to safe range
         const from = customFrom ? startOfDay(parseISO(customFrom)) : new Date(0)
@@ -192,7 +188,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
             <button
               key={p.id}
               onClick={() => setPeriod(p.id)}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
+              className={`flex min-h-[40px] items-center px-4 text-sm font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
                 period === p.id
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
@@ -210,14 +206,14 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
               type="date"
               value={customFrom}
               onChange={e => setCustomFrom(e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className="rounded-lg border border-gray-200 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
             />
             <span className="text-[11px] uppercase tracking-wide text-gray-400">по</span>
             <input
               type="date"
               value={customTo}
               onChange={e => setCustomTo(e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className="rounded-lg border border-gray-200 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
             />
           </div>
         )}
@@ -227,7 +223,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Создано за период" value={createdCount} />
         <KpiCard label="Закрыто за период" value={closedInPeriod} accent="green" />
-        <KpiCard label="В процессе сейчас" value={activeNow} accent="blue" />
+        <KpiCard label="В процессе сейчас" value={activeNow} accent="yellow" />
         <KpiCard label="Просрочено сейчас" value={overdueNow.length} accent={overdueNow.length > 0 ? 'red' : undefined} />
       </div>
 
@@ -360,13 +356,14 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
 function KpiCard({ label, value, accent }: {
   label: string
   value: number
-  accent?: 'green' | 'blue' | 'red'
+  accent?: 'green' | 'blue' | 'yellow' | 'red'
 }) {
   const accentClass =
-    accent === 'green' ? 'text-green-600 dark:text-green-400' :
-    accent === 'blue'  ? 'text-blue-600 dark:text-blue-400'   :
-    accent === 'red'   ? 'text-red-600 dark:text-red-400'     :
-                         'text-gray-900 dark:text-white'
+    accent === 'green'  ? 'text-green-600 dark:text-green-400'   :
+    accent === 'blue'   ? 'text-blue-600 dark:text-blue-400'     :
+    accent === 'yellow' ? 'text-yellow-600 dark:text-yellow-400' :
+    accent === 'red'    ? 'text-red-600 dark:text-red-400'       :
+                          'text-gray-900 dark:text-white'
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
       <p className="text-[11px] uppercase tracking-wide text-gray-400">{label}</p>

@@ -225,7 +225,7 @@ create index on tags(name);
 ```typescript
 export const STATUSES = {
   todo:        { label: 'Беклог',      color: 'gray'   },
-  in_progress: { label: 'В процессе',  color: 'blue'   },
+  in_progress: { label: 'В процессе',  color: 'yellow' },  // жёлтый везде: бейджи, канбан-колонки, ганты, графики
   done:        { label: 'Готово',      color: 'green'  },
   paused:      { label: 'Остановлено', color: 'orange' },
 }
@@ -267,7 +267,7 @@ export const TAG_COLORS = {
 - Фильтры на `< md` сворачиваются в кнопку «Фильтры (N)» — щелчок раскрывает SECONDARY-ряд (Проект, Ответственный, Теги). Категория-вкладки всегда видны.
 - Карточки: title и description используют `text-base md:text-sm` / `text-sm md:text-xs` — крупнее на мобиле для читабельности.
 - Тач-зона карточки: title + description обёрнуты в единый `<button>` — удобно тыкать пальцем.
-- Bottom nav: высота 56px + `pb-[env(safe-area-inset-bottom)]` для notch iPhone. Каждый пункт — эмодзи (✅ Задачи / 🎯 Проекты) над подписью (`flex-col`, `text-xs`).
+- Bottom nav: высота 56px + `pb-[env(safe-area-inset-bottom)]` для notch iPhone. Каждый пункт — эмодзи (🎯 Задачи / 📁 Проекты) над подписью (`flex-col`, `text-xs`).
 - Main padding-bottom: `pb-16 md:pb-0` чтобы низ контента не уходил под bottom nav.
 - **Safe-area снизу в модалках:** все модалки на мобиле — bottom-sheet (`items-end`), поэтому тело модалки/формы имеет `pb-[calc(...+env(safe-area-inset-bottom))]`, чтобы контент не прятался под home-indicator. На десктопе (`sm:`) сбрасывается в обычный паддинг.
 
@@ -328,7 +328,7 @@ export const TAG_COLORS = {
 
 - Вкладка `?view=analytics` на странице `/tasks` (не отдельный раздел в сайдбаре).
 - Реализована в `AnalyticsView.tsx` через `recharts`.
-- Свой фильтр **Период**: Сегодня / Эта неделя / Этот месяц / Квартал / Год / Всё время. Не путать с фильтрами `TaskFilters` (категория, проект, ответственный, теги) — они применяются ДО передачи задач в `AnalyticsView`, период применяется ВНУТРИ.
+- Свой фильтр **Период**: Эта неделя / Этот месяц / Всё время / Период (произвольный диапазон с двумя date-input). Кнопки периода и date-input выровнены по высоте 40px. Не путать с фильтрами `TaskFilters` (категория, проект, ответственный, теги) — они применяются ДО передачи задач в `AnalyticsView`, период применяется ВНУТРИ.
 
 Семантика метрик:
 - **Создано за период** — задачи с `created_at` в окне периода

@@ -43,7 +43,7 @@ export interface Comment {
 
 export const STATUSES: Record<Status, { label: string; color: string }> = {
   todo:        { label: 'Беклог',      color: 'gray'   },
-  in_progress: { label: 'В процессе',  color: 'blue'   },
+  in_progress: { label: 'В процессе',  color: 'yellow' },
   done:        { label: 'Готово',      color: 'green'  },
   paused:      { label: 'Остановлено', color: 'orange' },
 }

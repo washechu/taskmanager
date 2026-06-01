@@ -20,7 +20,7 @@ const links: NavLink[] = [
   {
     href: '/tasks',
     label: 'Задачи',
-    icon: '✅',
+    icon: '🎯',
     subs: [
       { view: 'kanban',    label: 'Канбан'    },
       { view: 'list',      label: 'Список'    },
@@ -31,7 +31,7 @@ const links: NavLink[] = [
   {
     href: '/projects',
     label: 'Проекты',
-    icon: '🎯',
+    icon: '📁',
     subs: [
       { view: 'kanban', label: 'Канбан' },
       { view: 'gantt',  label: 'Гант'   },

@@ -9,7 +9,7 @@ import type { Project } from '@/lib/types'
 
 const headerColors: Record<Status, string> = {
   todo:        'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50',
-  in_progress: 'border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30',
+  in_progress: 'border-yellow-300 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30',
   done:        'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30',
   paused:      'border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30',
 }
