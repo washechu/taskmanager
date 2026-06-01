@@ -1,17 +1,20 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { KanbanBoard } from '@/components/tasks/KanbanBoard'
 import { CalendarView } from '@/components/tasks/CalendarView'
 import { ListView } from '@/components/tasks/ListView'
 import { TaskModal } from '@/components/tasks/TaskModal'
+import { TaskForm } from '@/components/tasks/TaskForm'
 import { TaskFilters, applyTaskFilters, type TaskFilterState } from '@/components/tasks/TaskFilters'
 import { MobileViewTabs } from '@/components/ui/Navigation'
 import { useTasks } from '@/lib/hooks/useTasks'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import type { Task } from '@/lib/types'
+import { createClient } from '@/lib/supabase/client'
+import { diffTask } from '@/lib/diffTask'
+import type { Task, Status } from '@/lib/types'
 
 const DEFAULT_FILTERS: TaskFilterState = {
   category: 'all',
@@ -25,23 +28,36 @@ function TasksPageInner() {
   const router = useRouter()
   const view = (searchParams.get('view') ?? 'kanban') as 'kanban' | 'list' | 'calendar'
   const openTaskId = searchParams.get('open')
+  const createForProjectId = searchParams.get('create')
 
-  const { tasks, loading, createTask, updateTask, deleteTask, moveTask } = useTasks()
+  const { tasks, loading, createTask, updateTask, deleteTask } = useTasks()
   const { projects } = useProjects()
   const currentUser = useCurrentUser()
+  const supabase = useMemo(() => createClient(), [])
   const [filters, setFilters] = useState<TaskFilterState>(DEFAULT_FILTERS)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [creating, setCreating] = useState<{ projectId?: string | null } | null>(null)
 
-  // Auto-open task if ?open=<id> in URL (used for cross-navigation from Project modal)
+  // Auto-open task from ?open=<id>
   useEffect(() => {
     if (!openTaskId) return
     const task = tasks.find(t => t.id === openTaskId)
     if (task) setSelectedTask(task)
   }, [openTaskId, tasks])
 
+  // Auto-open task creation from ?create=<projectId|new>
+  useEffect(() => {
+    if (createForProjectId === null) return
+    setCreating({ projectId: createForProjectId === 'new' ? null : createForProjectId })
+    // Strip ?create= from URL once consumed
+    const sp = new URLSearchParams(searchParams.toString())
+    sp.delete('create')
+    router.replace(`/tasks${sp.toString() ? `?${sp}` : ''}`, { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createForProjectId])
+
   const closeTaskModal = () => {
     setSelectedTask(null)
-    // Strip ?open=... from URL to avoid reopen on revisit
     if (openTaskId) {
       const sp = new URLSearchParams(searchParams.toString())
       sp.delete('open')
@@ -51,6 +67,34 @@ function TasksPageInner() {
 
   const navigateToProject = (projectId: string) => {
     router.push(`/projects?open=${projectId}`)
+  }
+
+  /** Wrap updateTask to record audit comments on every successful edit */
+  const handleUpdate = async (id: string, updates: Partial<Task>) => {
+    const oldTask = tasks.find(t => t.id === id)
+    const result = await updateTask(id, updates)
+    if (!result.error && oldTask && currentUser.assignee) {
+      const changes = diffTask(oldTask, updates, projects)
+      if (changes.length > 0) {
+        await supabase.from('comments').insert({
+          task_id: id,
+          kind: 'audit',
+          author: currentUser.assignee,
+          text: changes.join('; '),
+        })
+      }
+    }
+    return result
+  }
+
+  /** Wrap moveTask (status-only update) — same audit treatment */
+  const handleMove = async (id: string, status: Status) => {
+    return handleUpdate(id, { status })
+  }
+
+  const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+    await createTask(data)
+    setCreating(null)
   }
 
   const filteredTasks = applyTaskFilters(tasks, filters)
@@ -79,7 +123,19 @@ function TasksPageInner() {
             { view: 'calendar', label: 'Календарь' },
           ]} />
         </div>
-        <TaskFilters filters={filters} projects={projects} onChange={setFilters} />
+        <TaskFilters
+          filters={filters}
+          projects={projects}
+          onChange={setFilters}
+          rightAction={
+            <button
+              onClick={() => setCreating({})}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+            >
+              + Задача
+            </button>
+          }
+        />
       </div>
 
       {/* View body */}
@@ -105,8 +161,8 @@ function TasksPageInner() {
             tasks={filteredTasks}
             projects={projects}
             currentUser={currentUser.assignee ?? 'nick'}
-            onMove={moveTask}
-            onUpdate={updateTask}
+            onMove={handleMove}
+            onUpdate={handleUpdate}
             onDelete={deleteTask}
             onCreate={createTask}
             onProjectOpen={navigateToProject}
@@ -116,7 +172,7 @@ function TasksPageInner() {
             tasks={filteredTasks}
             projects={projects}
             onTaskOpen={setSelectedTask}
-            onStatusChange={moveTask}
+            onStatusChange={handleMove}
           />
         ) : (
           <CalendarView
@@ -133,7 +189,7 @@ function TasksPageInner() {
           projects={projects}
           currentUser={currentUser.assignee ?? 'nick'}
           onUpdate={async (id, updates) => {
-            const result = await updateTask(id, updates)
+            const result = await handleUpdate(id, updates)
             setSelectedTask(prev => prev ? { ...prev, ...updates } : null)
             return result
           }}
@@ -141,6 +197,27 @@ function TasksPageInner() {
           onClose={closeTaskModal}
           onProjectOpen={navigateToProject}
         />
+      )}
+
+      {creating && (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+          onClick={e => e.target === e.currentTarget && setCreating(null)}
+        >
+          <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl">
+            <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
+              Новая задача
+            </h2>
+            <TaskForm
+              initial={{ project_id: creating.projectId ?? null }}
+              projects={projects}
+              defaultAssignee={currentUser.assignee}
+              onSubmit={handleCreate}
+              onCancel={() => setCreating(null)}
+              submitLabel="Создать"
+            />
+          </div>
+        </div>
       )}
     </div>
   )

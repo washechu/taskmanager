@@ -37,12 +37,13 @@ export interface Comment {
   task_id: string
   author: Assignee
   text: string
+  kind: 'user' | 'audit'
   created_at: string
 }
 
 export const STATUSES: Record<Status, { label: string; color: string }> = {
-  todo:        { label: 'Не начато',   color: 'gray'   },
-  in_progress: { label: 'В процессе', color: 'blue'   },
+  todo:        { label: 'Беклог',      color: 'gray'   },
+  in_progress: { label: 'В процессе',  color: 'blue'   },
   done:        { label: 'Готово',      color: 'green'  },
   paused:      { label: 'Остановлено', color: 'orange' },
 }

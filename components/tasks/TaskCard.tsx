@@ -57,15 +57,14 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
         </button>
       </div>
 
-      {/* Description preview (max 2 lines) */}
-      {task.description && task.description.trim().length > 0 && (
-        <p
-          className="mt-1 line-clamp-2 pl-6 text-xs text-gray-500 dark:text-gray-400"
-          title={task.description}
-        >
-          {task.description}
-        </p>
-      )}
+      {/* Description preview — always reserves 3 lines for consistent card height */}
+      <p
+        className="mt-1 line-clamp-3 pl-6 text-xs text-gray-500 dark:text-gray-400"
+        title={task.description ?? ''}
+        style={{ minHeight: '3.6em' }}
+      >
+        {task.description?.trim() || ''}
+      </p>
 
       {/* Meta */}
       <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-6">

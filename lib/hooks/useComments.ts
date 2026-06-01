@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Comment, Assignee } from '@/lib/types'
 
 export function useComments(taskId: string) {
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchComments = useCallback(async () => {
     const { data } = await supabase
@@ -15,7 +15,7 @@ export function useComments(taskId: string) {
       .select('*')
       .eq('task_id', taskId)
       .order('created_at', { ascending: true })
-    if (data) setComments(data)
+    if (data) setComments(data as Comment[])
     setLoading(false)
   }, [supabase, taskId])
 
@@ -43,20 +43,21 @@ export function useComments(taskId: string) {
       task_id: taskId,
       author,
       text,
+      kind: 'user',
       created_at: new Date().toISOString(),
     }
     setComments(prev => [...prev, optimistic])
 
     const { data, error } = await supabase
       .from('comments')
-      .insert({ task_id: taskId, author, text })
+      .insert({ task_id: taskId, author, text, kind: 'user' })
       .select()
       .single()
 
     if (error) {
       setComments(prev => prev.filter(c => c.id !== optimistic.id))
-    } else {
-      setComments(prev => prev.map(c => c.id === optimistic.id ? data : c))
+    } else if (data) {
+      setComments(prev => prev.map(c => c.id === optimistic.id ? (data as Comment) : c))
     }
     return { error }
   }, [supabase, taskId])

@@ -228,7 +228,7 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
                 </div>
 
                 {/* Groups */}
-                {groups.map(({ project, projectRange, taskRanges }) => (
+                {groups.map(({ project, taskRanges }) => (
                   <div key={project?.id ?? 'no-project'}>
                     {/* Project row */}
                     <div className="flex border-b border-gray-100 bg-gray-50/40 hover:bg-gray-100/60 dark:border-gray-800 dark:bg-gray-800/30 dark:hover:bg-gray-800/60">
@@ -241,13 +241,8 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
                         <span>📁</span>
                         <span className="truncate">{project?.title ?? 'Без проекта'}</span>
                       </button>
-                      <div className="relative" style={{ width: totalWidth, height: 36 }}>
-                        {projectRange && project && renderBar(
-                          projectRange,
-                          STATUS_COLORS[project.status],
-                          'opacity-90'
-                        )}
-                      </div>
+                      <div className="relative" style={{ width: totalWidth, height: 36 }} />
+                      {/* Project bar intentionally not rendered — only task bars per spec */}
                     </div>
                     {/* Task sub-rows */}
                     {taskRanges.map(({ task, range }) => (

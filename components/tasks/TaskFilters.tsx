@@ -16,6 +16,8 @@ interface TaskFiltersProps {
   filters: TaskFilterState
   projects: Project[]
   onChange: (filters: TaskFilterState) => void
+  /** Optional action slot rendered on the right side */
+  rightAction?: React.ReactNode
 }
 
 const SELECT_CLASS =
@@ -37,7 +39,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
+export function TaskFilters({ filters, projects, onChange, rightAction }: TaskFiltersProps) {
   const { tags: allTags } = useTags()
 
   const set = <K extends keyof TaskFilterState>(key: K, value: TaskFilterState[K]) =>
@@ -52,7 +54,8 @@ export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
 
   return (
     <div className="py-3">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
           {(['all', 'personal', 'family'] as const).map(cat => (
             <button
@@ -96,6 +99,8 @@ export function TaskFilters({ filters, projects, onChange }: TaskFiltersProps) {
             ))}
           </select>
         </Field>
+        </div>
+        {rightAction && <div>{rightAction}</div>}
       </div>
 
       {allTags.length > 0 && (

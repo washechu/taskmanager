@@ -18,6 +18,7 @@ interface ProjectModalProps {
   onDelete: (id: string) => Promise<{ error: unknown }>
   onClose: () => void
   onTaskOpen?: (taskId: string) => void
+  onCreateTask?: (projectId: string) => void
 }
 
 const SELECT_CLASS =
@@ -51,10 +52,14 @@ export function ProjectForm({
   const set = <K extends keyof ProjectFormData>(k: K, v: ProjectFormData[K]) => setForm(f => ({ ...f, [k]: v }))
 
   const needsAssignee = form.category === 'family' && !form.assignee
+  const dateError = form.start_date && form.due_date && form.start_date > form.due_date
+    ? 'Дата начала не может быть позже дедлайна'
+    : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title.trim()) return
+    if (dateError) return
     setSaving(true)
     await onSubmit(form)
     setSaving(false)
@@ -105,13 +110,20 @@ export function ProjectForm({
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Начало</label>
           <input type="date" value={form.start_date ?? ''} onChange={e => set('start_date', e.target.value || null)}
-            className="w-full rounded-lg border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" />
+            className={`w-full rounded-lg border px-2 py-2 text-sm dark:bg-gray-800 dark:text-gray-200 ${
+              dateError ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'
+            }`} />
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Дедлайн</label>
           <input type="date" value={form.due_date ?? ''} onChange={e => set('due_date', e.target.value || null)}
-            className="w-full rounded-lg border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" />
+            className={`w-full rounded-lg border px-2 py-2 text-sm dark:bg-gray-800 dark:text-gray-200 ${
+              dateError ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'
+            }`} />
         </div>
+        {dateError && (
+          <p className="col-span-2 -mt-2 text-xs text-red-500">{dateError}</p>
+        )}
       </div>
 
       <div>
@@ -126,7 +138,7 @@ export function ProjectForm({
           className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
           Отмена
         </button>
-        <button type="submit" disabled={saving || !form.title.trim()}
+        <button type="submit" disabled={saving || !form.title.trim() || !!dateError}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
           {saving ? 'Сохранение...' : submitLabel}
         </button>
@@ -135,7 +147,7 @@ export function ProjectForm({
   )
 }
 
-export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTaskOpen }: ProjectModalProps) {
+export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTaskOpen, onCreateTask }: ProjectModalProps) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -212,35 +224,49 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
                 )}
               </div>
 
-              {projectTasks.length > 0 && (
-                <div>
-                  <p className="mb-1 text-xs text-gray-400">Задачи: {doneTasks}/{projectTasks.length}</p>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                    <div
-                      className="h-full rounded-full bg-green-500"
-                      style={{ width: `${(doneTasks / projectTasks.length) * 100}%` }}
-                    />
-                  </div>
-                  <ul className="mt-2 space-y-0.5">
-                    {projectTasks.slice(0, 15).map(t => (
-                      <li key={t.id}>
-                        <button
-                          onClick={() => onTaskOpen?.(t.id)}
-                          disabled={!onTaskOpen}
-                          className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-xs text-gray-600 hover:bg-gray-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-400 disabled:hover:bg-transparent"
-                        >
-                          <span>{t.status === 'done' ? '✅' : '⬜'}</span>
-                          <span className="flex-1 truncate">{t.title}</span>
-                          {onTaskOpen && <span className="opacity-60">→</span>}
-                        </button>
-                      </li>
-                    ))}
-                    {projectTasks.length > 15 && (
-                      <li className="px-1.5 text-xs text-gray-400">…ещё {projectTasks.length - 15}</li>
-                    )}
-                  </ul>
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <p className="text-xs text-gray-400">
+                    {projectTasks.length > 0 ? `Задачи: ${doneTasks}/${projectTasks.length}` : 'Задач пока нет'}
+                  </p>
+                  {onCreateTask && (
+                    <button
+                      onClick={() => onCreateTask(project.id)}
+                      className="rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                    >
+                      + Создать задачу
+                    </button>
+                  )}
                 </div>
-              )}
+                {projectTasks.length > 0 && (
+                  <>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                      <div
+                        className="h-full rounded-full bg-green-500"
+                        style={{ width: `${(doneTasks / projectTasks.length) * 100}%` }}
+                      />
+                    </div>
+                    <ul className="mt-2 space-y-0.5">
+                      {projectTasks.slice(0, 15).map(t => (
+                        <li key={t.id}>
+                          <button
+                            onClick={() => onTaskOpen?.(t.id)}
+                            disabled={!onTaskOpen}
+                            className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-xs text-gray-600 hover:bg-gray-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-400 disabled:hover:bg-transparent"
+                          >
+                            <span>{t.status === 'done' ? '✅' : '⬜'}</span>
+                            <span className="flex-1 truncate">{t.title}</span>
+                            {onTaskOpen && <span className="opacity-60">→</span>}
+                          </button>
+                        </li>
+                      ))}
+                      {projectTasks.length > 15 && (
+                        <li className="px-1.5 text-xs text-gray-400">…ещё {projectTasks.length - 15}</li>
+                      )}
+                    </ul>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>

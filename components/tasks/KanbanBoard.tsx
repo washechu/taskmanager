@@ -31,18 +31,23 @@ interface KanbanBoardProps {
 
 type PrioritySort = 'none' | 'desc' | 'asc'
 
+const DEFAULT_SORTS: Record<Status, PrioritySort> = {
+  todo: 'none', in_progress: 'none', done: 'none', paused: 'none',
+}
+
 export function KanbanBoard({
   tasks, projects, currentUser, onMove, onUpdate, onDelete, onCreate, onProjectOpen,
 }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [creatingStatus, setCreatingStatus] = useState<Status | null>(null)
-  const [prioritySort, setPrioritySort] = useState<PrioritySort>('none')
+  const [prioritySorts, setPrioritySorts] = useState<Record<Status, PrioritySort>>(DEFAULT_SORTS)
 
-  const cyclePrioritySort = () => {
-    setPrioritySort(cur =>
-      cur === 'none' ? 'desc' : cur === 'desc' ? 'asc' : 'none'
-    )
+  const cyclePrioritySort = (status: Status) => {
+    setPrioritySorts(cur => ({
+      ...cur,
+      [status]: cur[status] === 'none' ? 'desc' : cur[status] === 'desc' ? 'asc' : 'none',
+    }))
   }
 
   const sensors = useSensors(
@@ -85,8 +90,8 @@ export function KanbanBoard({
               status={status}
               tasks={tasks.filter(t => t.status === status)}
               projects={projects}
-              prioritySort={prioritySort}
-              onTogglePrioritySort={cyclePrioritySort}
+              prioritySort={prioritySorts[status]}
+              onTogglePrioritySort={() => cyclePrioritySort(status)}
               onTaskOpen={task => setSelectedTask(task)}
               onProjectOpen={(id) => onProjectOpen?.(id)}
               onAddTask={s => setCreatingStatus(s)}

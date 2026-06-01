@@ -42,9 +42,14 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
   const set = <K extends keyof TaskFormData>(key: K, value: TaskFormData[K]) =>
     setForm(f => ({ ...f, [key]: value }))
 
+  const dateError = form.start_date && form.due_date && form.start_date > form.due_date
+    ? 'Дата начала не может быть позже дедлайна'
+    : null
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title.trim()) return
+    if (dateError) return
     setSaving(true)
     await onSubmit(form)
     setSaving(false)
@@ -126,7 +131,9 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
             type="date"
             value={form.start_date ?? ''}
             onChange={e => set('start_date', e.target.value || null)}
-            className="w-full rounded-lg border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+            className={`w-full rounded-lg border px-2 py-2 text-sm dark:bg-gray-800 dark:text-gray-200 ${
+              dateError ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'
+            }`}
           />
         </div>
 
@@ -137,9 +144,14 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
             type="date"
             value={form.due_date ?? ''}
             onChange={e => set('due_date', e.target.value || null)}
-            className="w-full rounded-lg border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+            className={`w-full rounded-lg border px-2 py-2 text-sm dark:bg-gray-800 dark:text-gray-200 ${
+              dateError ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'
+            }`}
           />
         </div>
+        {dateError && (
+          <p className="col-span-2 -mt-2 text-xs text-red-500">{dateError}</p>
+        )}
       </div>
 
       {/* Project */}
@@ -184,7 +196,7 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
         </button>
         <button
           type="submit"
-          disabled={saving || !form.title.trim()}
+          disabled={saving || !form.title.trim() || !!dateError}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {saving ? 'Сохранение...' : submitLabel}

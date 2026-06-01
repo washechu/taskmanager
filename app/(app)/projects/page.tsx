@@ -50,6 +50,10 @@ function ProjectsPageInner() {
     router.push(`/tasks?open=${taskId}`)
   }
 
+  const navigateToCreateTask = (projectId: string) => {
+    router.push(`/tasks?create=${projectId}`)
+  }
+
   const filtered = applyProjectFilters(projects, filters)
 
   return (
@@ -115,6 +119,7 @@ function ProjectsPageInner() {
           onDelete={deleteProject}
           onClose={closeProjectModal}
           onTaskOpen={navigateToTask}
+          onCreateTask={navigateToCreateTask}
         />
       )}
 
