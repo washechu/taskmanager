@@ -188,7 +188,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
             <button
               key={p.id}
               onClick={() => setPeriod(p.id)}
-              className={`flex min-h-[40px] items-center px-4 text-sm font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
+              className={`flex h-10 items-center px-4 text-sm font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
                 period === p.id
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
@@ -206,14 +206,14 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
               type="date"
               value={customFrom}
               onChange={e => setCustomFrom(e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
             />
             <span className="text-[11px] uppercase tracking-wide text-gray-400">по</span>
             <input
               type="date"
               value={customTo}
               onChange={e => setCustomTo(e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
             />
           </div>
         )}

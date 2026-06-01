@@ -15,8 +15,10 @@ interface ProjectFiltersProps {
   rightAction?: React.ReactNode
 }
 
+// Unified control tokens — match the Analytics "Период" control:
+// 40px tall (h-10), text-sm, rounded-lg, same borders.
 const SELECT_CLASS =
-  'rounded-lg border border-gray-200 bg-white py-1.5 pl-3 pr-3 text-sm md:text-xs ' +
+  'h-10 rounded-lg border border-gray-200 bg-white pl-3 text-sm ' +
   'dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300'
 
 const LABEL_CLASS = 'text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500'
@@ -52,7 +54,7 @@ export function ProjectFilters({ filters, onChange, rightAction }: ProjectFilter
               <button
                 key={cat}
                 onClick={() => set('category', cat)}
-                className={`px-3 py-2 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg md:py-1.5 ${
+                className={`flex h-10 items-center px-4 text-sm font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
                   filters.category === cat
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
@@ -65,7 +67,7 @@ export function ProjectFilters({ filters, onChange, rightAction }: ProjectFilter
 
           <button
             onClick={() => setOpen(o => !o)}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 md:hidden"
+            className="flex h-10 items-center gap-1.5 rounded-lg border border-gray-200 px-4 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 md:hidden"
           >
             <span>Фильтры</span>
             {activeCount > 0 && (
