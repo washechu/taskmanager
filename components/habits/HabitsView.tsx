@@ -4,7 +4,7 @@ import { useState } from 'react'
 import {
   startOfWeek, endOfWeek, addWeeks, addMonths, addDays,
   startOfMonth, endOfMonth, eachDayOfInterval,
-  format, isSameDay, isSameMonth, isAfter, startOfDay,
+  format, isSameDay, isSameWeek, isSameMonth, isAfter, startOfDay,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -145,6 +145,11 @@ export function HabitsView({
   const step = (dir: 1 | -1) =>
     setAnchor(a => (mode === 'week' ? addWeeks(a, dir) : addMonths(a, dir)))
 
+  // «Сегодня» нужна, только если мы ушли с текущего периода
+  const onCurrentPeriod = mode === 'week'
+    ? isSameWeek(anchor, new Date(), { weekStartsOn: 1 })
+    : isSameMonth(anchor, new Date())
+
   return (
     <div className="mx-auto max-w-2xl">
       {/* Тулбар: режим + навигация */}
@@ -170,8 +175,8 @@ export function HabitsView({
           <span className="min-w-[8.5rem] text-center text-sm font-medium capitalize text-gray-700 dark:text-gray-200">{rangeLabel}</span>
           <button onClick={() => step(1)} aria-label="Вперёд"
             className="rounded-lg px-2.5 py-1.5 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">→</button>
-          <button onClick={() => setAnchor(new Date())}
-            className="ml-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+          <button onClick={() => setAnchor(new Date())} disabled={onCurrentPeriod}
+            className="ml-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
             Сегодня
           </button>
         </div>

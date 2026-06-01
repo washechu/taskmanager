@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import {
-  ASSIGNEES, WEEKDAYS, TAG_COLORS, HABIT_ICONS,
+  ASSIGNEES, WEEKDAYS, TAG_COLORS,
   type Habit, type Assignee,
 } from '@/lib/types'
 
@@ -66,46 +66,16 @@ export function HabitForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Иконка + название в одну строку */}
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Название *</label>
-        <div className="flex items-center gap-2">
-          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-gray-200 text-xl dark:border-gray-700">
-            {form.icon || '🔁'}
-          </span>
-          <input
-            autoFocus
-            value={form.title}
-            onChange={e => set('title', e.target.value)}
-            required
-            placeholder="Жужица, английский, зарядка…"
-            className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-          />
-        </div>
-      </div>
-
-      {/* Иконка-пикер */}
-      <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">Иконка</label>
-        <div className="flex flex-wrap gap-1.5">
-          {HABIT_ICONS.map(emoji => {
-            const active = form.icon === emoji
-            return (
-              <button
-                key={emoji}
-                type="button"
-                onClick={() => set('icon', active ? null : emoji)}
-                className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg transition-colors ${
-                  active
-                    ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950'
-                    : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
-                }`}
-              >
-                {emoji}
-              </button>
-            )
-          })}
-        </div>
+        <input
+          autoFocus
+          value={form.title}
+          onChange={e => set('title', e.target.value)}
+          required
+          placeholder="Например, английский"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+        />
       </div>
 
       <div>

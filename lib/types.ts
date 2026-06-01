@@ -76,7 +76,7 @@ export interface Habit {
   id: string
   title: string
   description: string | null
-  icon: string | null  // эмодзи (необязательно); если нет — рисуем цветную точку
+  icon: string | null  // эмодзи (зарезервировано; пикер в UI убран — рисуем цветную точку)
   category: Category   // всегда 'personal' — привычки индивидуальны, в UI не задаётся
   assignee: Assignee | null  // = тот, кто создал привычку
   weekdays: number[]   // ISO weekday numbers 1=Пн … 7=Вс
@@ -85,14 +85,6 @@ export interface Habit {
   created_at: string
   updated_at: string
 }
-
-// Подсказки для emoji-пикера привычки (можно ввести и любой свой)
-export const HABIT_ICONS = [
-  '🥋', '🏃', '🏋️', '🧘', '🚴', '⚽', '🏊',
-  '📚', '🇬🇧', '✍️', '🧠', '🎸', '🎨',
-  '💧', '🥗', '💊', '🦷', '🛌', '☕',
-  '🧹', '💰', '📷', '🙏', '✅',
-]
 
 // Наличие лога = привычка выполнена в этот день.
 export interface HabitLog {
