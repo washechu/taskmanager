@@ -3,16 +3,11 @@
 import { useState } from 'react'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import {
-  CATEGORIES, ASSIGNEES, WEEKDAYS, TAG_COLORS,
-  type Habit, type Category, type Assignee,
+  ASSIGNEES, WEEKDAYS, TAG_COLORS, HABIT_ICONS,
+  type Habit, type Assignee,
 } from '@/lib/types'
 
 type HabitFormData = Omit<Habit, 'id' | 'created_at' | 'updated_at' | 'archived'>
-
-const SELECT_CLASS =
-  'w-full rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-8 text-sm ' +
-  'outline-none focus:ring-2 focus:ring-blue-500 ' +
-  'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200'
 
 // Solid dots for the color picker (как в TagPicker)
 const COLOR_DOT: Record<string, string> = {
@@ -42,6 +37,9 @@ export function HabitForm({
   const [form, setForm] = useState<HabitFormData>({
     title: initial?.title ?? '',
     description: initial?.description ?? null,
+    icon: initial?.icon ?? null,
+    // Категория и ответственный в UI не задаются: привычки личные,
+    // ответственный = создатель (defaultAssignee).
     category: initial?.category ?? 'personal',
     assignee: initial?.assignee ?? defaultAssignee ?? null,
     weekdays: initial?.weekdays ?? [],
@@ -55,9 +53,8 @@ export function HabitForm({
       ? form.weekdays.filter(x => x !== d)
       : [...form.weekdays, d].sort((a, b) => a - b))
 
-  const needsAssignee = form.category === 'family' && !form.assignee
   const needsDays = form.weekdays.length === 0
-  const invalid = !form.title.trim() || needsAssignee || needsDays
+  const invalid = !form.title.trim() || needsDays
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,16 +66,46 @@ export function HabitForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Иконка + название в одну строку */}
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Название *</label>
-        <input
-          autoFocus
-          value={form.title}
-          onChange={e => set('title', e.target.value)}
-          required
-          placeholder="Жужица, английский, зарядка…"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-        />
+        <div className="flex items-center gap-2">
+          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-gray-200 text-xl dark:border-gray-700">
+            {form.icon || '🔁'}
+          </span>
+          <input
+            autoFocus
+            value={form.title}
+            onChange={e => set('title', e.target.value)}
+            required
+            placeholder="Жужица, английский, зарядка…"
+            className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          />
+        </div>
+      </div>
+
+      {/* Иконка-пикер */}
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">Иконка</label>
+        <div className="flex flex-wrap gap-1.5">
+          {HABIT_ICONS.map(emoji => {
+            const active = form.icon === emoji
+            return (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => set('icon', active ? null : emoji)}
+                className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg transition-colors ${
+                  active
+                    ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950'
+                    : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
+                }`}
+              >
+                {emoji}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div>
@@ -108,28 +135,6 @@ export function HabitForm({
         {needsDays && (
           <p className="mt-1.5 text-xs text-red-500">Выбери хотя бы один день</p>
         )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Категория</label>
-          <select value={form.category} onChange={e => set('category', e.target.value as Category)} className={SELECT_CLASS}>
-            {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-            Ответственный {form.category === 'family' && <span className="text-red-500">*</span>}
-          </label>
-          <select
-            value={form.assignee ?? ''}
-            onChange={e => set('assignee', (e.target.value as Assignee) || null)}
-            className={`${SELECT_CLASS} ${needsAssignee ? 'border-red-400' : ''}`}
-          >
-            <option value="">Не назначен</option>
-            {Object.entries(ASSIGNEES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-          </select>
-        </div>
       </div>
 
       <div>
@@ -206,7 +211,8 @@ export function HabitModal({ habit, onUpdate, onDelete, onClose }: HabitModalPro
     >
       <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
+            {!editing && habit.icon && <span className="text-xl">{habit.icon}</span>}
             {editing ? 'Редактировать привычку' : habit.title}
           </h2>
           <div className="flex items-center gap-2">
@@ -230,16 +236,13 @@ export function HabitModal({ habit, onUpdate, onDelete, onClose }: HabitModalPro
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                  {CATEGORIES[habit.category].label}
+                  {dayLabels || 'Дни не выбраны'}
                 </span>
                 {habit.assignee && (
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                     {ASSIGNEES[habit.assignee].label}
                   </span>
                 )}
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                  {dayLabels || 'Дни не выбраны'}
-                </span>
               </div>
               {habit.description && (
                 <p className="whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300">{habit.description}</p>
