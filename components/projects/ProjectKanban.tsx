@@ -28,7 +28,7 @@ function ProjectColumn({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
   return (
-    <div className="flex w-72 flex-shrink-0 flex-col rounded-xl border border-gray-200 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-950/50">
+    <div className="flex w-[85vw] max-w-[18rem] flex-shrink-0 snap-start flex-col rounded-xl border border-gray-200 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-950/50 md:w-72">
       <div className={`flex items-center justify-between rounded-t-xl border-b px-3 py-2.5 ${headerColors[status]}`}>
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{STATUSES[status].label}</h3>
@@ -89,7 +89,7 @@ export function ProjectKanban({ projects, tasks, onMove, onProjectOpen }: Projec
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-4">
+      <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none">
         {STATUS_ORDER.map(status => (
           <ProjectColumn
             key={status}

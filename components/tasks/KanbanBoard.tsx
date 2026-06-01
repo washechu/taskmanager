@@ -83,7 +83,7 @@ export function KanbanBoard({
   return (
     <>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none">
           {STATUS_ORDER.map(status => (
             <KanbanColumn
               key={status}

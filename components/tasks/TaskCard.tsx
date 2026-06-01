@@ -38,7 +38,7 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
       style={style}
       className="group rounded-xl border border-gray-100 bg-white p-3 shadow-sm hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
     >
-      {/* Drag handle + title — reserves 2 lines */}
+      {/* Drag handle + title block — clicking title or description opens modal */}
       <div className="flex items-start gap-2">
         <button
           {...attributes}
@@ -53,42 +53,41 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
           onClick={() => onOpen(task)}
           className="flex-1 text-left"
         >
-          <span className="block min-h-[2.5rem] line-clamp-2 text-sm font-medium leading-snug text-gray-800 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400">
+          <span className="block min-h-[2.5rem] line-clamp-2 text-base font-medium leading-snug text-gray-800 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 md:text-sm">
             {task.title}
+          </span>
+          {/* Description preview — same button, expanded tap area */}
+          <span
+            className="mt-1 block min-h-[3rem] line-clamp-3 text-sm text-gray-500 dark:text-gray-400 md:text-xs"
+            title={task.description ?? ''}
+          >
+            {task.description?.trim() || ''}
           </span>
         </button>
       </div>
 
-      {/* Description preview — always reserves 3 lines */}
-      <p
-        className="mt-1 min-h-[3rem] line-clamp-3 pl-6 text-xs text-gray-500 dark:text-gray-400"
-        title={task.description ?? ''}
-      >
-        {task.description?.trim() || ''}
-      </p>
-
       {/* Meta */}
       <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-6">
         <PriorityBadge priority={task.priority} />
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
           {CATEGORIES[task.category].label}
         </span>
         {project && (
           <button
             onClick={e => { e.stopPropagation(); onProjectOpen?.(project.id) }}
-            className="max-w-[160px] truncate rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600 hover:bg-indigo-100 hover:underline dark:bg-indigo-950 dark:text-indigo-400 dark:hover:bg-indigo-900"
+            className="max-w-[160px] truncate rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700 hover:bg-indigo-100 hover:underline dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
             title={`Перейти к проекту: ${project.title}`}
           >
             📁 {project.title}
           </button>
         )}
         {task.assignee && (
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
             {ASSIGNEES[task.assignee].label}
           </span>
         )}
         {task.due_date && (
-          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
             {isOverdue ? '⚠️ ' : '📅 '}{task.due_date}
           </span>
         )}

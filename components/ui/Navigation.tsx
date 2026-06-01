@@ -106,19 +106,21 @@ export function Navigation() {
       </nav>
 
       {/* Mobile bottom nav (just main sections + view chips above) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 flex border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 md:hidden">
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-30 flex border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-gray-800 dark:bg-gray-900 md:hidden"
+      >
         {links.map(link => {
           const active = pathname.startsWith(link.href)
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`flex flex-1 items-center justify-center py-3 text-sm font-medium transition-colors ${
+              className={`flex flex-1 items-center justify-center py-4 text-base font-medium transition-colors ${
                 active
                   ? 'text-blue-700 dark:text-blue-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
-              style={{ minHeight: 56 }}
+              style={{ minHeight: 64 }}
             >
               {link.label}
             </Link>
