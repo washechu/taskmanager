@@ -12,6 +12,7 @@ interface SubItem {
 interface NavLink {
   href: string
   label: string
+  icon: string
   subs?: SubItem[]
 }
 
@@ -19,6 +20,7 @@ const links: NavLink[] = [
   {
     href: '/tasks',
     label: 'Задачи',
+    icon: '✅',
     subs: [
       { view: 'kanban',    label: 'Канбан'    },
       { view: 'list',      label: 'Список'    },
@@ -29,6 +31,7 @@ const links: NavLink[] = [
   {
     href: '/projects',
     label: 'Проекты',
+    icon: '🎯',
     subs: [
       { view: 'kanban', label: 'Канбан' },
       { view: 'gantt',  label: 'Гант'   },
@@ -62,12 +65,13 @@ export function Navigation() {
               <div key={link.href}>
                 <Link
                   href={link.href}
-                  className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     active
                       ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
                       : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                   }`}
                 >
+                  <span className="text-base">{link.icon}</span>
                   {link.label}
                 </Link>
                 {/* Sub-items, shown only when section is active */}
@@ -115,13 +119,14 @@ export function Navigation() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex flex-1 items-center justify-center py-3 text-sm font-medium transition-colors ${
+              className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors ${
                 active
                   ? 'text-blue-700 dark:text-blue-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
               style={{ minHeight: 56 }}
             >
+              <span className="text-lg leading-none">{link.icon}</span>
               {link.label}
             </Link>
           )

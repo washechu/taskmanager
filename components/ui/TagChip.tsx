@@ -18,7 +18,7 @@ interface TagChipProps {
 export function TagChip({ name, color, tags, size = 'xs', selected, onClick, onRemove }: TagChipProps) {
   const resolvedColor = color ?? tags?.find(t => t.name === name)?.color ?? 'gray'
   const c = TAG_COLORS[resolvedColor] ?? TAG_COLORS.gray
-  const sizeClass = size === 'xs' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm'
+  const sizeClass = size === 'xs' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm'
 
   const className = `inline-flex items-center gap-1 rounded-full ${sizeClass} ${c.bg} ${c.text} ${
     selected ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-gray-900' : ''

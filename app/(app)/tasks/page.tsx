@@ -10,6 +10,7 @@ import { TaskModal } from '@/components/tasks/TaskModal'
 import { TaskForm } from '@/components/tasks/TaskForm'
 import { TaskFilters, applyTaskFilters, type TaskFilterState } from '@/components/tasks/TaskFilters'
 import { MobileViewTabs } from '@/components/ui/Navigation'
+import { Fab } from '@/components/ui/Fab'
 import { useTasks } from '@/lib/hooks/useTasks'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
@@ -130,14 +131,6 @@ function TasksPageInner() {
           projects={projects}
           currentUserAssignee={currentUser.assignee}
           onChange={setFilters}
-          rightAction={
-            <button
-              onClick={() => setCreating({})}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 md:px-3 md:py-1.5 md:text-xs"
-            >
-              + Задача
-            </button>
-          }
         />
       </div>
 
@@ -192,6 +185,8 @@ function TasksPageInner() {
         )}
       </div>
 
+      <Fab label="Задача" onClick={() => setCreating({})} />
+
       {selectedTask && (
         <TaskModal
           task={selectedTask}
@@ -213,7 +208,7 @@ function TasksPageInner() {
           className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
           onClick={e => e.target === e.currentTarget && setCreating(null)}
         >
-          <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl">
+          <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl sm:pb-5">
             <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
               Новая задача
             </h2>

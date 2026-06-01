@@ -76,7 +76,7 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {editing ? (
             <TaskForm
               initial={task}

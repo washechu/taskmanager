@@ -66,7 +66,8 @@
 │   │   ├── ProjectFilters.tsx    # Фильтры + rightAction для +Проект
 │   │   └── ProjectGantt.tsx      # Иерархический Гант: проекты + вложенные задачи
 │   └── ui/
-│       ├── Navigation.tsx        # Sidebar/bottom nav + экспорт MobileViewTabs
+│       ├── Fab.tsx               # Floating Action Button (создание задачи/проекта)
+│       ├── Navigation.tsx        # Sidebar/bottom nav (с эмодзи) + экспорт MobileViewTabs
 │       ├── StatusBadge.tsx
 │       ├── PriorityBadge.tsx     # С цветной точкой + контрастный фон
 │       ├── EmptyState.tsx
@@ -263,11 +264,20 @@ export const TAG_COLORS = {
 - **Snap-scroll на мобиле:** ширина колонки 85vw (max 18rem), контейнер `snap-x snap-mandatory`. Свайп переключает по одной колонке за раз. На десктопе snap отключен.
 
 ### Мобильная адаптация
-- Фильтры на `< md` сворачиваются в кнопку «Фильтры (N)» — щелчок раскрывает SECONDARY-ряд (Проект, Ответственный, Теги). Категория-вкладки и +Кнопка всегда видны.
+- Фильтры на `< md` сворачиваются в кнопку «Фильтры (N)» — щелчок раскрывает SECONDARY-ряд (Проект, Ответственный, Теги). Категория-вкладки всегда видны.
 - Карточки: title и description используют `text-base md:text-sm` / `text-sm md:text-xs` — крупнее на мобиле для читабельности.
 - Тач-зона карточки: title + description обёрнуты в единый `<button>` — удобно тыкать пальцем.
-- Bottom nav: высота 64px + `pb-[env(safe-area-inset-bottom)]` для notch iPhone, шрифт `text-base`.
-- Main padding-bottom: `pb-20 md:pb-0` чтобы низ контента не уходил под bottom nav.
+- Bottom nav: высота 56px + `pb-[env(safe-area-inset-bottom)]` для notch iPhone. Каждый пункт — эмодзи (✅ Задачи / 🎯 Проекты) над подписью (`flex-col`, `text-xs`).
+- Main padding-bottom: `pb-16 md:pb-0` чтобы низ контента не уходил под bottom nav.
+- **Safe-area снизу в модалках:** все модалки на мобиле — bottom-sheet (`items-end`), поэтому тело модалки/формы имеет `pb-[calc(...+env(safe-area-inset-bottom))]`, чтобы контент не прятался под home-indicator. На десктопе (`sm:`) сбрасывается в обычный паддинг.
+
+### FAB (Floating Action Button)
+- Создание задачи/проекта — через плавающую кнопку `components/ui/Fab.tsx`, а не через кнопку в панели фильтров (`rightAction` больше не передаётся, хотя проп в фильтрах остался для совместимости).
+- Расширенный FAB (пилюля с «+ Задача» / «+ Проект»), `fixed` в правом нижнем углу, `z-30` (ниже модалок `z-40`).
+- На мобиле висит над bottom nav: `bottom-[calc(72px+env(safe-area-inset-bottom))]`. На десктопе — `md:bottom-6 md:right-6`.
+
+### Теги — размер чипов
+- `TagChip` имеет два размера: `xs` (`px-2.5 py-1 text-xs`, по умолчанию на карточках/фильтрах) и `sm` (`px-3 py-1.5 text-sm`, в модалках). Намеренно крупнее остальных мета-бейджей.
 
 ### Per-column priority sort
 - В шапке каждой колонки канбана — стрелочка с 3 состояниями: `none` / `desc` (высокий сверху) / `asc` (низкий сверху). Цикл по клику.
