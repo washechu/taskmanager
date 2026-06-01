@@ -58,14 +58,14 @@ function ProjectsPageInner() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+      <div className="border-b border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-900">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Проекты</h1>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Крупные цели или направления, объединяющие несколько задач.
           </p>
         </div>
-        <div className="mt-2">
+        <div className="mt-4">
           <MobileViewTabs basePath="/projects" subs={[
             { view: 'kanban', label: 'Канбан' },
             { view: 'gantt',  label: 'Гант'   },
@@ -77,7 +77,7 @@ function ProjectsPageInner() {
           rightAction={
             <button
               onClick={() => setCreating(true)}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 md:px-3 md:py-1.5 md:text-xs"
             >
               + Проект
             </button>

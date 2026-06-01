@@ -143,17 +143,17 @@ export function MobileViewTabs({
   const currentView = searchParams.get('view') ?? 'kanban'
 
   return (
-    <div className="flex gap-1 overflow-x-auto md:hidden">
+    <div className="flex gap-1.5 overflow-x-auto md:hidden">
       {subs.map(sub => {
         const active = currentView === sub.view
         return (
           <Link
             key={sub.view}
             href={`${basePath}?view=${sub.view}`}
-            className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors ${
               active
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
             }`}
           >
             {sub.label}
