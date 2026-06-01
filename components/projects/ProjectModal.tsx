@@ -225,19 +225,9 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
               </div>
 
               <div>
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-xs text-gray-400">
-                    {projectTasks.length > 0 ? `Задачи: ${doneTasks}/${projectTasks.length}` : 'Задач пока нет'}
-                  </p>
-                  {onCreateTask && (
-                    <button
-                      onClick={() => onCreateTask(project.id)}
-                      className="rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
-                    >
-                      + Создать задачу
-                    </button>
-                  )}
-                </div>
+                <p className="mb-1 text-xs text-gray-400">
+                  {projectTasks.length > 0 ? `Задачи: ${doneTasks}/${projectTasks.length}` : 'Задач пока нет'}
+                </p>
                 {projectTasks.length > 0 && (
                   <>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
@@ -254,8 +244,16 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
                             disabled={!onTaskOpen}
                             className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-xs text-gray-600 hover:bg-gray-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-400 disabled:hover:bg-transparent"
                           >
-                            <span>{t.status === 'done' ? '✅' : '⬜'}</span>
+                            <span className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                              t.status === 'done' ? 'bg-green-500' :
+                              t.status === 'in_progress' ? 'bg-blue-500' :
+                              t.status === 'paused' ? 'bg-orange-500' :
+                              'bg-gray-400'
+                            }`} />
                             <span className="flex-1 truncate">{t.title}</span>
+                            <span className="text-[10px] uppercase tracking-wide text-gray-400">
+                              {STATUSES[t.status].label}
+                            </span>
                             {onTaskOpen && <span className="opacity-60">→</span>}
                           </button>
                         </li>
@@ -265,6 +263,14 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
                       )}
                     </ul>
                   </>
+                )}
+                {onCreateTask && (
+                  <button
+                    onClick={() => onCreateTask(project.id)}
+                    className="mt-3 w-full rounded-lg border border-dashed border-blue-300 px-3 py-2 text-xs font-medium text-blue-600 transition-colors hover:border-blue-500 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/40"
+                  >
+                    + Создать задачу в проекте
+                  </button>
                 )}
               </div>
             </div>

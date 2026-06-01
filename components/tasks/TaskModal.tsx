@@ -5,6 +5,9 @@ import { TaskForm } from './TaskForm'
 import { CommentSection } from './CommentSection'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { TagChip } from '@/components/ui/TagChip'
+import { StatusBadge } from '@/components/ui/StatusBadge'
+import { PriorityBadge } from '@/components/ui/PriorityBadge'
+import { CATEGORIES } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import type { Task, Project, Assignee } from '@/lib/types'
 
@@ -84,6 +87,15 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
             />
           ) : (
             <div className="space-y-4">
+              {/* Status + Priority + Category badges row */}
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={task.status} />
+                <PriorityBadge priority={task.priority} />
+                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                  {CATEGORIES[task.category].label}
+                </span>
+              </div>
+
               {task.description && (
                 <p className="whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300">{task.description}</p>
               )}

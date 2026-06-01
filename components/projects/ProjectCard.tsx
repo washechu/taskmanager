@@ -43,17 +43,18 @@ export function ProjectCard({ project, tasks, onOpen }: ProjectCardProps) {
         </button>
         <button
           onClick={() => onOpen(project)}
-          className="flex-1 text-left text-sm font-medium leading-snug text-gray-800 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400"
+          className="flex-1 text-left"
         >
-          {project.title}
+          <span className="block min-h-[2.5rem] line-clamp-2 text-sm font-medium leading-snug text-gray-800 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400">
+            {project.title}
+          </span>
         </button>
       </div>
 
       {/* Description preview — always 3 lines reserved (height parity with task cards) */}
       <p
-        className="mt-1 line-clamp-3 pl-6 text-xs text-gray-500 dark:text-gray-400"
+        className="mt-1 min-h-[3rem] line-clamp-3 pl-6 text-xs text-gray-500 dark:text-gray-400"
         title={project.description ?? ''}
-        style={{ minHeight: '3.6em' }}
       >
         {project.description?.trim() || ''}
       </p>
