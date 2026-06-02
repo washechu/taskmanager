@@ -4,10 +4,15 @@ import { useState } from 'react'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Modal } from '@/components/ui/Modal'
 import { IconButton } from '@/components/ui/IconButton'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { TextArea } from '@/components/ui/TextArea'
 import {
   ASSIGNEES, WEEKDAYS, TAG_COLORS,
   type Habit, type Assignee,
 } from '@/lib/types'
+
+const LABEL_CLASS = 'mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300'
 
 type HabitFormData = Omit<Habit, 'id' | 'created_at' | 'updated_at' | 'archived'>
 
@@ -69,19 +74,18 @@ export function HabitForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Название *</label>
-        <input
+        <label className={LABEL_CLASS}>Название *</label>
+        <Input
           autoFocus
           value={form.title}
           onChange={e => set('title', e.target.value)}
           required
           placeholder="Например, английский"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
         />
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">
+        <label className={LABEL_CLASS}>
           Дни недели <span className="text-red-500">*</span>
         </label>
         <div className="flex gap-1.5">
@@ -93,7 +97,7 @@ export function HabitForm({
                 type="button"
                 onClick={() => toggleDay(d.value)}
                 title={d.label}
-                className={`h-9 flex-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`h-10 flex-1 rounded-lg text-xs font-medium transition-colors ${
                   active
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
@@ -110,7 +114,7 @@ export function HabitForm({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-gray-300">Цвет</label>
+        <label className={LABEL_CLASS}>Цвет</label>
         <div className="flex gap-1.5">
           {Object.keys(TAG_COLORS).map(key => {
             const active = form.color === key
@@ -133,21 +137,20 @@ export function HabitForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Описание</label>
-        <textarea value={form.description ?? ''} onChange={e => set('description', e.target.value || null)} rows={2}
+        <label className={LABEL_CLASS}>Описание</label>
+        <TextArea
+          value={form.description ?? ''}
+          onChange={e => set('description', e.target.value || null)}
+          rows={2}
           placeholder="Заметка (необязательно)"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" />
+        />
       </div>
 
       <div className="flex justify-end gap-3">
-        <button type="button" onClick={onCancel}
-          className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
-          Отмена
-        </button>
-        <button type="submit" disabled={saving || invalid}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+        <Button type="button" variant="ghost" onClick={onCancel}>Отмена</Button>
+        <Button type="submit" disabled={saving || invalid}>
           {saving ? 'Сохранение...' : submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   )

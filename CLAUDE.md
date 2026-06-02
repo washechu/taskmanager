@@ -74,6 +74,9 @@
 │       ├── ConfirmModal.tsx      # Поверх Modal: подтверждение действия, layer=confirm
 │       ├── Button.tsx            # primary / secondary / ghost / destructive (h-10)
 │       ├── IconButton.tsx        # Иконочная кнопка (h-10 w-10 / h-8 w-8), tone default/danger
+│       ├── Input.tsx             # Текстовый input (h-10), optional invalid → красная рамка
+│       ├── Select.tsx            # Нативный <select> (h-10), invalid prop
+│       ├── TextArea.tsx          # Многострочный input, высота через rows
 │       ├── SegmentedControl.tsx  # Сегмент-контрол: variant view (iOS-пилюля) / filter (синяя заливка)
 │       ├── Fab.tsx               # Floating Action Button (создание задачи/проекта)
 │       ├── Navigation.tsx        # Sidebar/bottom nav (с эмодзи) + экспорт MobileViewTabs (использует SegmentedControl)
@@ -308,8 +311,7 @@ export const TAG_COLORS = {
 > - ✅ Calendar и Gantt slice toggles (Сегодня/Неделя/Месяц) — `SegmentedControl` variant=view, ←/→ — `IconButton`, «Сегодня» — `Button(secondary)`. Тулбары обоих компонентов выровнены по 40px.
 > - ✅ Analytics период — `SegmentedControl` variant=filter.
 > - ✅ Категория-вкладки в `TaskFilters` и `ProjectFilters` — `SegmentedControl` variant=filter.
-> - ⏳ `Select` — `SELECT_CLASS` всё ещё дублируется в `TaskFilters` и `ProjectFilters`.
-> - ⏳ Формы (`TaskForm`/`ProjectForm`/`HabitForm`) — поля и кнопки на `py-2`, не на `h-10`.
+> - ✅ `Input` / `Select` / `TextArea` извлечены. SELECT_CLASS дубли убраны из обоих фильтров. TaskForm / ProjectForm / HabitForm / CommentSection переехали на примитивы. Все поля форм теперь `h-10` (раньше `py-2 ≈ 38px`); HabitForm weekday-кнопки тоже `h-10`. Кнопки submit/cancel в формах — через `Button`.
 > - ⏳ Typography sweep — `text-[10px]`, `text-[13px]`, `font-normal`, `text-gray-500/700/800` точечно остались в Calendar/Gantt/AnalyticsView/Filters.
 
 ### Принципы
@@ -388,7 +390,7 @@ export const TAG_COLORS = {
 - Бордер — `border-gray-200 dark:border-gray-700` (где есть).
 - Паддинг: сегмент-кнопки `px-4`, селекты `pl-3` (правый под chevron из `globals.css`), date-input `px-3`, кнопки `px-4 py-2` (если `h-10` не задан явно).
 
-> Сейчас формы (`TaskForm`/`ProjectForm`/`HabitForm`) используют `py-2 ≈ 38px` вместо `h-10`. В этапе C привести к `h-10`.
+Все поля форм, фильтров и комментариев сидят на примитивах `Input` / `Select` / `TextArea` — единый shell (h-10 для Input/Select, rounded-lg, общий border, dark-вариант). Для error-состояний — проп `invalid` (красная рамка). Для ширины внутри формы — `className="w-full"` (в filter-Field берёт по контенту автоматически).
 
 ### Кнопки
 

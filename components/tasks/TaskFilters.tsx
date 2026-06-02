@@ -6,6 +6,7 @@ import type { Project } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { Select } from '@/components/ui/Select'
 
 export interface TaskFilterState {
   category: Category | 'all'
@@ -23,12 +24,6 @@ interface TaskFiltersProps {
   /** Optional action slot rendered on the right side */
   rightAction?: React.ReactNode
 }
-
-// Unified control tokens — match the Analytics "Период" control:
-// 40px tall (h-10), text-sm, rounded-lg, same borders.
-const SELECT_CLASS =
-  'h-10 rounded-lg border border-gray-200 bg-white pl-3 text-sm ' +
-  'dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300'
 
 const LABEL_CLASS = 'text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500'
 
@@ -114,30 +109,22 @@ export function TaskFilters({ filters, projects, currentUserAssignee, onChange, 
         <Divider />
 
         <Field label="Проект">
-          <select
-            value={filters.projectId}
-            onChange={e => set('projectId', e.target.value as string)}
-            className={SELECT_CLASS}
-          >
+          <Select value={filters.projectId} onChange={e => set('projectId', e.target.value as string)}>
             <option value="all">Все</option>
             {projects.map(p => (
               <option key={p.id} value={p.id}>{p.title}</option>
             ))}
-          </select>
+          </Select>
         </Field>
 
         {!isPersonal && (
           <Field label="Ответственный">
-            <select
-              value={filters.assignee}
-              onChange={e => set('assignee', e.target.value as Assignee | 'all')}
-              className={SELECT_CLASS}
-            >
+            <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
               <option value="all">Все</option>
               {Object.entries(ASSIGNEES).map(([k, v]) => (
                 <option key={k} value={k}>{v.label}</option>
               ))}
-            </select>
+            </Select>
           </Field>
         )}
 

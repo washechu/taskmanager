@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useComments } from '@/lib/hooks/useComments'
 import { ASSIGNEES, type Assignee } from '@/lib/types'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -95,19 +97,12 @@ export function CommentSection({ taskId, currentUser }: CommentSectionProps) {
       )}
 
       <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
-        <input
+        <Input
           value={text}
           onChange={e => setText(e.target.value)}
           placeholder="Написать комментарий..."
-          className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
         />
-        <button
-          type="submit"
-          disabled={!text.trim() || submitting}
-          className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          →
-        </button>
+        <Button type="submit" disabled={!text.trim() || submitting} className="flex-shrink-0">→</Button>
       </form>
     </div>
   )
