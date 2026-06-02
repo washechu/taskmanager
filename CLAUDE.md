@@ -291,6 +291,212 @@ export const TAG_COLORS = {
 
 > Хардкоженных `DEFAULT_TAGS` больше нет — теги в БД, управляются через `TagPicker`.
 
+## Дизайн-система
+
+Канонический набор токенов. **Никаких произвольных пиксельных значений** (`text-[10px]`, `h-9`, `rounded-md` без причины) — если нужного токена в таблице ниже нет, добавляем его сюда, а не лепим на месте. Цель — чтобы консистентность держалась автоматически через переиспользуемые компоненты, а не через силу воли.
+
+> **Текущий статус (этап А):** правила зафиксированы, реализация по коду — местами расходится с гайдом. Этап С — извлечь общие компоненты (`Modal`, `SegmentedControl`, `Button`, `Select`, `IconButton`) и подтянуть весь UI под токены.
+
+### Принципы
+
+1. **Mobile-first.** Тач-таргет любого интерактивного элемента ≥ 40px (`h-10`). Модалки на мобиле — bottom-sheet с safe-area снизу. FAB висит над bottom nav.
+2. **Семантика, не цвет.** Цвет — функция роли (primary action / secondary text / muted / accent), а не выбор по вкусу.
+3. **Одна штука — один токен.** Если для «вторичного текста» три оттенка серого — это не три уровня, это бардак.
+4. **Dark mode обязателен.** Каждый цветовой утилити-класс имеет `dark:` пару. Никаких компонентов без тёмной темы.
+
+### Типографика
+
+6 ступеней. Произвольные пиксельные размеры (`text-[10px]`, `text-[13px]`) **запрещены**.
+
+| Роль | Токен | Размер |
+|---|---|---|
+| Микро-лейбл (uppercase подписи фильтров, счётчики) | `text-[11px]` | 11px |
+| Меta / body-secondary (мета на карточках, описания) | `text-xs` | 12px |
+| Body (всё основное) | `text-sm` | 14px |
+| Заголовок карточки / модалки | `text-base` | 16px |
+| Заголовок страницы (`<h1>`) | `text-xl` | 20px |
+| Display (KPI, login) | `text-2xl` | 24px |
+
+**Мобайл:** title карточки и описание увеличиваются (`text-base md:text-sm`, `text-sm md:text-xs`) — на маленьком экране нужнее читабельность, на десктопе — плотность.
+
+Веса: только `font-medium` (UI-элементы, активные состояния), `font-semibold` (заголовки), `font-bold` (display). `font-normal` не используется (это дефолт).
+
+### Цвет текста
+
+3 роли, не больше.
+
+| Роль | Light | Dark |
+|---|---|---|
+| Primary (основной текст, заголовки) | `text-gray-900` | `dark:text-gray-100` |
+| Secondary (значения, body на тёмном фоне карточки) | `text-gray-600` | `dark:text-gray-300` |
+| Muted (подписи, плейсхолдеры, disabled, иконки) | `text-gray-400` | `dark:text-gray-500` |
+
+`text-gray-500`, `text-gray-700`, `text-gray-800` использовать **нельзя** — выбирай одну из трёх ролей выше.
+
+### Акцент (синий)
+
+Один токен, никаких `bg-blue-500` или `text-blue-700`.
+
+| Роль | Токен |
+|---|---|
+| Primary action background | `bg-blue-600` |
+| Primary action hover | `hover:bg-blue-700` |
+| Link / accent text | `text-blue-600 dark:text-blue-400` |
+| Subtle tint (sidebar active) | `bg-blue-50 dark:bg-blue-950` |
+
+### Скругления (радиусы)
+
+| Уровень | Радиус | Применение |
+|---|---|---|
+| Контейнеры | `rounded-xl` | Карточки, колонки канбана, список (ListView), пустые состояния |
+| Модалки | `rounded-2xl` (моб. — `rounded-t-2xl`) | Все диалоги, включая ConfirmModal |
+| Контролы | `rounded-lg` | Кнопки, инпуты, селекты, текстарии, сегменты, фильтры |
+| Чипы/аватары/точки | `rounded-full` | Теги, статусные точки, аватарки, прогресс-бары |
+
+### Бордеры и elevation
+
+| Роль | Light | Dark |
+|---|---|---|
+| Бордер контейнера | `border-gray-200` | `dark:border-gray-700` |
+| Внутренний разделитель (header модалки) | `border-gray-100` | `dark:border-gray-800` |
+| Тень карточки | `shadow-sm` (`hover:shadow-md`) | — |
+| Тень модалки | `shadow-xl` | — |
+| Тень FAB | `shadow-lg shadow-blue-600/30` | — |
+
+### Контролы (интерактивные элементы)
+
+**Унифицированный размер.** Все поля и кнопки в формах, фильтрах и модалках:
+
+- Высота — `h-10` (40px). Гарантирует тач-таргет на мобиле.
+- Шрифт — `text-sm font-medium` (кнопки) или `text-sm` (поля).
+- Радиус — `rounded-lg`.
+- Бордер — `border-gray-200 dark:border-gray-700` (где есть).
+- Паддинг: сегмент-кнопки `px-4`, селекты `pl-3` (правый под chevron из `globals.css`), date-input `px-3`, кнопки `px-4 py-2` (если `h-10` не задан явно).
+
+> Сейчас формы (`TaskForm`/`ProjectForm`/`HabitForm`) используют `py-2 ≈ 38px` вместо `h-10`. В этапе C привести к `h-10`.
+
+### Кнопки
+
+| Вариант | Стили | Применение |
+|---|---|---|
+| Primary | `h-10 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50` | Submit, основное действие |
+| Secondary | `h-10 rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800` | Cancel, парная к primary |
+| Ghost | `h-10 rounded-lg px-4 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800` | Незаметные действия, «Сегодня» в тулбаре |
+| Icon | `rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800` | ✏️ 🗑️ ✕ в header модалки, ← → в тулбарах |
+| Danger icon | `rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950` | 🗑️ удаление |
+| Destructive | `h-10 rounded-lg bg-red-600 px-4 text-sm font-medium text-white hover:bg-red-700` | Подтверждение удаления в ConfirmModal |
+
+### Сегментированные контролы (выбор одного из N)
+
+**Два варианта**, по семантике, а не по вкусу:
+
+**`view` — переключение вида/экрана** (как iOS): белая пилюля на сером треке. Используется для:
+- `MobileViewTabs` (Канбан/Список/Календарь/Аналитика на мобиле)
+- Тулбар периода в Календаре/Ганте/HabitsView (Сегодня/Неделя/Месяц)
+
+```
+Контейнер: grid gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800
+Сегмент base: rounded-lg px-4 h-10 text-sm font-medium text-center transition-colors
+Активный: bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white
+Неактивный: text-gray-500 dark:text-gray-400
+```
+
+**`filter` — выбор фильтра/параметра**: синяя заливка активного. Используется для:
+- Вкладки категорий (Все/Личное/Семейное) в `TaskFilters`/`ProjectFilters`
+- Тоггл «Все привычки / Сегодня» на странице Привычек
+- Контрол периода (Эта неделя/Этот месяц/Всё время) в `AnalyticsView`
+
+```
+Контейнер: flex rounded-lg border border-gray-200 overflow-hidden dark:border-gray-700
+Сегмент base: h-10 px-4 text-sm font-medium transition-colors
+Активный: bg-blue-600 text-white
+Неактивный: text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800
+```
+
+> **Важно:** если на одном экране стоят рядом два сегментированных контрола разной семантики (как на /habits: «Все/Сегодня» — фильтр, «Неделя/Месяц» — вид), они **обязаны быть разных вариантов**. Иначе глаз читает их как дубль.
+
+### Модалки
+
+Единый шелл (в этапе C — компонент `<Modal>`). Сейчас три архетипа скопированы вручную в `TaskModal`/`ProjectModal`/`HabitModal`, плюс отдельный `ConfirmModal` и create-sheet в `KanbanBoard`.
+
+```
+Overlay: fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0
+         sm:items-center sm:p-4
+Panel: flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl
+       bg-white shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl
+Header: flex items-center justify-between border-b border-gray-100 px-5 py-4
+        dark:border-gray-800 (заголовок text-base font-semibold)
+Body: flex-1 overflow-y-auto px-5 pt-4
+      pb-[calc(1rem+env(safe-area-inset-bottom))]
+```
+
+**Мобайл:** bottom-sheet (`items-end`, скруглён только сверху). Тело имеет нижний safe-area паддинг, чтобы контент не уходил под home-indicator. Закрытие по тапу на backdrop.
+
+**ConfirmModal — особый случай:**
+- `z-50` (рендерится поверх обычной модалки)
+- `max-w-sm`, иначе те же токены (`rounded-2xl`, bottom-sheet на мобиле)
+- Backdrop **не закрывает** — только явные кнопки
+
+### Чипы / бейджи
+
+- **Meta-чипы на карточках:** `rounded-full bg-gray-100 px-2 py-0.5 text-[11px]` (категория, ответственный, проект, дата).
+- **TagChip:** два размера — `xs` (`px-2.5 py-1 text-xs`, по умолчанию) и `sm` (`px-3 py-1.5 text-sm`, в модалках). Намеренно крупнее meta-чипов.
+- **StatusBadge / PriorityBadge:** см. ниже про «yellow collision». StatusBadge **обязан иметь dark-вариант** (сейчас не имеет — фикс в этапе С).
+
+### Spacing scale
+
+| Размер | Tailwind | Когда |
+|---|---|---|
+| 6px | `gap-1.5` | Между подписью и значением; мета на карточке |
+| 8px | `gap-2` | Кнопки в кластере, мета-чипы |
+| 12px | `gap-3` | Поля в форме (грид), кнопки в футере, колонки канбана |
+| 16px | `gap-4` | Между секциями формы (по вертикали `space-y-4`), view-mode секции в модалке |
+| 20px | `gap-x-5` / `px-5` | Между фильтрами в одной группе; горизонтальный паддинг модалки |
+| 32px | `border-l h-6` | Вертикальный разделитель между группами фильтров |
+
+**Стандартные паддинги:**
+- Карточка: `p-3`
+- Хедер модалки: `px-5 py-4`
+- Тело модалки: `px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]`
+- Панель фильтров: `py-3`
+
+### Yellow collision (token-leak)
+
+`STATUSES.in_progress.color = 'yellow'` и `PRIORITIES.medium.color = 'yellow'` — одинаковый ключ, но разные палитры:
+
+- **StatusBadge** → `yellow-200/800` (насыщенный жёлтый — статус заметнее)
+- **PriorityBadge** → `amber-100/700` (бледный янтарь — приоритет деликатнее)
+- **TagChip** → `yellow-100/700` (нейтральная палитра тегов)
+
+Это **намеренное** разведение, но абстракция `color: 'yellow'` — лживая, реального общего токена нет. Если будем переделывать — переименовать в семантические токены (`status-active`, `priority-medium`).
+
+### Z-index scale
+
+| z | Что |
+|---|---|
+| `z-30` | FAB |
+| `z-40` | Обычные модалки (Task/Project/Habit) |
+| `z-50` | ConfirmModal, dropdown-меню |
+
+### Мобайл — ключевые правила
+
+- Все интерактивные элементы — минимум `h-10` (40px тач-таргета).
+- Модалки — bottom-sheet (`items-end`, `rounded-t-2xl`, safe-area `pb-[calc(...+env(safe-area-inset-bottom))]`).
+- FAB — `bottom-[calc(72px+env(safe-area-inset-bottom))]` (над bottom nav).
+- Bottom nav — `h-14 + pb-[env(safe-area-inset-bottom)]`, эмодзи над подписью.
+- Main content — `pb-16 md:pb-0`, чтобы не уходило под bottom nav.
+- Header — `pt-[env(safe-area-inset-top)]`.
+- Карточки — крупнее шрифт (`text-base md:text-sm`), title+description обёрнуты в один `<button>` для удобства тапа.
+- Фильтры — сворачиваются в кнопку «Фильтры (N)»; категория-вкладки всегда видны.
+- Сегмент-контролы — без горизонтального скролла, влезают в ширину экрана (`grid` с равными колонками).
+- Канбан — `snap-x snap-mandatory`, ширина колонки `85vw max-w-[18rem]`, свайп — одна колонка за раз.
+
+### Селекты (HTML `<select>`)
+
+- Нативный chevron скрыт через `appearance: none` в `globals.css`.
+- Кастомный chevron — `background-image` SVG, отступ 10px справа.
+- Глобальное правило, отдельные классы не нужны.
+
 ## Ключевые решения
 
 ### Канбан
@@ -438,25 +644,11 @@ export const TAG_COLORS = {
 - На странице — тоггл «Все привычки / Сегодня» (см. выше), фильтров по категории/ответственному нет. Создание через `Fab label="Привычка"`. У раздела нет под-видов (`subs`), поэтому `MobileViewTabs` не рендерится.
 - Удаление привычки (модалка → 🗑️ → confirm) каскадно сносит `habit_logs` (`ON DELETE CASCADE`).
 
-### Дизайн-система: отступы и иерархия в панелях фильтров
+### Фильтры — реализация
 
-| Размер | Tailwind | Когда применять |
-|---|---|---|
-| 6px  | `gap-1.5` | Между подписью и её значением |
-| 20px | `gap-x-5` | Между фильтрами в одной группе |
-| 32px | вертикальная черта `border-l h-6` | Между разными группами |
-| 12px | `py-3` | Вертикальный паддинг панели фильтров |
-
-- Подписи: `text-[11px] uppercase tracking-wide text-gray-400` — мельче и легче значений.
-- Реализовано через переиспользуемые компоненты `Field` и `Divider` внутри `TaskFilters` / `ProjectFilters`.
+- Подписи через переиспользуемые `Field` и `Divider` внутри `TaskFilters` / `ProjectFilters`. Токены подписей, паддингов и контролов — см. раздел «Дизайн-система».
 - В обоих фильтрах есть `rightAction` prop — слот справа (сейчас не используется, создание вынесено в FAB).
-
-**Единый размер контролов.** Все интерактивные поля (сегмент-кнопки категории, селекты, мобильная кнопка «Фильтры», кнопки и date-input контрола «Период» в аналитике) имеют один размер — высота `h-10` (40px), шрифт `text-sm`, `rounded-lg`, бордеры `border-gray-200 dark:border-gray-700`. Горизонтальный паддинг: сегмент-кнопки `px-4`, селекты `pl-3` (правый паддинг 32px под chevron задаёт глобальное правило в `globals.css`), date-input `px-3`. Раньше на десктопе фильтры ужимались (`md:text-xs`, `md:py-1.5`) — это убрано, теперь размер одинаковый на всех брейкпоинтах и совпадает с «Период».
-
-### Селекты (HTML `<select>`)
-- Нативный chevron скрывается через `appearance: none` в `globals.css`.
-- Кастомный chevron рисуется через `background-image` SVG с отступом 10px справа.
-- Глобальное правило — отдельные классы не нужны.
+- На мобиле — сворачиваются в кнопку «Фильтры (N)», см. раздел «Дизайн-система» → «Мобайл».
 
 ### PWA
 - `manifest.json` + service worker через next-pwa
