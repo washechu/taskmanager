@@ -8,6 +8,9 @@ import {
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { IconButton } from '@/components/ui/IconButton'
+import { Button } from '@/components/ui/Button'
 import { isoWeekday, WEEKDAYS, type Habit, type HabitLog } from '@/lib/types'
 
 type Mode = 'week' | 'month'
@@ -153,33 +156,30 @@ export function HabitsView({
 
   return (
     <div className="mx-auto max-w-2xl">
-      {/* Тулбар: режим + навигация */}
+      {/* Тулбар: режим (view) + навигация по периоду */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-          {(['week', 'month'] as const).map(m => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`flex h-9 items-center px-4 text-sm font-medium transition-colors ${
-                mode === m
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
-              }`}
-            >
-              {m === 'week' ? 'Неделя' : 'Месяц'}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          variant="view"
+          value={mode}
+          onChange={setMode}
+          ariaLabel="Режим отображения"
+          options={[
+            { value: 'week',  label: 'Неделя' },
+            { value: 'month', label: 'Месяц'  },
+          ] as const}
+        />
         <div className="flex items-center gap-1">
-          <button onClick={() => step(-1)} aria-label="Назад"
-            className="rounded-lg px-2.5 py-1.5 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">←</button>
-          <span className="min-w-[8.5rem] text-center text-sm font-medium capitalize text-gray-700 dark:text-gray-200">{rangeLabel}</span>
-          <button onClick={() => step(1)} aria-label="Вперёд"
-            className="rounded-lg px-2.5 py-1.5 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">→</button>
-          <button onClick={() => setAnchor(new Date())} disabled={onCurrentPeriod}
-            className="ml-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+          <IconButton onClick={() => step(-1)} aria-label="Назад">←</IconButton>
+          <span className="min-w-[8.5rem] text-center text-sm font-medium capitalize text-gray-900 dark:text-gray-100">{rangeLabel}</span>
+          <IconButton onClick={() => step(1)} aria-label="Вперёд">→</IconButton>
+          <Button
+            variant="secondary"
+            onClick={() => setAnchor(new Date())}
+            disabled={onCurrentPeriod}
+            className="ml-1"
+          >
             Сегодня
-          </button>
+          </Button>
         </div>
       </div>
 

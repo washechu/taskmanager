@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { HabitsView } from '@/components/habits/HabitsView'
 import { HabitModal, HabitForm } from '@/components/habits/HabitModal'
 import { Fab } from '@/components/ui/Fab'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { isoWeekday, type Habit } from '@/lib/types'
@@ -35,20 +36,17 @@ export default function HabitsPage() {
           </p>
         </div>
 
-        <div className="mt-4 flex w-max overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-          {([['all', 'Все привычки'], ['today', 'Сегодня']] as const).map(([val, label]) => (
-            <button
-              key={val}
-              onClick={() => setScope(val)}
-              className={`flex h-10 items-center px-4 text-sm font-medium transition-colors ${
-                scope === val
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="mt-4">
+          <SegmentedControl
+            variant="filter"
+            value={scope}
+            onChange={setScope}
+            ariaLabel="Какие привычки показывать"
+            options={[
+              { value: 'all',   label: 'Все привычки' },
+              { value: 'today', label: 'Сегодня'      },
+            ] as const}
+          />
         </div>
       </div>
 

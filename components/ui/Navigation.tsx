@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { SegmentedControl } from './SegmentedControl'
 
 interface SubItem {
   view: string
@@ -153,26 +154,17 @@ export function MobileViewTabs({
   const currentView = searchParams.get('view') ?? 'kanban'
 
   return (
-    <div
-      className="grid gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800 md:hidden"
-      style={{ gridTemplateColumns: `repeat(${subs.length}, minmax(0, 1fr))` }}
-    >
-      {subs.map(sub => {
-        const active = currentView === sub.view
-        return (
-          <Link
-            key={sub.view}
-            href={`${basePath}?view=${sub.view}`}
-            className={`rounded-lg px-1 py-2 text-center text-[13px] font-medium transition-colors ${
-              active
-                ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            {sub.label}
-          </Link>
-        )
-      })}
-    </div>
+    <SegmentedControl
+      variant="view"
+      fullWidth
+      value={currentView}
+      ariaLabel="Переключить вид"
+      className="md:hidden"
+      options={subs.map(sub => ({
+        value: sub.view,
+        label: sub.label,
+        href: `${basePath}?view=${sub.view}`,
+      }))}
+    />
   )
 }
