@@ -51,7 +51,7 @@ export function SegmentedControl<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={`${root} ${className}`}
-      style={isView ? { gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` } : undefined}
+      style={isView ? { gridTemplateColumns: `repeat(${options.length}, minmax(max-content, 1fr))` } : undefined}
     >
       {options.map(opt => {
         const active = opt.value === value

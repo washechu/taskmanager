@@ -21,10 +21,6 @@ interface TaskFiltersProps {
 
 const LABEL_CLASS = 'text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500'
 
-const Divider = () => (
-  <span className="hidden h-6 w-px self-center bg-gray-200 dark:bg-gray-700 md:inline-block" />
-)
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex items-center gap-1.5">
@@ -56,7 +52,7 @@ export function TaskFilters({ filters, currentUserAssignee, onChange }: TaskFilt
   const isPersonal = filters.category === 'personal'
 
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 py-3">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-4 py-3">
       <SegmentedControl
         variant="filter"
         value={filters.category}
@@ -69,17 +65,14 @@ export function TaskFilters({ filters, currentUserAssignee, onChange }: TaskFilt
       />
 
       {!isPersonal && (
-        <>
-          <Divider />
-          <Field label="Ответственный">
-            <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
-              <option value="all">Все</option>
-              {Object.entries(ASSIGNEES).map(([k, v]) => (
-                <option key={k} value={k}>{v.label}</option>
-              ))}
-            </Select>
-          </Field>
-        </>
+        <Field label="Ответственный">
+          <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
+            <option value="all">Все</option>
+            {Object.entries(ASSIGNEES).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
+            ))}
+          </Select>
+        </Field>
       )}
 
       {isPersonal && currentUserAssignee && (
@@ -89,21 +82,18 @@ export function TaskFilters({ filters, currentUserAssignee, onChange }: TaskFilt
       )}
 
       {allTags.length > 0 && (
-        <>
-          <Divider />
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            <span className={LABEL_CLASS}>Теги</span>
-            {allTags.map(tag => (
-              <TagChip
-                key={tag.id}
-                name={tag.name}
-                color={tag.color}
-                selected={filters.tags.includes(tag.name)}
-                onClick={() => toggleTag(tag.name)}
-              />
-            ))}
-          </div>
-        </>
+        <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-1.5">
+          <span className={LABEL_CLASS}>Теги</span>
+          {allTags.map(tag => (
+            <TagChip
+              key={tag.id}
+              name={tag.name}
+              color={tag.color}
+              selected={filters.tags.includes(tag.name)}
+              onClick={() => toggleTag(tag.name)}
+            />
+          ))}
+        </div>
       )}
     </div>
   )

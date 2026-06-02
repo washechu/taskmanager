@@ -16,10 +16,6 @@ interface ProjectFiltersProps {
 
 const LABEL_CLASS = 'text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500'
 
-const Divider = () => (
-  <span className="hidden h-6 w-px self-center bg-gray-200 dark:bg-gray-700 md:inline-block" />
-)
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex items-center gap-1.5">
@@ -34,7 +30,7 @@ export function ProjectFilters({ filters, onChange }: ProjectFiltersProps) {
     onChange({ ...filters, [key]: value })
 
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 py-3">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-4 py-3">
       <SegmentedControl
         variant="filter"
         value={filters.category}
@@ -45,8 +41,6 @@ export function ProjectFilters({ filters, onChange }: ProjectFiltersProps) {
           { value: 'family'   as const, label: CATEGORIES.family.label   },
         ]}
       />
-
-      <Divider />
 
       <Field label="Ответственный">
         <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>

@@ -21,9 +21,9 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl'
 type Period = 'week' | 'month' | 'custom'
 
 const PERIOD_OPTIONS = [
-  { value: 'week'   as const, label: 'Эта неделя' },
-  { value: 'month'  as const, label: 'Этот месяц' },
-  { value: 'custom' as const, label: 'Период'     },
+  { value: 'week'   as const, label: 'Неделя' },
+  { value: 'month'  as const, label: 'Месяц'  },
+  { value: 'custom' as const, label: 'Период' },
 ]
 
 const STATUS_HEX: Record<Status, string> = {
@@ -47,7 +47,7 @@ interface AnalyticsViewProps {
 }
 
 export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
-  const [period, setPeriod] = useState<Period>('month')
+  const [period, setPeriod] = useState<Period>('week')
   // ISO yyyy-MM-dd strings for the custom range pickers
   const todayIso = format(new Date(), 'yyyy-MM-dd')
   const monthAgoIso = format(startOfMonth(new Date()), 'yyyy-MM-dd')
