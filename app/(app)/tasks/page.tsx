@@ -20,8 +20,7 @@ import { diffTask } from '@/lib/diffTask'
 import type { Task, Status } from '@/lib/types'
 
 const DEFAULT_FILTERS: TaskFilterState = {
-  category: 'all',
-  projectId: 'all',
+  category: 'personal',
   assignee: 'all',
   tags: [],
 }
@@ -101,8 +100,7 @@ function TasksPageInner() {
   }
 
   const filteredTasks = applyTaskFilters(tasks, filters, currentUser.assignee)
-  const hasFilters = filters.category !== 'all' || filters.projectId !== 'all' ||
-    filters.assignee !== 'all' || filters.tags.length > 0
+  const hasFilters = filters.assignee !== 'all' || filters.tags.length > 0
 
   return (
     <div className="flex h-full flex-col">
@@ -129,7 +127,6 @@ function TasksPageInner() {
         </div>
         <TaskFilters
           filters={filters}
-          projects={projects}
           currentUserAssignee={currentUser.assignee}
           onChange={setFilters}
         />

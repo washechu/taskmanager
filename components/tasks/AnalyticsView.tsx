@@ -18,12 +18,11 @@ import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 
-type Period = 'week' | 'month' | 'all' | 'custom'
+type Period = 'week' | 'month' | 'custom'
 
 const PERIOD_OPTIONS = [
   { value: 'week'   as const, label: 'Эта неделя' },
   { value: 'month'  as const, label: 'Этот месяц' },
-  { value: 'all'    as const, label: 'Всё время'  },
   { value: 'custom' as const, label: 'Период'     },
 ]
 

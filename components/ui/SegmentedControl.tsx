@@ -31,7 +31,7 @@ export function SegmentedControl<T extends string>({
   const isView = variant === 'view'
 
   const root = isView
-    ? `gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800 ${fullWidth ? 'grid w-full' : 'inline-grid'}`
+    ? `gap-1 rounded-xl bg-gray-100 p-1.5 dark:bg-gray-800 ${fullWidth ? 'grid w-full' : 'inline-grid'}`
     : `flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 ${fullWidth ? 'w-full' : 'w-max'}`
 
   const segmentBase = isView
