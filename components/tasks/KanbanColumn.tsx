@@ -45,10 +45,10 @@ export function KanbanColumn({
       {/* Column header */}
       <div className={`flex items-center justify-between rounded-t-xl border-b px-3 py-2.5 ${headerColors[status]}`}>
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">
             {STATUSES[status].label}
           </h3>
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white/80 px-1.5 text-xs font-medium text-gray-500 dark:bg-gray-900/80">
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white/80 px-1.5 text-xs font-medium text-gray-400 dark:bg-gray-900/80">
             {tasks.length}
           </span>
         </div>

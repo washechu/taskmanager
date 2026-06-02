@@ -64,7 +64,7 @@ function DayCircle({
   const cls = done
     ? `${HABIT_BG[color] ?? HABIT_BG.blue} text-white shadow-sm`
     : future
-      ? 'border border-gray-200 text-gray-300 opacity-60 dark:border-gray-700 dark:text-gray-600'
+      ? 'border border-gray-200 text-gray-400 opacity-60 dark:border-gray-700 dark:text-gray-600'
       : isNow
         ? 'border-2 border-blue-500 text-blue-600 dark:text-blue-400'
         : 'border-2 border-dashed border-red-300 text-red-400 dark:border-red-900/70 dark:text-red-500/70'
@@ -95,7 +95,7 @@ function HabitCardHeader({ habit, streak, doneCount, total, unit }: {
             ? <span className="flex-shrink-0 text-lg leading-none">{habit.icon}</span>
             : <span className={`h-3 w-3 flex-shrink-0 rounded-full ${HABIT_DOT[habit.color] ?? HABIT_DOT.blue}`} />}
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">{habit.title}</div>
+            <div className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{habit.title}</div>
             {habit.description && (
               <div className="truncate text-xs text-gray-400">{habit.description}</div>
             )}
@@ -202,13 +202,13 @@ export function HabitsView({
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {scheduled.map(d => (
                       <div key={fmtKey(d)} className="flex flex-col items-center gap-1">
-                        <span className={`text-[10px] uppercase ${isSameDay(d, today) ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+                        <span className={`text-[11px] uppercase ${isSameDay(d, today) ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
                           {format(d, 'EEEEEE', { locale: ru })}
                         </span>
                         <DayCircle date={d} color={habit.color} today={today}
                           done={doneSet.has(fmtKey(d))} future={isAfter(startOfDay(d), today)}
                           onToggle={() => onToggle(habit.id, fmtKey(d))} />
-                        <span className={`text-[10px] ${isSameDay(d, today) ? 'font-medium text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+                        <span className={`text-[11px] ${isSameDay(d, today) ? 'font-medium text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
                           {format(d, 'd')}
                         </span>
                       </div>
@@ -229,7 +229,7 @@ export function HabitsView({
                 {/* Заголовок дней недели */}
                 <div className="mt-3 grid grid-cols-7 gap-1 text-center">
                   {WEEKDAYS.map(d => (
-                    <span key={d.value} className="text-[10px] uppercase text-gray-400">{d.short}</span>
+                    <span key={d.value} className="text-[11px] uppercase text-gray-400">{d.short}</span>
                   ))}
                 </div>
                 {/* Сетка месяца */}
@@ -240,7 +240,7 @@ export function HabitsView({
                     if (!inMonth) return <span key={fmtKey(d)} className="h-8 w-8" />
                     if (!scheduled) {
                       return (
-                        <span key={fmtKey(d)} className="flex h-8 w-8 items-center justify-center text-xs text-gray-300 dark:text-gray-700">
+                        <span key={fmtKey(d)} className="flex h-8 w-8 items-center justify-center text-xs text-gray-400 dark:text-gray-700">
                           {format(d, 'd')}
                         </span>
                       )

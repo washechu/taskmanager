@@ -13,7 +13,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   primary:
     'bg-blue-600 text-white hover:bg-blue-700',
   secondary:
-    'border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800',
+    'border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800',
   ghost:
     'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800',
   destructive:

@@ -100,7 +100,7 @@ export function CalendarView({ tasks, projects, onTaskOpen }: CalendarViewProps)
                   onClick={() => onTaskOpen(t)}
                   className="block w-full rounded-lg border border-gray-100 bg-gray-50 p-2 text-left text-xs hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
                 >
-                  <div className="truncate font-medium text-gray-800 dark:text-gray-200">{t.title}</div>
+                  <div className="truncate font-medium text-gray-900 dark:text-gray-100">{t.title}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
                     <PriorityBadge priority={t.priority} />
                     {t.project_id && (
@@ -168,7 +168,7 @@ function WeekView({ anchor, tasksByDate, onTaskOpen }: {
             isToday(day) ? 'bg-blue-50 dark:bg-blue-950/30' : ''
           }`}>
             <div className="text-xs text-gray-400">{format(day, 'EEE', { locale: ru })}</div>
-            <div className={`text-sm font-semibold ${isToday(day) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+            <div className={`text-sm font-semibold ${isToday(day) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'}`}>
               {format(day, 'd')}
             </div>
           </div>
@@ -236,7 +236,7 @@ function Section({ title, muted, children }: { title: string; muted?: boolean; c
   return (
     <div className="mb-5">
       <h3 className={`mb-2 text-xs font-semibold uppercase tracking-wide ${
-        muted ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
+        muted ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'
       }`}>
         {title}
       </h3>
@@ -256,10 +256,10 @@ function AgendaItem({ task, onOpen, overdue }: { task: Task; onOpen: (t: Task) =
       }`}
     >
       <div className="flex items-center gap-2">
-        <span className={task.status === 'done' ? 'text-green-500' : 'text-gray-300'}>
+        <span className={task.status === 'done' ? 'text-green-500' : 'text-gray-400'}>
           {task.status === 'done' ? '✓' : '○'}
         </span>
-        <span className={`flex-1 font-medium ${task.status === 'done' ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'}`}>
+        <span className={`flex-1 font-medium ${task.status === 'done' ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100'}`}>
           {task.title}
         </span>
         <PriorityBadge priority={task.priority} />
@@ -293,8 +293,8 @@ function DayCell({ day, anchor, tasksByDate, onTaskOpen, compact }: {
         today
           ? 'rounded-full bg-blue-600 font-semibold text-white'
           : otherMonth
-            ? 'text-gray-300 dark:text-gray-700'
-            : 'text-gray-500 dark:text-gray-400'
+            ? 'text-gray-400 dark:text-gray-700'
+            : 'text-gray-400 dark:text-gray-500'
       }`}>
         {format(day, 'd')}
       </div>

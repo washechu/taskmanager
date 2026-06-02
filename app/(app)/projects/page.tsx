@@ -63,7 +63,7 @@ function ProjectsPageInner() {
       <div className="border-b border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-900">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Проекты</h1>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
             Крупные цели или направления, объединяющие несколько задач.
           </p>
         </div>

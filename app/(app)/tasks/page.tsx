@@ -110,7 +110,7 @@ function TasksPageInner() {
       <div className="border-b border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-900">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Задачи</h1>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
             Конкретные дела с дедлайном. Объединяются в проекты.
           </p>
         </div>
@@ -144,7 +144,7 @@ function TasksPageInner() {
         ) : filteredTasks.length === 0 && hasFilters ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
-              <p className="text-sm text-gray-500">Ничего не найдено</p>
+              <p className="text-sm text-gray-400">Ничего не найдено</p>
               <button
                 onClick={() => setFilters(DEFAULT_FILTERS)}
                 className="mt-2 text-sm text-blue-600 underline"

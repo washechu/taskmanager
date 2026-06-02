@@ -82,7 +82,7 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
                 <td className="px-3 py-2">
                   <button
                     onClick={() => onTaskOpen(task)}
-                    className="text-left text-sm font-medium text-gray-800 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400"
+                    className="text-left text-sm font-medium text-gray-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400"
                   >
                     {task.title}
                   </button>
@@ -99,13 +99,13 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
                   </select>
                 </td>
                 <td className="px-3 py-2"><PriorityBadge priority={task.priority} /></td>
-                <td className="hidden px-3 py-2 text-sm text-gray-500 md:table-cell">
+                <td className="hidden px-3 py-2 text-sm text-gray-400 md:table-cell">
                   {project?.title ?? '—'}
                 </td>
-                <td className="hidden px-3 py-2 text-sm text-gray-500 md:table-cell">
+                <td className="hidden px-3 py-2 text-sm text-gray-400 md:table-cell">
                   {task.assignee === 'nick' ? 'Никита' : task.assignee === 'galya' ? 'Галочка' : '—'}
                 </td>
-                <td className={`px-3 py-2 text-sm ${overdue ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                <td className={`px-3 py-2 text-sm ${overdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
                   {task.due_date ?? '—'}
                 </td>
               </tr>
@@ -130,7 +130,7 @@ function Th({
   return (
     <th
       onClick={onClick}
-      className={`cursor-pointer select-none px-3 py-2 text-left text-xs font-semibold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 ${className}`}
+      className={`cursor-pointer select-none px-3 py-2 text-left text-xs font-semibold text-gray-400 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 ${className}`}
     >
       {label}
     </th>

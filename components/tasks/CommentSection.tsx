@@ -69,7 +69,7 @@ export function CommentSection({ taskId, currentUser }: CommentSectionProps) {
                 </div>
                 <div className="flex-1 rounded-lg bg-gray-50 p-2.5 dark:bg-gray-800">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
                       {ASSIGNEES[comment.author].label}
                     </span>
                     <div className="flex items-center gap-2">
@@ -79,7 +79,7 @@ export function CommentSection({ taskId, currentUser }: CommentSectionProps) {
                       {comment.author === currentUser && (
                         <button
                           onClick={() => deleteComment(comment.id)}
-                          className="text-xs text-gray-300 hover:text-red-500"
+                          className="text-xs text-gray-400 hover:text-red-500"
                         >
                           ✕
                         </button>

@@ -43,7 +43,7 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
         <button
           {...attributes}
           {...listeners}
-          className="mt-0.5 cursor-grab touch-none text-gray-300 hover:text-gray-500 active:cursor-grabbing"
+          className="mt-0.5 cursor-grab touch-none text-gray-400 hover:text-gray-500 active:cursor-grabbing"
           tabIndex={-1}
           aria-label="Перетащить"
         >
@@ -53,12 +53,12 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
           onClick={() => onOpen(task)}
           className="flex-1 text-left"
         >
-          <span className="block min-h-[2.5rem] line-clamp-2 text-base font-medium leading-snug text-gray-800 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 md:text-sm">
+          <span className="block min-h-[2.5rem] line-clamp-2 text-base font-medium leading-snug text-gray-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400 md:text-sm">
             {task.title}
           </span>
           {/* Description preview — same button, expanded tap area */}
           <span
-            className="mt-1 block min-h-[3rem] line-clamp-3 text-sm text-gray-500 dark:text-gray-400 md:text-xs"
+            className="mt-1 block min-h-[3rem] line-clamp-3 text-sm text-gray-400 dark:text-gray-500 md:text-xs"
             title={task.description ?? ''}
           >
             {task.description?.trim() || ''}
@@ -87,7 +87,7 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
           </span>
         )}
         {task.due_date && (
-          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
             {isOverdue ? '⚠️ ' : '📅 '}{task.due_date}
           </span>
         )}

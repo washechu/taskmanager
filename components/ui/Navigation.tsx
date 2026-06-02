@@ -74,7 +74,7 @@ export function Navigation() {
                   className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     active
                       ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                   }`}
                 >
                   <span className="text-base">{link.icon}</span>
@@ -92,7 +92,7 @@ export function Navigation() {
                           className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
                             subActive
                               ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
-                              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800/50'
+                              : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800/50'
                           }`}
                         >
                           {sub.label}
@@ -108,7 +108,7 @@ export function Navigation() {
         <div className="border-t border-gray-200 p-3 dark:border-gray-800">
           <button
             onClick={handleLogout}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             Выйти
           </button>
@@ -128,7 +128,7 @@ export function Navigation() {
               className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors ${
                 active
                   ? 'text-blue-700 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400'
+                  : 'text-gray-400 dark:text-gray-500'
               }`}
               style={{ minHeight: 56 }}
             >

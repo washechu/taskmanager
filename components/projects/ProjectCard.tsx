@@ -36,7 +36,7 @@ export function ProjectCard({ project, tasks, onOpen }: ProjectCardProps) {
         <button
           {...attributes}
           {...listeners}
-          className="mt-0.5 cursor-grab touch-none text-gray-300 hover:text-gray-500 active:cursor-grabbing"
+          className="mt-0.5 cursor-grab touch-none text-gray-400 hover:text-gray-500 active:cursor-grabbing"
           tabIndex={-1}
         >
           ⠿
@@ -45,11 +45,11 @@ export function ProjectCard({ project, tasks, onOpen }: ProjectCardProps) {
           onClick={() => onOpen(project)}
           className="flex-1 text-left"
         >
-          <span className="block min-h-[2.5rem] line-clamp-2 text-base font-medium leading-snug text-gray-800 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 md:text-sm">
+          <span className="block min-h-[2.5rem] line-clamp-2 text-base font-medium leading-snug text-gray-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400 md:text-sm">
             {project.title}
           </span>
           <span
-            className="mt-1 block min-h-[3rem] line-clamp-3 text-sm text-gray-500 dark:text-gray-400 md:text-xs"
+            className="mt-1 block min-h-[3rem] line-clamp-3 text-sm text-gray-400 dark:text-gray-500 md:text-xs"
             title={project.description ?? ''}
           >
             {project.description?.trim() || ''}
@@ -68,12 +68,12 @@ export function ProjectCard({ project, tasks, onOpen }: ProjectCardProps) {
           </span>
         )}
         {projectTasks.length > 0 && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-400">
             {doneTasks}/{projectTasks.length} задач
           </span>
         )}
         {project.due_date && (
-          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
             {isOverdue ? '⚠️ ' : '📅 '}{project.due_date}
           </span>
         )}
