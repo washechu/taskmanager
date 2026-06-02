@@ -23,7 +23,7 @@ interface TaskFormProps {
   submitLabel?: string
 }
 
-const LABEL_CLASS = 'mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300'
+const LABEL_CLASS = 'mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300'
 
 export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCancel, submitLabel = 'Создать' }: TaskFormProps) {
   const [form, setForm] = useState<TaskFormData>({

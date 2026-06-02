@@ -102,7 +102,7 @@ export function GanttView({ tasks, projects, onTaskOpen }: GanttViewProps) {
             <div style={{ width: totalWidth + 240 }}>
               {/* Date header */}
               <div className="sticky top-0 z-10 flex border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                <div className="sticky left-0 z-20 w-60 border-r border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-500 dark:border-gray-800 dark:bg-gray-900">
+                <div className="sticky left-0 z-20 w-60 border-r border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-400 dark:border-gray-800 dark:bg-gray-900">
                   Задача
                 </div>
                 <div className="flex">
@@ -117,12 +117,12 @@ export function GanttView({ tasks, projects, onTaskOpen }: GanttViewProps) {
                         style={{ width: DAY_WIDTH }}
                       >
                         {isFirstOfMonth && (
-                          <div className="absolute -top-0 left-0 whitespace-nowrap px-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          <div className="absolute -top-0 left-0 whitespace-nowrap px-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
                             {format(day, 'LLL yyyy', { locale: ru })}
                           </div>
                         )}
                         <div className="pt-4 text-gray-400">{format(day, 'EEEEE', { locale: ru })}</div>
-                        <div className={isToday(day) ? 'font-bold text-blue-600 dark:text-blue-400' : 'text-gray-500'}>
+                        <div className={isToday(day) ? 'font-bold text-blue-600 dark:text-blue-400' : 'text-gray-400'}>
                           {format(day, 'd')}
                         </div>
                       </div>
@@ -136,7 +136,7 @@ export function GanttView({ tasks, projects, onTaskOpen }: GanttViewProps) {
                 <div key={group.projectId ?? 'none'}>
                   {/* Group header */}
                   <div className="flex border-b border-gray-100 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-800/30">
-                    <div className="sticky left-0 w-60 border-r border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:text-gray-300">
+                    <div className="sticky left-0 w-60 border-r border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:border-gray-800 dark:text-gray-300">
                       📁 {group.project?.title ?? 'Без проекта'}
                     </div>
                     <div style={{ width: totalWidth }} />
@@ -151,7 +151,7 @@ export function GanttView({ tasks, projects, onTaskOpen }: GanttViewProps) {
                       <div key={task.id} className="flex border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/40">
                         <button
                           onClick={() => onTaskOpen(task)}
-                          className="sticky left-0 flex w-60 items-center gap-2 truncate border-r border-gray-200 bg-white px-3 py-2 text-left text-xs text-gray-700 hover:text-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:text-blue-400"
+                          className="sticky left-0 flex w-60 items-center gap-2 truncate border-r border-gray-200 bg-white px-3 py-2 text-left text-xs text-gray-600 hover:text-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:text-blue-400"
                         >
                           <span className={`h-2 w-2 flex-shrink-0 rounded-full ${STATUS_COLORS[task.status]}`} />
                           <span className="truncate">{task.title}</span>
@@ -190,7 +190,7 @@ export function GanttView({ tasks, projects, onTaskOpen }: GanttViewProps) {
                 className="block w-full truncate rounded-lg border border-gray-100 bg-gray-50 p-2 text-left text-xs hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
               >
                 <span className={`mr-1.5 inline-block h-2 w-2 rounded-full align-middle ${STATUS_COLORS[t.status]}`} />
-                <span className="text-gray-700 dark:text-gray-300">{t.title}</span>
+                <span className="text-gray-600 dark:text-gray-300">{t.title}</span>
               </button>
             ))}
           </div>

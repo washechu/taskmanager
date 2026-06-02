@@ -27,7 +27,7 @@ interface ProjectModalProps {
   onCreateTask?: (projectId: string) => void
 }
 
-const LABEL_CLASS = 'mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300'
+const LABEL_CLASS = 'mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300'
 
 export function ProjectForm({
   initial,
@@ -187,11 +187,11 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
                 <StatusBadge status={project.status} />
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400 dark:bg-gray-800 dark:text-gray-400">
                   {CATEGORIES[project.category].label}
                 </span>
                 {project.assignee && (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400 dark:bg-gray-800 dark:text-gray-400">
                     {ASSIGNEES[project.assignee].label}
                   </span>
                 )}
@@ -205,13 +205,13 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
                 {project.start_date && (
                   <div>
                     <span className="text-xs text-gray-400">Начало</span>
-                    <p className="font-medium text-gray-700 dark:text-gray-200">{project.start_date}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{project.start_date}</p>
                   </div>
                 )}
                 {project.due_date && (
                   <div>
                     <span className="text-xs text-gray-400">Дедлайн</span>
-                    <p className="font-medium text-gray-700 dark:text-gray-200">{project.due_date}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{project.due_date}</p>
                   </div>
                 )}
               </div>
@@ -243,7 +243,7 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
                               'bg-gray-400'
                             }`} />
                             <span className="flex-1 truncate">{t.title}</span>
-                            <span className="text-[10px] uppercase tracking-wide text-gray-400">
+                            <span className="text-[11px] uppercase tracking-wide text-gray-400">
                               {STATUSES[t.status].label}
                             </span>
                             {onTaskOpen && <span className="opacity-60">→</span>}

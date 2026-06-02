@@ -112,7 +112,7 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
             <button
               type="button"
               onClick={() => { setManaging(m => !m); setPendingDelete(null) }}
-              className="text-xs text-gray-500 hover:underline dark:text-gray-400"
+              className="text-xs text-gray-400 hover:underline dark:text-gray-400"
             >
               {managing ? 'Готово' : 'Изменить'}
             </button>
@@ -130,7 +130,7 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
                 if (e.key === 'Escape') { e.preventDefault(); setCreating(false); setNewTagName('') }
               }}
               placeholder="Название тега"
-              className="flex-1 rounded-md border border-gray-200 px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+              className="flex-1 rounded-md border border-gray-200 px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
             <button
               type="button"
@@ -143,7 +143,7 @@ export function TagPicker({ selected, onChange }: TagPickerProps) {
             <button
               type="button"
               onClick={() => { setCreating(false); setNewTagName('') }}
-              className="rounded-md px-2 py-1.5 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="rounded-md px-2 py-1.5 text-xs text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               ✕
             </button>

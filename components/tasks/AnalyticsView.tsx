@@ -300,7 +300,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
                 <li key={t.id}>
                   <button
                     onClick={() => onTaskOpen(t)}
-                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs text-gray-700 hover:bg-red-50 dark:text-gray-300 dark:hover:bg-red-950/30"
+                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs text-gray-600 hover:bg-red-50 dark:text-gray-300 dark:hover:bg-red-950/30"
                   >
                     <span className="flex-1 truncate">{t.title}</span>
                     <span className="text-red-500">⚠ {t.due_date}</span>
@@ -332,7 +332,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
                         style={{ width: `${(count / max) * 100}%` }}
                       />
                     </div>
-                    <span className="w-6 text-right text-xs font-medium text-gray-500 dark:text-gray-400">{count}</span>
+                    <span className="w-6 text-right text-xs font-medium text-gray-400 dark:text-gray-500">{count}</span>
                   </li>
                 )
               })}

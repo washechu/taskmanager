@@ -312,7 +312,7 @@ export const TAG_COLORS = {
 > - ✅ Analytics период — `SegmentedControl` variant=filter.
 > - ✅ Категория-вкладки в `TaskFilters` и `ProjectFilters` — `SegmentedControl` variant=filter.
 > - ✅ `Input` / `Select` / `TextArea` извлечены. SELECT_CLASS дубли убраны из обоих фильтров. TaskForm / ProjectForm / HabitForm / CommentSection переехали на примитивы. Все поля форм теперь `h-10` (раньше `py-2 ≈ 38px`); HabitForm weekday-кнопки тоже `h-10`. Кнопки submit/cancel в формах — через `Button`.
-> - ⏳ Typography sweep — `text-[10px]`, `text-[13px]`, `font-normal`, `text-gray-500/700/800` точечно остались в Calendar/Gantt/AnalyticsView/Filters.
+> - ✅ Typography sweep: `text-[10px]` / `text-[13px]` / `font-normal` обнулены. Light-mode серый сжат до 3 ролей: `text-gray-900` (primary, 23×), `text-gray-600` (secondary, 44×), `text-gray-400` (muted, 102×). Dark-mode primary — `dark:text-gray-100`. Остались 3 «ghost»-уровня (`dark:text-gray-600/700`) для disabled-кружков дней и off-month плейсхолдеров в `HabitsView` / `CalendarView` — это намеренная 4-я ступень для очень-приглушённых элементов.
 
 ### Принципы
 

@@ -203,7 +203,7 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
               <div style={{ width: totalWidth + LABEL_WIDTH }}>
                 {/* Date header */}
                 <div className="sticky top-0 z-10 flex border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                  <div className="sticky left-0 z-20 border-r border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-500 dark:border-gray-800 dark:bg-gray-900"
+                  <div className="sticky left-0 z-20 border-r border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-400 dark:border-gray-800 dark:bg-gray-900"
                     style={{ width: LABEL_WIDTH }}>
                     Проект / Задача
                   </div>
@@ -219,12 +219,12 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
                           style={{ width: dayWidth }}
                         >
                           {isFirstOfMonth && slice !== 'today' && (
-                            <div className="absolute top-0 left-0 whitespace-nowrap px-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            <div className="absolute top-0 left-0 whitespace-nowrap px-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
                               {format(day, 'LLL', { locale: ru })}
                             </div>
                           )}
                           <div className="pt-4 text-gray-400">{format(day, 'EEEEE', { locale: ru })}</div>
-                          <div className={isToday(day) ? 'font-bold text-blue-600 dark:text-blue-400' : 'text-gray-500'}>
+                          <div className={isToday(day) ? 'font-bold text-blue-600 dark:text-blue-400' : 'text-gray-400'}>
                             {format(day, 'd')}
                           </div>
                         </div>
@@ -242,7 +242,7 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
                       {/* Project row */}
                       <div className="flex border-b border-gray-100 bg-gray-50/40 hover:bg-gray-100/60 dark:border-gray-800 dark:bg-gray-800/30 dark:hover:bg-gray-800/60">
                         <div
-                          className="sticky left-0 z-10 flex items-center gap-1 border-r border-gray-200 bg-gray-50/40 px-2 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-800/30 dark:text-gray-300"
+                          className="sticky left-0 z-10 flex items-center gap-1 border-r border-gray-200 bg-gray-50/40 px-2 py-2 text-xs font-semibold text-gray-600 dark:border-gray-800 dark:bg-gray-800/30 dark:text-gray-300"
                           style={{ width: LABEL_WIDTH }}
                         >
                           {taskRanges.length > 0 ? (
@@ -264,7 +264,7 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
                             <span>📁</span>
                             <span className="truncate">{project?.title ?? 'Без проекта'}</span>
                             {taskRanges.length > 0 && (
-                              <span className="text-[10px] font-normal text-gray-400">({taskRanges.length})</span>
+                              <span className="text-[11px] text-gray-400">({taskRanges.length})</span>
                             )}
                           </button>
                         </div>
@@ -316,7 +316,7 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
                         className="block w-full truncate rounded-lg border border-gray-100 bg-gray-50 p-2 text-left text-xs hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
                       >
                         <span className={`mr-1.5 inline-block h-2 w-2 rounded-full align-middle ${STATUS_COLORS[p.status]}`} />
-                        <span className="text-gray-700 dark:text-gray-300">📁 {p.title}</span>
+                        <span className="text-gray-600 dark:text-gray-300">📁 {p.title}</span>
                       </button>
                     ))}
                   </div>
@@ -340,10 +340,10 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
                         >
                           <div className="flex items-center gap-1.5">
                             <span className={`h-2 w-2 flex-shrink-0 rounded-full ${STATUS_COLORS[t.status]}`} />
-                            <span className="truncate text-gray-700 dark:text-gray-300">{t.title}</span>
+                            <span className="truncate text-gray-600 dark:text-gray-300">{t.title}</span>
                           </div>
                           {proj && (
-                            <div className="mt-0.5 truncate pl-3.5 text-[10px] text-gray-400">
+                            <div className="mt-0.5 truncate pl-3.5 text-[11px] text-gray-400">
                               {proj.title}
                             </div>
                           )}

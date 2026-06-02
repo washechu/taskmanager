@@ -43,7 +43,7 @@ export function SegmentedControl<T extends string>({
     : 'bg-blue-600 text-white'
 
   const inactiveCls = isView
-    ? 'text-gray-500 dark:text-gray-400'
+    ? 'text-gray-400 dark:text-gray-500'
     : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
 
   return (

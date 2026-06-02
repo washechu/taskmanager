@@ -76,19 +76,19 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                 {task.due_date && (
                   <div>
                     <span className="text-xs text-gray-400">Дедлайн</span>
-                    <p className="font-medium text-gray-700 dark:text-gray-200">{task.due_date}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{task.due_date}</p>
                   </div>
                 )}
                 {task.start_date && (
                   <div>
                     <span className="text-xs text-gray-400">Начало</span>
-                    <p className="font-medium text-gray-700 dark:text-gray-200">{task.start_date}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{task.start_date}</p>
                   </div>
                 )}
                 {task.assignee && (
                   <div>
                     <span className="text-xs text-gray-400">Ответственный</span>
-                    <p className="font-medium text-gray-700 dark:text-gray-200">
+                    <p className="font-medium text-gray-600 dark:text-gray-100">
                       {task.assignee === 'nick' ? 'Никита' : 'Галочка'}
                     </p>
                   </div>

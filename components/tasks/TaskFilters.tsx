@@ -92,7 +92,7 @@ export function TaskFilters({ filters, projects, currentUserAssignee, onChange, 
           >
             <span>Фильтры</span>
             {activeCount > 0 && (
-              <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+              <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[11px] font-bold text-white">
                 {activeCount}
               </span>
             )}
