@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { HabitsView } from '@/components/habits/HabitsView'
 import { HabitModal, HabitForm } from '@/components/habits/HabitModal'
 import { Fab } from '@/components/ui/Fab'
+import { Modal } from '@/components/ui/Modal'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
@@ -82,23 +83,17 @@ export default function HabitsPage() {
       )}
 
       {creating && (
-        <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
-          onClick={e => e.target === e.currentTarget && setCreating(false)}
-        >
-          <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl dark:bg-gray-900 sm:max-w-md sm:rounded-2xl sm:pb-5">
-            <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">Новая привычка</h2>
-            <HabitForm
-              defaultAssignee={currentUser.assignee}
-              onSubmit={async (data) => {
-                await createHabit(data)
-                setCreating(false)
-              }}
-              onCancel={() => setCreating(false)}
-              submitLabel="Создать"
-            />
-          </div>
-        </div>
+        <Modal onClose={() => setCreating(false)} title="Новая привычка" size="md">
+          <HabitForm
+            defaultAssignee={currentUser.assignee}
+            onSubmit={async (data) => {
+              await createHabit(data)
+              setCreating(false)
+            }}
+            onCancel={() => setCreating(false)}
+            submitLabel="Создать"
+          />
+        </Modal>
       )}
     </div>
   )

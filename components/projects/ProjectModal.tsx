@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { Modal } from '@/components/ui/Modal'
+import { IconButton } from '@/components/ui/IconButton'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import {
   STATUSES, CATEGORIES, ASSIGNEES, STATUS_ORDER,
@@ -165,33 +167,19 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
   }
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
-      onClick={e => e.target === e.currentTarget && onClose()}
+    <Modal
+      onClose={onClose}
+      title={editing ? 'Редактировать проект' : project.title}
+      headerActions={!editing && (
+        <>
+          <IconButton size="sm" onClick={() => setEditing(true)} aria-label="Редактировать">✏️</IconButton>
+          <IconButton size="sm" tone="danger" onClick={() => setConfirmDelete(true)} aria-label="Удалить">🗑️</IconButton>
+        </>
+      )}
     >
-      <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-            {editing ? 'Редактировать проект' : project.title}
-          </h2>
-          <div className="flex items-center gap-2">
-            {!editing && (
-              <>
-                <button onClick={() => setEditing(true)}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">✏️</button>
-                <button onClick={() => setConfirmDelete(true)}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950">🗑️</button>
-              </>
-            )}
-            <button onClick={onClose}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">✕</button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          {editing ? (
-            <ProjectForm initial={project} onSubmit={handleUpdate} onCancel={() => setEditing(false)} />
-          ) : (
+      {editing ? (
+        <ProjectForm initial={project} onSubmit={handleUpdate} onCancel={() => setEditing(false)} />
+      ) : (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
                 <StatusBadge status={project.status} />
@@ -275,8 +263,6 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
               </div>
             </div>
           )}
-        </div>
-      </div>
 
       <ConfirmModal
         open={confirmDelete}
@@ -285,6 +271,6 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-    </div>
+    </Modal>
   )
 }

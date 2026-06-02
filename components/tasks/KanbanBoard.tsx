@@ -15,6 +15,7 @@ import { KanbanColumn } from './KanbanColumn'
 import { TaskCard } from './TaskCard'
 import { TaskModal } from './TaskModal'
 import { TaskForm } from './TaskForm'
+import { Modal } from '@/components/ui/Modal'
 import { STATUS_ORDER, type Task, type Status, type Assignee } from '@/lib/types'
 import type { Project } from '@/lib/types'
 
@@ -131,24 +132,16 @@ export function KanbanBoard({
 
       {/* Create task sheet */}
       {creatingStatus && (
-        <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
-          onClick={e => e.target === e.currentTarget && setCreatingStatus(null)}
-        >
-          <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl">
-            <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
-              Новая задача
-            </h2>
-            <TaskForm
-              initial={{ status: creatingStatus }}
-              projects={projects}
-              defaultAssignee={currentUser}
-              onSubmit={handleCreate}
-              onCancel={() => setCreatingStatus(null)}
-              submitLabel="Создать"
-            />
-          </div>
-        </div>
+        <Modal onClose={() => setCreatingStatus(null)} title="Новая задача">
+          <TaskForm
+            initial={{ status: creatingStatus }}
+            projects={projects}
+            defaultAssignee={currentUser}
+            onSubmit={handleCreate}
+            onCancel={() => setCreatingStatus(null)}
+            submitLabel="Создать"
+          />
+        </Modal>
       )}
     </>
   )

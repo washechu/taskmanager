@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { TaskForm } from './TaskForm'
 import { CommentSection } from './CommentSection'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { Modal } from '@/components/ui/Modal'
+import { IconButton } from '@/components/ui/IconButton'
 import { TagChip } from '@/components/ui/TagChip'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
@@ -37,55 +39,25 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
   }
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
-      onClick={e => e.target === e.currentTarget && onClose()}
+    <Modal
+      onClose={onClose}
+      title={editing ? 'Редактировать задачу' : task.title}
+      headerActions={!editing && (
+        <>
+          <IconButton size="sm" onClick={() => setEditing(true)} title="Редактировать" aria-label="Редактировать">✏️</IconButton>
+          <IconButton size="sm" tone="danger" onClick={() => setConfirmDelete(true)} title="Удалить" aria-label="Удалить">🗑️</IconButton>
+        </>
+      )}
     >
-      <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-            {editing ? 'Редактировать задачу' : task.title}
-          </h2>
-          <div className="flex items-center gap-2">
-            {!editing && (
-              <>
-                <button
-                  onClick={() => setEditing(true)}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
-                  title="Редактировать"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
-                  title="Удалить"
-                >
-                  🗑️
-                </button>
-              </>
-            )}
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          {editing ? (
-            <TaskForm
-              initial={task}
-              projects={projects}
-              onSubmit={handleUpdate}
-              onCancel={() => setEditing(false)}
-              submitLabel="Сохранить"
-            />
-          ) : (
+      {editing ? (
+        <TaskForm
+          initial={task}
+          projects={projects}
+          onSubmit={handleUpdate}
+          onCancel={() => setEditing(false)}
+          submitLabel="Сохранить"
+        />
+      ) : (
             <div className="space-y-4">
               {/* Status + Priority + Category badges row */}
               <div className="flex flex-wrap items-center gap-2">
@@ -144,11 +116,9 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                 </div>
               )}
 
-              <CommentSection taskId={task.id} currentUser={currentUser} />
-            </div>
-          )}
+          <CommentSection taskId={task.id} currentUser={currentUser} />
         </div>
-      </div>
+      )}
 
       <ConfirmModal
         open={confirmDelete}
@@ -157,6 +127,6 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-    </div>
+    </Modal>
   )
 }
