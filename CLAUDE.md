@@ -69,10 +69,13 @@
 │   ├── habits/
 │   │   ├── HabitsView.tsx        # Карточки привычек, режимы Неделя/Месяц, streak
 │   │   └── HabitModal.tsx        # Модалка привычки (view + edit) + HabitForm (эмодзи-иконка)
-│   └── ui/
+│   └── ui/                       # Базовые примитивы дизайн-системы
+│       ├── Button.tsx            # primary / secondary / ghost / destructive (h-10)
+│       ├── IconButton.tsx        # Иконочная кнопка (h-10 w-10 / h-8 w-8), tone default/danger
+│       ├── SegmentedControl.tsx  # Сегмент-контрол: variant view (iOS-пилюля) / filter (синяя заливка)
 │       ├── Fab.tsx               # Floating Action Button (создание задачи/проекта)
-│       ├── Navigation.tsx        # Sidebar/bottom nav (с эмодзи) + экспорт MobileViewTabs
-│       ├── StatusBadge.tsx
+│       ├── Navigation.tsx        # Sidebar/bottom nav (с эмодзи) + экспорт MobileViewTabs (использует SegmentedControl)
+│       ├── StatusBadge.tsx       # С dark-вариантами для всех цветов
 │       ├── PriorityBadge.tsx     # С цветной точкой + контрастный фон
 │       ├── EmptyState.tsx
 │       ├── ConfirmModal.tsx
@@ -295,7 +298,15 @@ export const TAG_COLORS = {
 
 Канонический набор токенов. **Никаких произвольных пиксельных значений** (`text-[10px]`, `h-9`, `rounded-md` без причины) — если нужного токена в таблице ниже нет, добавляем его сюда, а не лепим на месте. Цель — чтобы консистентность держалась автоматически через переиспользуемые компоненты, а не через силу воли.
 
-> **Текущий статус (этап А):** правила зафиксированы, реализация по коду — местами расходится с гайдом. Этап С — извлечь общие компоненты (`Modal`, `SegmentedControl`, `Button`, `Select`, `IconButton`) и подтянуть весь UI под токены.
+> **Статус миграции на токены:**
+> - ✅ `SegmentedControl`, `Button`, `IconButton` — извлечены в `components/ui/`.
+> - ✅ `StatusBadge` — есть dark-варианты.
+> - ✅ `/habits` (двойной тоггл) — мигрирован: scope = `filter`, week/month = `view`.
+> - ✅ `MobileViewTabs` — переехал на `SegmentedControl` variant=view.
+> - ⏳ Модальный шелл `Modal` — не извлечён, TaskModal/ProjectModal/HabitModal/ConfirmModal продолжают копировать JSX вручную.
+> - ⏳ `Select` — `SELECT_CLASS` всё ещё дублируется в `TaskFilters` и `ProjectFilters`.
+> - ⏳ Формы (`TaskForm`/`ProjectForm`/`HabitForm`) — поля и кнопки на `py-2`, не на `h-10`.
+> - ⏳ Typography sweep — `text-[10px]`, `text-[13px]`, `font-normal`, `text-gray-500/700/800` точечно остались в Calendar/Gantt/AnalyticsView/Filters.
 
 ### Принципы
 
