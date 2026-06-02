@@ -7,6 +7,10 @@ import {
 } from '@/lib/types'
 import type { Project } from '@/lib/types'
 import { TagPicker } from '@/components/ui/TagPicker'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { TextArea } from '@/components/ui/TextArea'
 
 type TaskFormData = Omit<Task, 'id' | 'created_at' | 'updated_at'>
 
@@ -19,10 +23,7 @@ interface TaskFormProps {
   submitLabel?: string
 }
 
-const SELECT_CLASS =
-  'w-full rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-8 text-sm ' +
-  'outline-none focus:ring-2 focus:ring-blue-500 ' +
-  'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200'
+const LABEL_CLASS = 'mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300'
 
 export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCancel, submitLabel = 'Создать' }: TaskFormProps) {
   const [form, setForm] = useState<TaskFormData>({
@@ -59,94 +60,81 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Title */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-          Название *
-        </label>
-        <input
+        <label className={LABEL_CLASS}>Название *</label>
+        <Input
           autoFocus
           value={form.title}
           onChange={e => set('title', e.target.value)}
           required
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {/* Status */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Статус</label>
-          <select value={form.status} onChange={e => set('status', e.target.value as Status)} className={SELECT_CLASS}>
+          <label className={LABEL_CLASS}>Статус</label>
+          <Select value={form.status} onChange={e => set('status', e.target.value as Status)} className="w-full">
             {STATUS_ORDER.map(s => (
               <option key={s} value={s}>{STATUSES[s].label}</option>
             ))}
-          </select>
+          </Select>
         </div>
 
-        {/* Priority */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Приоритет</label>
-          <select value={form.priority} onChange={e => set('priority', e.target.value as Priority)} className={SELECT_CLASS}>
+          <label className={LABEL_CLASS}>Приоритет</label>
+          <Select value={form.priority} onChange={e => set('priority', e.target.value as Priority)} className="w-full">
             {Object.entries(PRIORITIES).map(([k, v]) => (
               <option key={k} value={k}>{v.label}</option>
             ))}
-          </select>
+          </Select>
         </div>
 
-        {/* Category */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Категория</label>
-          <select value={form.category} onChange={e => set('category', e.target.value as Category)} className={SELECT_CLASS}>
+          <label className={LABEL_CLASS}>Категория</label>
+          <Select value={form.category} onChange={e => set('category', e.target.value as Category)} className="w-full">
             {Object.entries(CATEGORIES).map(([k, v]) => (
               <option key={k} value={k}>{v.label}</option>
             ))}
-          </select>
+          </Select>
         </div>
 
-        {/* Assignee */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+          <label className={LABEL_CLASS}>
             Ответственный {form.category === 'family' && <span className="text-red-500">*</span>}
           </label>
-          <select
+          <Select
             value={form.assignee ?? ''}
             onChange={e => set('assignee', (e.target.value as Assignee) || null)}
-            className={`${SELECT_CLASS} ${needsAssignee ? 'border-red-400' : ''}`}
+            invalid={needsAssignee}
+            className="w-full"
           >
             <option value="">Не назначен</option>
             {Object.entries(ASSIGNEES).map(([k, v]) => (
               <option key={k} value={k}>{v.label}</option>
             ))}
-          </select>
+          </Select>
           {needsAssignee && (
             <p className="mt-0.5 text-xs text-red-500">Для семейных задач укажите ответственного</p>
           )}
         </div>
 
-        {/* Start date */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Начало</label>
-          <input
+          <label className={LABEL_CLASS}>Начало</label>
+          <Input
             type="date"
             value={form.start_date ?? ''}
             onChange={e => set('start_date', e.target.value || null)}
-            className={`w-full rounded-lg border px-2 py-2 text-sm dark:bg-gray-800 dark:text-gray-200 ${
-              dateError ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'
-            }`}
+            invalid={!!dateError}
           />
         </div>
 
-        {/* Due date */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Дедлайн</label>
-          <input
+          <label className={LABEL_CLASS}>Дедлайн</label>
+          <Input
             type="date"
             value={form.due_date ?? ''}
             onChange={e => set('due_date', e.target.value || null)}
-            className={`w-full rounded-lg border px-2 py-2 text-sm dark:bg-gray-800 dark:text-gray-200 ${
-              dateError ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'
-            }`}
+            invalid={!!dateError}
           />
         </div>
         {dateError && (
@@ -154,53 +142,39 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
         )}
       </div>
 
-      {/* Project */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Проект</label>
-        <select
+        <label className={LABEL_CLASS}>Проект</label>
+        <Select
           value={form.project_id ?? ''}
           onChange={e => set('project_id', e.target.value || null)}
-          className={SELECT_CLASS}
+          className="w-full"
         >
           <option value="">Без проекта</option>
           {projects.map(p => (
             <option key={p.id} value={p.id}>{p.title}</option>
           ))}
-        </select>
+        </Select>
       </div>
 
-      {/* Tags */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Теги</label>
+        <label className={LABEL_CLASS}>Теги</label>
         <TagPicker selected={form.tags} onChange={tags => set('tags', tags)} />
       </div>
 
-      {/* Description */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Описание</label>
-        <textarea
+        <label className={LABEL_CLASS}>Описание</label>
+        <TextArea
           value={form.description ?? ''}
           onChange={e => set('description', e.target.value || null)}
           rows={3}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
         />
       </div>
 
       <div className="flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-        >
-          Отмена
-        </button>
-        <button
-          type="submit"
-          disabled={saving || !form.title.trim() || !!dateError}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
+        <Button type="button" variant="ghost" onClick={onCancel}>Отмена</Button>
+        <Button type="submit" disabled={saving || !form.title.trim() || !!dateError}>
           {saving ? 'Сохранение...' : submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   )

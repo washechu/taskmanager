@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { CATEGORIES, ASSIGNEES, type Category, type Assignee } from '@/lib/types'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { Select } from '@/components/ui/Select'
 
 export interface ProjectFilterState {
   category: Category | 'all'
@@ -15,12 +16,6 @@ interface ProjectFiltersProps {
   /** Optional action slot rendered on the right side of the filter row */
   rightAction?: React.ReactNode
 }
-
-// Unified control tokens — match the Analytics "Период" control:
-// 40px tall (h-10), text-sm, rounded-lg, same borders.
-const SELECT_CLASS =
-  'h-10 rounded-lg border border-gray-200 bg-white pl-3 text-sm ' +
-  'dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300'
 
 const LABEL_CLASS = 'text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500'
 
@@ -83,16 +78,12 @@ export function ProjectFilters({ filters, onChange, rightAction }: ProjectFilter
         <Divider />
 
         <Field label="Ответственный">
-          <select
-            value={filters.assignee}
-            onChange={e => set('assignee', e.target.value as Assignee | 'all')}
-            className={SELECT_CLASS}
-          >
+          <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
             <option value="all">Все</option>
             {Object.entries(ASSIGNEES).map(([k, v]) => (
               <option key={k} value={k}>{v.label}</option>
             ))}
-          </select>
+          </Select>
         </Field>
       </div>
     </div>
