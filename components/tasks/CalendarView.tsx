@@ -8,14 +8,17 @@ import {
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { IconButton } from '@/components/ui/IconButton'
+import { Button } from '@/components/ui/Button'
 import type { Task, Project } from '@/lib/types'
 
 type Slice = 'today' | 'week' | 'month'
 
-const SLICES: { id: Slice; label: string }[] = [
-  { id: 'today', label: 'Сегодня' },
-  { id: 'week',  label: 'Неделя'  },
-  { id: 'month', label: 'Месяц'   },
+const SLICE_OPTIONS = [
+  { value: 'today' as const, label: 'Сегодня' },
+  { value: 'week'  as const, label: 'Неделя'  },
+  { value: 'month' as const, label: 'Месяц'   },
 ]
 
 interface CalendarViewProps {
@@ -61,32 +64,18 @@ export function CalendarView({ tasks, projects, onTaskOpen }: CalendarViewProps)
     <div className="flex h-full flex-col gap-3">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
-          {SLICES.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSlice(s.id)}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
-                slice === s.id
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
+        <SegmentedControl
+          variant="view"
+          value={slice}
+          onChange={setSlice}
+          ariaLabel="Срез календаря"
+          options={SLICE_OPTIONS}
+        />
         <div className="flex items-center gap-1">
-          <button onClick={goPrev}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800">←</button>
+          <IconButton onClick={goPrev} aria-label="Назад">←</IconButton>
           <h2 className="px-3 text-sm font-semibold text-gray-900 dark:text-white">{title}</h2>
-          <button onClick={goNext}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800">→</button>
-          <button onClick={goToday}
-            className="ml-2 rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
-            Сегодня
-          </button>
+          <IconButton onClick={goNext} aria-label="Вперёд">→</IconButton>
+          <Button variant="secondary" onClick={goToday} className="ml-1">Сегодня</Button>
         </div>
       </div>
 

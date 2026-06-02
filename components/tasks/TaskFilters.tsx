@@ -5,6 +5,7 @@ import { CATEGORIES, ASSIGNEES, type Category, type Assignee } from '@/lib/types
 import type { Project } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 
 export interface TaskFilterState {
   category: Category | 'all'
@@ -77,21 +78,17 @@ export function TaskFilters({ filters, projects, currentUserAssignee, onChange, 
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           {/* Category tabs — always shown */}
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
-            {(['all', 'personal', 'family'] as const).map(cat => (
-              <button
-                key={cat}
-                onClick={() => handleCategoryChange(cat)}
-                className={`flex h-10 items-center px-4 text-sm font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
-                  filters.category === cat
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
-                }`}
-              >
-                {cat === 'all' ? 'Все' : CATEGORIES[cat].label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            variant="filter"
+            value={filters.category}
+            onChange={handleCategoryChange}
+            ariaLabel="Категория"
+            options={[
+              { value: 'all'      as const, label: 'Все'                  },
+              { value: 'personal' as const, label: CATEGORIES.personal.label },
+              { value: 'family'   as const, label: CATEGORIES.family.label   },
+            ]}
+          />
 
           {/* Mobile-only filter toggle */}
           <button

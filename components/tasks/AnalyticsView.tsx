@@ -16,14 +16,15 @@ import {
 } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 
 type Period = 'week' | 'month' | 'all' | 'custom'
 
-const PERIODS: { id: Period; label: string }[] = [
-  { id: 'week',    label: 'Эта неделя' },
-  { id: 'month',   label: 'Этот месяц' },
-  { id: 'all',     label: 'Всё время'  },
-  { id: 'custom',  label: 'Период'     },
+const PERIOD_OPTIONS = [
+  { value: 'week'   as const, label: 'Эта неделя' },
+  { value: 'month'  as const, label: 'Этот месяц' },
+  { value: 'all'    as const, label: 'Всё время'  },
+  { value: 'custom' as const, label: 'Период'     },
 ]
 
 const STATUS_HEX: Record<Status, string> = {
@@ -183,21 +184,13 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
       {/* Period selector */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Период</span>
-        <div className="flex flex-wrap rounded-lg border border-gray-200 dark:border-gray-700">
-          {PERIODS.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setPeriod(p.id)}
-              className={`flex h-10 items-center px-4 text-sm font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
-                period === p.id
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          variant="filter"
+          value={period}
+          onChange={setPeriod}
+          ariaLabel="Период аналитики"
+          options={PERIOD_OPTIONS}
+        />
 
         {period === 'custom' && (
           <div className="flex flex-wrap items-center gap-2">
