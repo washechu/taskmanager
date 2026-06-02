@@ -305,9 +305,11 @@ export const TAG_COLORS = {
 > - ✅ `/habits` (двойной тоггл) — мигрирован: scope = `filter`, week/month = `view`.
 > - ✅ `MobileViewTabs` — переехал на `SegmentedControl` variant=view.
 > - ✅ `Modal` извлечён, TaskModal/ProjectModal/HabitModal/ConfirmModal и все 5 create-sheet (kanban + страницы tasks/projects/habits) сидят на нём. ConfirmModal приехал к стандартным токенам (`rounded-2xl`, bottom-sheet на мобиле, Button-кнопки).
+> - ✅ Calendar и Gantt slice toggles (Сегодня/Неделя/Месяц) — `SegmentedControl` variant=view, ←/→ — `IconButton`, «Сегодня» — `Button(secondary)`. Тулбары обоих компонентов выровнены по 40px.
+> - ✅ Analytics период — `SegmentedControl` variant=filter.
+> - ✅ Категория-вкладки в `TaskFilters` и `ProjectFilters` — `SegmentedControl` variant=filter.
 > - ⏳ `Select` — `SELECT_CLASS` всё ещё дублируется в `TaskFilters` и `ProjectFilters`.
 > - ⏳ Формы (`TaskForm`/`ProjectForm`/`HabitForm`) — поля и кнопки на `py-2`, не на `h-10`.
-> - ⏳ Calendar/Gantt slice toggles, Analytics period, category tabs в фильтрах ещё не мигрированы на `SegmentedControl`.
 > - ⏳ Typography sweep — `text-[10px]`, `text-[13px]`, `font-normal`, `text-gray-500/700/800` точечно остались в Calendar/Gantt/AnalyticsView/Filters.
 
 ### Принципы

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CATEGORIES, ASSIGNEES, type Category, type Assignee } from '@/lib/types'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 
 export interface ProjectFilterState {
   category: Category | 'all'
@@ -49,21 +50,17 @@ export function ProjectFilters({ filters, onChange, rightAction }: ProjectFilter
     <div className="py-3">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
-            {(['all', 'personal', 'family'] as const).map(cat => (
-              <button
-                key={cat}
-                onClick={() => set('category', cat)}
-                className={`flex h-10 items-center px-4 text-sm font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
-                  filters.category === cat
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
-                }`}
-              >
-                {cat === 'all' ? 'Все' : CATEGORIES[cat].label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            variant="filter"
+            value={filters.category}
+            onChange={(cat) => set('category', cat)}
+            ariaLabel="Категория"
+            options={[
+              { value: 'all'      as const, label: 'Все'                  },
+              { value: 'personal' as const, label: CATEGORIES.personal.label },
+              { value: 'family'   as const, label: CATEGORIES.family.label   },
+            ]}
+          />
 
           <button
             onClick={() => setOpen(o => !o)}
