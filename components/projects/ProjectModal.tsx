@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { TextArea } from '@/components/ui/TextArea'
+import { DateInput } from '@/components/ui/DateInput'
 import {
   STATUSES, CATEGORIES, ASSIGNEES, STATUS_ORDER,
   type Project, type Status, type Category, type Assignee,
@@ -112,19 +113,17 @@ export function ProjectForm({
         <div />{/* spacer */}
         <div>
           <label className={LABEL_CLASS}>Начало</label>
-          <Input
-            type="date"
+          <DateInput
             value={form.start_date ?? ''}
-            onChange={e => set('start_date', e.target.value || null)}
+            onChange={v => set('start_date', v || null)}
             invalid={!!dateError}
           />
         </div>
         <div>
           <label className={LABEL_CLASS}>Дедлайн</label>
-          <Input
-            type="date"
+          <DateInput
             value={form.due_date ?? ''}
-            onChange={e => set('due_date', e.target.value || null)}
+            onChange={v => set('due_date', v || null)}
             invalid={!!dateError}
           />
         </div>

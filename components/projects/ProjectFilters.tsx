@@ -1,20 +1,17 @@
 'use client'
 
-import { useState } from 'react'
 import { CATEGORIES, ASSIGNEES, type Category, type Assignee } from '@/lib/types'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Select } from '@/components/ui/Select'
 
 export interface ProjectFilterState {
-  category: Category | 'all'
+  category: Category
   assignee: Assignee | 'all'
 }
 
 interface ProjectFiltersProps {
   filters: ProjectFilterState
   onChange: (filters: ProjectFilterState) => void
-  /** Optional action slot rendered on the right side of the filter row */
-  rightAction?: React.ReactNode
 }
 
 const LABEL_CLASS = 'text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500'
@@ -32,60 +29,33 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export function ProjectFilters({ filters, onChange, rightAction }: ProjectFiltersProps) {
-  const [open, setOpen] = useState(false)
-
+export function ProjectFilters({ filters, onChange }: ProjectFiltersProps) {
   const set = <K extends keyof ProjectFilterState>(key: K, value: ProjectFilterState[K]) =>
     onChange({ ...filters, [key]: value })
 
-  const activeCount =
-    (filters.assignee !== 'all' ? 1 : 0)
-
   return (
-    <div className="py-3">
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <SegmentedControl
-            variant="filter"
-            value={filters.category}
-            onChange={(cat) => set('category', cat)}
-            ariaLabel="Категория"
-            options={[
-              { value: 'all'      as const, label: 'Все'                  },
-              { value: 'personal' as const, label: CATEGORIES.personal.label },
-              { value: 'family'   as const, label: CATEGORIES.family.label   },
-            ]}
-          />
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 py-3">
+      <SegmentedControl
+        variant="filter"
+        value={filters.category}
+        onChange={(cat) => set('category', cat)}
+        ariaLabel="Категория"
+        options={[
+          { value: 'personal' as const, label: CATEGORIES.personal.label },
+          { value: 'family'   as const, label: CATEGORIES.family.label   },
+        ]}
+      />
 
-          <button
-            onClick={() => setOpen(o => !o)}
-            className="flex h-10 items-center gap-1.5 rounded-lg border border-gray-200 px-4 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 md:hidden"
-          >
-            <span>Фильтры</span>
-            {activeCount > 0 && (
-              <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[11px] font-bold text-white">
-                {activeCount}
-              </span>
-            )}
-            <span className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
-          </button>
-        </div>
+      <Divider />
 
-        {rightAction && <div>{rightAction}</div>}
-      </div>
-
-      <div className={`${open ? 'flex' : 'hidden'} mt-3 flex-wrap items-center gap-x-5 gap-y-2 md:!flex md:mt-2`}>
-        <Divider />
-
-        <Field label="Ответственный">
-          <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
-            <option value="all">Все</option>
-            {Object.entries(ASSIGNEES).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
-            ))}
-          </Select>
-        </Field>
-      </div>
+      <Field label="Ответственный">
+        <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
+          <option value="all">Все</option>
+          {Object.entries(ASSIGNEES).map(([k, v]) => (
+            <option key={k} value={k}>{v.label}</option>
+          ))}
+        </Select>
+      </Field>
     </div>
   )
 }
@@ -96,7 +66,7 @@ export function applyProjectFilters<T extends { category: string; assignee: stri
 ): T[] {
   return projects
     .filter(p => {
-      if (filters.category !== 'all' && p.category !== filters.category) return false
+      if (p.category !== filters.category) return false
       if (filters.assignee !== 'all' && p.assignee !== filters.assignee) return false
       return true
     })

@@ -15,7 +15,7 @@ import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import type { Project } from '@/lib/types'
 
 const DEFAULT_FILTERS: ProjectFilterState = {
-  category: 'all',
+  category: 'personal',
   assignee: 'all',
 }
 
