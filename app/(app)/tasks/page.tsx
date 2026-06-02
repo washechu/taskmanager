@@ -11,6 +11,7 @@ import { TaskForm } from '@/components/tasks/TaskForm'
 import { TaskFilters, applyTaskFilters, type TaskFilterState } from '@/components/tasks/TaskFilters'
 import { MobileViewTabs } from '@/components/ui/Navigation'
 import { Fab } from '@/components/ui/Fab'
+import { Modal } from '@/components/ui/Modal'
 import { useTasks } from '@/lib/hooks/useTasks'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
@@ -204,24 +205,16 @@ function TasksPageInner() {
       )}
 
       {creating && (
-        <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
-          onClick={e => e.target === e.currentTarget && setCreating(null)}
-        >
-          <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl sm:pb-5">
-            <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
-              Новая задача
-            </h2>
-            <TaskForm
-              initial={{ project_id: creating.projectId ?? null }}
-              projects={projects}
-              defaultAssignee={currentUser.assignee}
-              onSubmit={handleCreate}
-              onCancel={() => setCreating(null)}
-              submitLabel="Создать"
-            />
-          </div>
-        </div>
+        <Modal onClose={() => setCreating(null)} title="Новая задача">
+          <TaskForm
+            initial={{ project_id: creating.projectId ?? null }}
+            projects={projects}
+            defaultAssignee={currentUser.assignee}
+            onSubmit={handleCreate}
+            onCancel={() => setCreating(null)}
+            submitLabel="Создать"
+          />
+        </Modal>
       )}
     </div>
   )

@@ -70,6 +70,8 @@
 │   │   ├── HabitsView.tsx        # Карточки привычек, режимы Неделя/Месяц, streak
 │   │   └── HabitModal.tsx        # Модалка привычки (view + edit) + HabitForm (эмодзи-иконка)
 │   └── ui/                       # Базовые примитивы дизайн-системы
+│       ├── Modal.tsx             # Единый шелл диалогов: overlay+panel+header+body, layer/size/dismissable
+│       ├── ConfirmModal.tsx      # Поверх Modal: подтверждение действия, layer=confirm
 │       ├── Button.tsx            # primary / secondary / ghost / destructive (h-10)
 │       ├── IconButton.tsx        # Иконочная кнопка (h-10 w-10 / h-8 w-8), tone default/danger
 │       ├── SegmentedControl.tsx  # Сегмент-контрол: variant view (iOS-пилюля) / filter (синяя заливка)
@@ -78,7 +80,6 @@
 │       ├── StatusBadge.tsx       # С dark-вариантами для всех цветов
 │       ├── PriorityBadge.tsx     # С цветной точкой + контрастный фон
 │       ├── EmptyState.tsx
-│       ├── ConfirmModal.tsx
 │       ├── TagChip.tsx           # Цветной тег (resolve color по name из allTags)
 │       └── TagPicker.tsx         # Мультиселект + создание нового тега + color picker
 ├── lib/
@@ -303,9 +304,10 @@ export const TAG_COLORS = {
 > - ✅ `StatusBadge` — есть dark-варианты.
 > - ✅ `/habits` (двойной тоггл) — мигрирован: scope = `filter`, week/month = `view`.
 > - ✅ `MobileViewTabs` — переехал на `SegmentedControl` variant=view.
-> - ⏳ Модальный шелл `Modal` — не извлечён, TaskModal/ProjectModal/HabitModal/ConfirmModal продолжают копировать JSX вручную.
+> - ✅ `Modal` извлечён, TaskModal/ProjectModal/HabitModal/ConfirmModal и все 5 create-sheet (kanban + страницы tasks/projects/habits) сидят на нём. ConfirmModal приехал к стандартным токенам (`rounded-2xl`, bottom-sheet на мобиле, Button-кнопки).
 > - ⏳ `Select` — `SELECT_CLASS` всё ещё дублируется в `TaskFilters` и `ProjectFilters`.
 > - ⏳ Формы (`TaskForm`/`ProjectForm`/`HabitForm`) — поля и кнопки на `py-2`, не на `h-10`.
+> - ⏳ Calendar/Gantt slice toggles, Analytics period, category tabs в фильтрах ещё не мигрированы на `SegmentedControl`.
 > - ⏳ Typography sweep — `text-[10px]`, `text-[13px]`, `font-normal`, `text-gray-500/700/800` точечно остались в Calendar/Gantt/AnalyticsView/Filters.
 
 ### Принципы
@@ -428,7 +430,9 @@ export const TAG_COLORS = {
 
 ### Модалки
 
-Единый шелл (в этапе C — компонент `<Modal>`). Сейчас три архетипа скопированы вручную в `TaskModal`/`ProjectModal`/`HabitModal`, плюс отдельный `ConfirmModal` и create-sheet в `KanbanBoard`.
+Единый компонент **`<Modal>`** (`components/ui/Modal.tsx`). Через него рендерятся: `TaskModal`/`ProjectModal`/`HabitModal` (view + edit), `ConfirmModal` (layer=`confirm`, size=`sm`, `dismissable={false}`) и все create-sheet (`KanbanBoard` + страницы `tasks`/`projects`/`habits`).
+
+Пропы: `title`, `headerActions` (слот слева от ✕ для ✏️/🗑️), `size` (`sm`/`md`/`lg`), `layer` (`modal` z-40 / `confirm` z-50), `dismissable` (backdrop+ESC+✕, default true). ESC закрывает только если dismissable.
 
 ```
 Overlay: fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0

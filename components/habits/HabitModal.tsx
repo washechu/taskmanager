@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { Modal } from '@/components/ui/Modal'
+import { IconButton } from '@/components/ui/IconButton'
 import {
   ASSIGNEES, WEEKDAYS, TAG_COLORS,
   type Habit, type Assignee,
@@ -175,52 +177,40 @@ export function HabitModal({ habit, onUpdate, onDelete, onClose }: HabitModalPro
   const dayLabels = WEEKDAYS.filter(d => habit.weekdays.includes(d.value)).map(d => d.short).join(', ')
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
-      onClick={e => e.target === e.currentTarget && onClose()}
+    <Modal
+      onClose={onClose}
+      title={
+        <>
+          {!editing && habit.icon && <span className="text-xl">{habit.icon}</span>}
+          {editing ? 'Редактировать привычку' : habit.title}
+        </>
+      }
+      headerActions={!editing && (
+        <>
+          <IconButton size="sm" onClick={() => setEditing(true)} aria-label="Редактировать">✏️</IconButton>
+          <IconButton size="sm" tone="danger" onClick={() => setConfirmDelete(true)} aria-label="Удалить">🗑️</IconButton>
+        </>
+      )}
     >
-      <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:max-w-lg sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
-            {!editing && habit.icon && <span className="text-xl">{habit.icon}</span>}
-            {editing ? 'Редактировать привычку' : habit.title}
-          </h2>
-          <div className="flex items-center gap-2">
-            {!editing && (
-              <>
-                <button onClick={() => setEditing(true)}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">✏️</button>
-                <button onClick={() => setConfirmDelete(true)}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950">🗑️</button>
-              </>
+      {editing ? (
+        <HabitForm initial={habit} onSubmit={handleUpdate} onCancel={() => setEditing(false)} />
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+              {dayLabels || 'Дни не выбраны'}
+            </span>
+            {habit.assignee && (
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                {ASSIGNEES[habit.assignee].label}
+              </span>
             )}
-            <button onClick={onClose}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">✕</button>
           </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          {editing ? (
-            <HabitForm initial={habit} onSubmit={handleUpdate} onCancel={() => setEditing(false)} />
-          ) : (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                  {dayLabels || 'Дни не выбраны'}
-                </span>
-                {habit.assignee && (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                    {ASSIGNEES[habit.assignee].label}
-                  </span>
-                )}
-              </div>
-              {habit.description && (
-                <p className="whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300">{habit.description}</p>
-              )}
-            </div>
+          {habit.description && (
+            <p className="whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300">{habit.description}</p>
           )}
         </div>
-      </div>
+      )}
 
       <ConfirmModal
         open={confirmDelete}
@@ -229,6 +219,6 @@ export function HabitModal({ habit, onUpdate, onDelete, onClose }: HabitModalPro
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-    </div>
+    </Modal>
   )
 }
