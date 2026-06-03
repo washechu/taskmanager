@@ -88,7 +88,7 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                 {task.assignees.length > 0 && (
                   <div>
                     <span className="text-xs text-gray-400">
-                      {task.assignees.length > 1 ? 'Ответственные' : 'Ответственный'}
+                      {task.assignees.length > 1 ? 'Участники' : 'Участник'}
                     </span>
                     <p className="font-medium text-gray-600 dark:text-gray-100">
                       {task.assignees.map(a => a === 'nick' ? 'Никита' : 'Галочка').join(' + ')}

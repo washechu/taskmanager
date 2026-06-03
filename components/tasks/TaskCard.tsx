@@ -2,12 +2,12 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { startOfDay, parseISO } from 'date-fns'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { TagChip } from '@/components/ui/TagChip'
 import { CATEGORIES, ASSIGNEES, type Task, type Status } from '@/lib/types'
 import type { Project } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
+import { dueStatus, dueIcon } from '@/lib/dueStatus'
 
 interface TaskCardProps {
   task: Task
@@ -31,8 +31,11 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
   }
 
   const project = projects.find(p => p.id === task.project_id)
-  // Today != overdue: красим только если due_date строго ДО сегодня (без учёта времени).
-  const isOverdue = task.due_date && parseISO(task.due_date) < startOfDay(new Date()) && task.status !== 'done'
+  const due = dueStatus(task)
+  const dueCls =
+    due === 'overdue' ? 'text-red-500 font-medium' :
+    due === 'today'   ? 'text-orange-500 font-medium' :
+                        'text-gray-400'
 
   return (
     <div
@@ -89,8 +92,8 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
           </span>
         )}
         {task.due_date && (
-          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-            {isOverdue ? '⚠️ ' : '📅 '}{task.due_date}
+          <span className={`text-xs ${dueCls}`}>
+            {due && due !== 'future' ? `${dueIcon(due)} ` : '📅 '}{task.due_date}
           </span>
         )}
         {task.tags.slice(0, 3).map(tag => (
