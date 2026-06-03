@@ -7,7 +7,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Select } from '@/components/ui/Select'
 
 export interface TaskFilterState {
-  category: Category
+  category: Category | 'all'
   assignee: Assignee | 'all'
   tags: string[]
 }
@@ -43,13 +43,14 @@ export function TaskFilters({ filters, currentUserAssignee, onChange }: TaskFilt
     set('tags', tags)
   }
 
-  const handleCategoryChange = (cat: Category) => {
-    // Личное всегда скоупится на текущего пользователя — сбрасываем явный выбор
-    if (cat === 'personal') onChange({ ...filters, category: cat, assignee: 'all' })
+  const handleCategoryChange = (cat: Category | 'all') => {
+    // Личное и Все авто-скоупятся на текущего пользователя — сбрасываем явный выбор
+    if (cat === 'personal' || cat === 'all') onChange({ ...filters, category: cat, assignee: 'all' })
     else onChange({ ...filters, category: cat })
   }
 
-  const isPersonal = filters.category === 'personal'
+  // Auto-scope: в Личном и в Все показываем только свои задачи
+  const isAutoScoped = filters.category === 'personal' || filters.category === 'all'
 
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-4 py-3">
@@ -61,10 +62,11 @@ export function TaskFilters({ filters, currentUserAssignee, onChange }: TaskFilt
         options={[
           { value: 'personal' as const, label: CATEGORIES.personal.label },
           { value: 'family'   as const, label: CATEGORIES.family.label   },
+          { value: 'all'      as const, label: 'Все' },
         ]}
       />
 
-      {!isPersonal && (
+      {!isAutoScoped && (
         <Field label="Ответственный">
           <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
             <option value="all">Все</option>
@@ -75,7 +77,7 @@ export function TaskFilters({ filters, currentUserAssignee, onChange }: TaskFilt
         </Field>
       )}
 
-      {isPersonal && currentUserAssignee && (
+      {isAutoScoped && currentUserAssignee && (
         <span className="text-[11px] italic text-gray-400">
           Показаны только твои задачи · {ASSIGNEES[currentUserAssignee].label}
         </span>
@@ -104,17 +106,21 @@ export function applyTaskFilters<T extends { category: string; assignee: string 
   filters: TaskFilterState,
   currentUserAssignee?: Assignee | null,
 ): T[] {
+  // Личное и Все авто-скоупятся на текущего пользователя.
+  // Семейное — assignee из явного селекта (по умолчанию 'all').
   const effectiveAssignee: string | 'all' =
-    filters.category === 'personal' && currentUserAssignee
+    (filters.category === 'personal' || filters.category === 'all') && currentUserAssignee
       ? currentUserAssignee
       : filters.assignee
 
   return tasks
     .filter(task => {
-      if (task.category !== filters.category) return false
+      if (filters.category !== 'all' && task.category !== filters.category) return false
 
       if (effectiveAssignee !== 'all') {
-        if (filters.category === 'personal') {
+        // Личные задачи без ответственного считаем своими (loose personal).
+        // Семейные без ответственного — нет (ответственного никто не взял).
+        if (task.category === 'personal') {
           if (task.assignee !== null && task.assignee !== effectiveAssignee) return false
         } else {
           if (task.assignee !== effectiveAssignee) return false

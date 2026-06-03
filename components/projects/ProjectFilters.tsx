@@ -5,7 +5,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Select } from '@/components/ui/Select'
 
 export interface ProjectFilterState {
-  category: Category
+  category: Category | 'all'
   assignee: Assignee | 'all'
 }
 
@@ -31,13 +31,13 @@ export function ProjectFilters({ filters, currentUserAssignee, onChange }: Proje
   const set = <K extends keyof ProjectFilterState>(key: K, value: ProjectFilterState[K]) =>
     onChange({ ...filters, [key]: value })
 
-  const handleCategoryChange = (cat: Category) => {
-    // Личное всегда скоупится на текущего пользователя — сбрасываем явный выбор
-    if (cat === 'personal') onChange({ ...filters, category: cat, assignee: 'all' })
+  const handleCategoryChange = (cat: Category | 'all') => {
+    // Личное и Все авто-скоупятся на текущего пользователя
+    if (cat === 'personal' || cat === 'all') onChange({ ...filters, category: cat, assignee: 'all' })
     else onChange({ ...filters, category: cat })
   }
 
-  const isPersonal = filters.category === 'personal'
+  const isAutoScoped = filters.category === 'personal' || filters.category === 'all'
 
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-4 py-3">
@@ -49,10 +49,11 @@ export function ProjectFilters({ filters, currentUserAssignee, onChange }: Proje
         options={[
           { value: 'personal' as const, label: CATEGORIES.personal.label },
           { value: 'family'   as const, label: CATEGORIES.family.label   },
+          { value: 'all'      as const, label: 'Все' },
         ]}
       />
 
-      {!isPersonal && (
+      {!isAutoScoped && (
         <Field label="Ответственный">
           <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
             <option value="all">Все</option>
@@ -63,7 +64,7 @@ export function ProjectFilters({ filters, currentUserAssignee, onChange }: Proje
         </Field>
       )}
 
-      {isPersonal && currentUserAssignee && (
+      {isAutoScoped && currentUserAssignee && (
         <span className="text-[11px] italic text-gray-400">
           Показаны только твои проекты · {ASSIGNEES[currentUserAssignee].label}
         </span>
@@ -78,15 +79,15 @@ export function applyProjectFilters<T extends { category: string; assignee: stri
   currentUserAssignee?: Assignee | null,
 ): T[] {
   const effectiveAssignee: string | 'all' =
-    filters.category === 'personal' && currentUserAssignee
+    (filters.category === 'personal' || filters.category === 'all') && currentUserAssignee
       ? currentUserAssignee
       : filters.assignee
 
   return projects
     .filter(p => {
-      if (p.category !== filters.category) return false
+      if (filters.category !== 'all' && p.category !== filters.category) return false
       if (effectiveAssignee !== 'all') {
-        if (filters.category === 'personal') {
+        if (p.category === 'personal') {
           if (p.assignee !== null && p.assignee !== effectiveAssignee) return false
         } else {
           if (p.assignee !== effectiveAssignee) return false
