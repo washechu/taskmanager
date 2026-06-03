@@ -2,6 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { startOfDay, parseISO } from 'date-fns'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { TagChip } from '@/components/ui/TagChip'
 import { CATEGORIES, ASSIGNEES, type Task, type Status } from '@/lib/types'
@@ -30,7 +31,8 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
   }
 
   const project = projects.find(p => p.id === task.project_id)
-  const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done'
+  // Today != overdue: красим только если due_date строго ДО сегодня (без учёта времени).
+  const isOverdue = task.due_date && parseISO(task.due_date) < startOfDay(new Date()) && task.status !== 'done'
 
   return (
     <div

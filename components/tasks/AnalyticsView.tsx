@@ -96,11 +96,12 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
     [tasks]
   )
   const overdueNow = useMemo(() => {
-    const now = new Date()
+    // Сегодняшние не считаем просроченными — день ещё не закончился.
+    const today = startOfDay(new Date())
     return tasks.filter(t =>
       t.due_date &&
       t.status !== 'done' &&
-      parseISO(t.due_date) < now
+      parseISO(t.due_date) < today
     )
   }, [tasks])
 

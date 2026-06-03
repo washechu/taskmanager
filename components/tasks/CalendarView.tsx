@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import {
   startOfMonth, endOfMonth, eachDayOfInterval, format, isSameMonth,
   startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks,
-  addDays, subDays, isToday, isPast,
+  addDays, subDays, isToday, startOfDay, parseISO, isBefore,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
@@ -205,15 +205,16 @@ function TodayView({ anchor, tasksByDate, tasks, onTaskOpen }: {
 }) {
   const dayKey = format(anchor, 'yyyy-MM-dd')
   const todayTasks = tasksByDate.get(dayKey) ?? []
-  const overdue = useMemo(
-    () => tasks.filter(t =>
+  const overdue = useMemo(() => {
+    // «Просрочено» = строго ДО сегодня (день не закончился — не просрочка).
+    const today = startOfDay(new Date())
+    return tasks.filter(t =>
       t.due_date &&
       t.status !== 'done' &&
-      isPast(new Date(t.due_date)) &&
+      isBefore(parseISO(t.due_date), today) &&
       t.due_date !== dayKey
-    ).sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? '')),
-    [tasks, dayKey]
-  )
+    ).sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
+  }, [tasks, dayKey])
 
   return (
     <div className="overflow-y-auto p-4">
