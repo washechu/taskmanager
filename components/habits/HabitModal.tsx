@@ -30,9 +30,9 @@ const COLOR_DOT: Record<string, string> = {
 }
 
 const SCHEDULE_OPTIONS = [
-  { value: 'daily'     as const, label: 'Ежедневно'   },
-  { value: 'weekdays'  as const, label: 'Дни недели'  },
-  { value: 'monthdays' as const, label: 'Дни месяца'  },
+  { value: 'daily'     as const, label: 'Ежедневно' },
+  { value: 'weekdays'  as const, label: 'Неделя'    },
+  { value: 'monthdays' as const, label: 'Месяц'     },
 ]
 
 /** Человекочитаемая подпись расписания привычки. */

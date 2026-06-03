@@ -63,8 +63,9 @@ function DayCircle({
   const content = label !== undefined ? label : done ? '✓' : missed ? '·' : ''
   const box = size === 'lg' ? 'h-9 w-9 text-base sm:h-11 sm:w-11' : 'h-8 w-8 text-xs'
 
-  // Пропущенные прошлые дни — read-only (нельзя задним числом ставить ✓).
-  const disabled = future || missed
+  // Прошлое read-only (ни поставить, ни снять задним числом). Кликается
+  // только сегодня — поставить или снять при ошибочном тапе.
+  const disabled = !isNow
   return (
     <button
       onClick={() => !disabled && onToggle()}
