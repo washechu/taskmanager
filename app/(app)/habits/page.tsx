@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { format } from 'date-fns'
 import { HabitsView } from '@/components/habits/HabitsView'
 import { HabitModal, HabitForm } from '@/components/habits/HabitModal'
 import { Fab } from '@/components/ui/Fab'
@@ -10,12 +11,14 @@ import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { isoWeekday, type Habit } from '@/lib/types'
 
+type Scope = 'today' | 'done' | 'all'
+
 export default function HabitsPage() {
   const { habits, logs, loading, createHabit, updateHabit, deleteHabit, toggleLog } = useHabits()
   const currentUser = useCurrentUser()
   const [creating, setCreating] = useState(false)
   const [selected, setSelected] = useState<Habit | null>(null)
-  const [scope, setScope] = useState<'all' | 'today'>('all')
+  const [scope, setScope] = useState<Scope>('today')
 
   // Показываем только привычки текущего пользователя (чужие смотреть незачем).
   // Если пользователь не распознан (email не совпал) — показываем все, чтобы не было пусто.
@@ -23,9 +26,22 @@ export default function HabitsPage() {
     ? habits.filter(h => h.assignee === currentUser.assignee)
     : habits
 
-  // «Сегодня» — только те, у кого сегодняшний день в расписании.
   const todayIso = isoWeekday(new Date())
-  const filtered = scope === 'today' ? mine.filter(h => h.weekdays.includes(todayIso)) : mine
+  const todayDate = format(new Date(), 'yyyy-MM-dd')
+  const doneTodayIds = new Set(logs.filter(l => l.date === todayDate).map(l => l.habit_id))
+
+  const scheduledToday = mine.filter(h => h.weekdays.includes(todayIso))
+  const filtered =
+    scope === 'all'   ? mine :
+    scope === 'done'  ? scheduledToday.filter(h => doneTodayIds.has(h.id)) :
+                        scheduledToday.filter(h => !doneTodayIds.has(h.id)) // 'today'
+
+  // Контекстные пустые состояния по вкладкам
+  const emptyText =
+    scope === 'all'  ? undefined :
+    scope === 'done' ? 'Сегодня пока ничего не отмечено' :
+    scheduledToday.length === 0 ? 'На сегодня привычек по расписанию нет' :
+                                  'Все привычки на сегодня выполнены 🎉'
 
   return (
     <div className="flex h-full flex-col">
@@ -44,8 +60,9 @@ export default function HabitsPage() {
             onChange={setScope}
             ariaLabel="Какие привычки показывать"
             options={[
-              { value: 'all',   label: 'Все привычки' },
-              { value: 'today', label: 'Сегодня'      },
+              { value: 'today', label: 'Сегодня' },
+              { value: 'done',  label: 'Готово'  },
+              { value: 'all',   label: 'Все'     },
             ] as const}
           />
         </div>
@@ -62,7 +79,7 @@ export default function HabitsPage() {
             logs={logs}
             onToggle={toggleLog}
             onOpen={setSelected}
-            emptyText={scope === 'today' ? 'На сегодня привычек по расписанию нет' : undefined}
+            emptyText={emptyText}
           />
         )}
       </div>
