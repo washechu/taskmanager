@@ -54,7 +54,7 @@ export function ProjectFilters({ filters, currentUserAssignee, onChange }: Proje
       />
 
       {!isAutoScoped && (
-        <Field label="Ответственный">
+        <Field label="Участник">
           <Select value={filters.assignee} onChange={e => set('assignee', e.target.value as Assignee | 'all')}>
             <option value="all">Все</option>
             {Object.entries(ASSIGNEES).map(([k, v]) => (

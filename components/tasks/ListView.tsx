@@ -7,6 +7,7 @@ import {
 } from 'date-fns'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { dueStatus, dueIcon } from '@/lib/dueStatus'
 import {
   STATUSES, STATUS_ORDER, type Status, type Task, type Project,
 } from '@/lib/types'
@@ -35,7 +36,7 @@ const SLICE_OPTIONS = [
 export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>('due_date')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
-  const [slice, setSlice] = useState<Slice>('all')
+  const [slice, setSlice] = useState<Slice>('today')
 
   const toggle = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -88,12 +89,10 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
   const arrow = (key: SortKey) =>
     sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''
 
-  const todayStart = startOfDay(new Date())
-
   return (
     <div className="flex flex-col gap-3">
       <SegmentedControl
-        variant="filter"
+        variant="view"
         value={slice}
         onChange={setSlice}
         ariaLabel="Фильтр по дедлайну"
@@ -115,8 +114,11 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {sorted.map(task => {
               const project = projects.find(p => p.id === task.project_id)
-              // Today != overdue: красим красным только если due_date строго ДО сегодня
-              const overdue = task.due_date && parseISO(task.due_date) < todayStart && task.status !== 'done'
+              const due = dueStatus(task)
+              const dueCls =
+                due === 'overdue' ? 'text-red-500 font-medium' :
+                due === 'today'   ? 'text-orange-500 font-medium' :
+                                    'text-gray-400'
 
               return (
                 <tr
@@ -151,8 +153,10 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
                       ? '—'
                       : task.assignees.map(a => a === 'nick' ? 'Никита' : 'Галочка').join(' + ')}
                   </td>
-                  <td className={`px-3 py-2 text-sm ${overdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                    {task.due_date ?? '—'}
+                  <td className={`px-3 py-2 text-sm ${dueCls}`}>
+                    {task.due_date
+                      ? <>{due && due !== 'future' ? `${dueIcon(due)} ` : ''}{task.due_date}</>
+                      : '—'}
                   </td>
                 </tr>
               )

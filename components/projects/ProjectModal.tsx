@@ -97,7 +97,7 @@ export function ProjectForm({
         </div>
         <div className="col-span-2">
           <label className={LABEL_CLASS}>
-            Ответственные {form.category === 'family' && <span className="text-red-500">*</span>}
+            Участники {form.category === 'family' && <span className="text-red-500">*</span>}
           </label>
           <AssigneePicker
             value={form.assignees}

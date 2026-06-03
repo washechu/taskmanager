@@ -26,8 +26,8 @@ export function diffTask(oldT: Task, updates: Partial<Task>, projects: Project[]
     const newSet = new Set(updates.assignees)
     const added   = updates.assignees.filter(a => !oldSet.has(a))
     const removed = oldT.assignees.filter(a => !newSet.has(a))
-    if (added.length)   out.push(`Добавлен ответственный: ${added.map(a => ASSIGNEES[a].label).join(', ')}`)
-    if (removed.length) out.push(`Убран ответственный: ${removed.map(a => ASSIGNEES[a].label).join(', ')}`)
+    if (added.length)   out.push(`Добавлен участник: ${added.map(a => ASSIGNEES[a].label).join(', ')}`)
+    if (removed.length) out.push(`Убран участник: ${removed.map(a => ASSIGNEES[a].label).join(', ')}`)
   }
   if ('project_id' in updates && updates.project_id !== oldT.project_id) {
     out.push(`Проект: ${projectTitle(oldT.project_id)} → ${projectTitle(updates.project_id)}`)

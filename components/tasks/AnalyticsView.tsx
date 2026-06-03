@@ -190,7 +190,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Период</span>
         <SegmentedControl
-          variant="filter"
+          variant="view"
           value={period}
           onChange={setPeriod}
           ariaLabel="Период аналитики"
@@ -248,7 +248,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
           )}
         </Card>
 
-        <Card title="По ответственным">
+        <Card title="По участникам">
           {assigneeData.length === 0 ? (
             <EmptyChart />
           ) : (

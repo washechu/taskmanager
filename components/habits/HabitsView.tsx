@@ -1,15 +1,12 @@
 'use client'
 
-import { useState } from 'react'
 import {
-  startOfWeek, addWeeks, addDays,
-  format, isSameDay, isSameWeek, isAfter, startOfDay,
+  startOfWeek, addDays, startOfMonth, endOfMonth, endOfWeek, eachDayOfInterval,
+  format, isSameDay, isSameMonth, isAfter, startOfDay,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { IconButton } from '@/components/ui/IconButton'
-import { Button } from '@/components/ui/Button'
-import { isHabitScheduledOn, type Habit, type HabitLog } from '@/lib/types'
+import { isHabitScheduledOn, WEEKDAYS, type Habit, type HabitLog } from '@/lib/types'
 
 const HABIT_BG: Record<string, string> = {
   gray:   'bg-gray-500',
@@ -41,7 +38,7 @@ function computeStreak(habit: Habit, doneSet: Set<string>): number {
 
 /** Кружок одного дня. */
 function DayCircle({
-  date, done, color, today, future, onToggle,
+  date, done, color, today, future, onToggle, size = 'lg', label,
 }: {
   date: Date
   done: boolean
@@ -49,6 +46,8 @@ function DayCircle({
   today: Date
   future: boolean
   onToggle: () => void
+  size?: 'lg' | 'sm'
+  label?: string
 }) {
   const isNow = isSameDay(date, today)
   const missed = !done && !future && !isNow
@@ -61,25 +60,25 @@ function DayCircle({
         ? 'border-2 border-blue-500 text-blue-600 dark:text-blue-400'
         : 'border-2 border-dashed border-red-300 text-red-400 dark:border-red-900/70 dark:text-red-500/70'
 
-  const content = done ? '✓' : missed ? '·' : ''
+  const content = label !== undefined ? label : done ? '✓' : missed ? '·' : ''
+  const box = size === 'lg' ? 'h-9 w-9 text-base sm:h-11 sm:w-11' : 'h-8 w-8 text-xs'
 
   // Пропущенные прошлые дни — read-only (нельзя задним числом ставить ✓).
-  // Готовые прошлые дни — кликаются для снятия отметки.
   const disabled = future || missed
   return (
     <button
       onClick={() => !disabled && onToggle()}
       disabled={disabled}
       aria-label={fmtKey(date)}
-      className={`flex h-9 w-9 items-center justify-center rounded-full text-base transition-all active:scale-90 disabled:cursor-default sm:h-11 sm:w-11 ${cls}`}
+      className={`flex items-center justify-center rounded-full transition-all active:scale-90 disabled:cursor-default ${box} ${cls}`}
     >
       {content}
     </button>
   )
 }
 
-function HabitCardHeader({ habit, streak, doneCount, total }: {
-  habit: Habit; streak: number; doneCount: number; total: number
+function HabitCardHeader({ habit, streak, doneCount, total, unit }: {
+  habit: Habit; streak: number; doneCount: number; total: number; unit: string
 }) {
   const pct = total ? Math.round((doneCount / total) * 100) : 0
   return (
@@ -104,9 +103,79 @@ function HabitCardHeader({ habit, streak, doneCount, total }: {
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
             <div className={`h-full rounded-full ${HABIT_BG[habit.color] ?? HABIT_BG.blue} transition-all`} style={{ width: `${pct}%` }} />
           </div>
-          <span className="flex-shrink-0 text-[11px] tabular-nums text-gray-400">{doneCount}/{total} на неделе</span>
+          <span className="flex-shrink-0 text-[11px] tabular-nums text-gray-400">{doneCount}/{total} {unit}</span>
         </div>
       )}
+    </>
+  )
+}
+
+/** Недельная полоса (запланированные дни этой недели). Для daily/weekdays. */
+function WeekStrip({ habit, doneSet, today, onToggle }: {
+  habit: Habit; doneSet: Set<string>; today: Date; onToggle: (date: string) => void
+}) {
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 })
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  const scheduled = weekDays.filter(d => isHabitScheduledOn(habit, d))
+
+  if (scheduled.length === 0) {
+    return <p className="mt-3 text-xs text-gray-400">На этой неделе нет запланированных дней</p>
+  }
+  return (
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {scheduled.map(d => (
+        <div key={fmtKey(d)} className="flex flex-col items-center gap-1">
+          <span className={`text-[11px] uppercase ${isSameDay(d, today) ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+            {format(d, 'EEEEEE', { locale: ru })}
+          </span>
+          <DayCircle date={d} color={habit.color} today={today}
+            done={doneSet.has(fmtKey(d))} future={isAfter(startOfDay(d), today)}
+            onToggle={() => onToggle(fmtKey(d))} />
+          <span className={`text-[11px] ${isSameDay(d, today) ? 'font-medium text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+            {format(d, 'd')}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Месячный grid (тепловая карта). Для monthdays. */
+function MonthGrid({ habit, doneSet, today, onToggle }: {
+  habit: Habit; doneSet: Set<string>; today: Date; onToggle: (date: string) => void
+}) {
+  const monthStart = startOfMonth(today)
+  const gridDays = eachDayOfInterval({
+    start: startOfWeek(monthStart, { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(monthStart), { weekStartsOn: 1 }),
+  })
+  return (
+    <>
+      <div className="mt-3 grid grid-cols-7 gap-1 text-center">
+        {WEEKDAYS.map(d => (
+          <span key={d.value} className="text-[11px] uppercase text-gray-400">{d.short}</span>
+        ))}
+      </div>
+      <div className="mt-1 grid grid-cols-7 place-items-center gap-1">
+        {gridDays.map(d => {
+          const inMonth = isSameMonth(d, monthStart)
+          const scheduled = isHabitScheduledOn(habit, d)
+          if (!inMonth) return <span key={fmtKey(d)} className="h-8 w-8" />
+          if (!scheduled) {
+            return (
+              <span key={fmtKey(d)} className="flex h-8 w-8 items-center justify-center text-xs text-gray-400 dark:text-gray-700">
+                {format(d, 'd')}
+              </span>
+            )
+          }
+          return (
+            <DayCircle key={fmtKey(d)} date={d} color={habit.color} today={today}
+              done={doneSet.has(fmtKey(d))} future={isAfter(startOfDay(d), today)}
+              label={format(d, 'd')} size="sm"
+              onToggle={() => onToggle(fmtKey(d))} />
+          )
+        })}
+      </div>
     </>
   )
 }
@@ -120,7 +189,6 @@ export function HabitsView({
   onOpen: (habit: Habit) => void
   emptyText?: string
 }) {
-  const [anchor, setAnchor] = useState(() => new Date())
   const today = startOfDay(new Date())
 
   const doneByHabit = new Map<string, Set<string>>()
@@ -129,69 +197,46 @@ export function HabitsView({
     doneByHabit.get(l.habit_id)!.add(l.date)
   }
 
-  // Один режим — недельная полоса; перемещение анкора шагает неделями.
-  const weekStart = startOfWeek(anchor, { weekStartsOn: 1 })
+  // Period scope для прогресс-бара:
+  // - monthdays → текущий месяц
+  // - daily / weekdays → текущая неделя
+  const monthStart = startOfMonth(today)
+  const monthEnd = endOfMonth(today)
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 })
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-  const rangeLabel = `${format(weekStart, 'd MMM', { locale: ru })} — ${format(addDays(weekStart, 6), 'd MMM', { locale: ru })}`
-  const onCurrentPeriod = isSameWeek(anchor, new Date(), { weekStartsOn: 1 })
+  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
+
+  if (habits.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <EmptyState text={emptyText ?? 'Привычек пока нет — добавь первую через кнопку справа внизу'} />
+      </div>
+    )
+  }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      {/* Тулбар: навигация по неделям. Без режима — карточки сами знают, как себя рисовать. */}
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-1">
-        <IconButton onClick={() => setAnchor(a => addWeeks(a, -1))} aria-label="Назад">←</IconButton>
-        <span className="min-w-[8.5rem] text-center text-sm font-medium capitalize text-gray-900 dark:text-gray-100">{rangeLabel}</span>
-        <IconButton onClick={() => setAnchor(a => addWeeks(a, 1))} aria-label="Вперёд">→</IconButton>
-        <Button
-          variant="secondary"
-          onClick={() => setAnchor(new Date())}
-          disabled={onCurrentPeriod}
-          className="ml-1"
-        >
-          Сегодня
-        </Button>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-3">
+      {habits.map(habit => {
+        const doneSet = doneByHabit.get(habit.id) ?? new Set<string>()
+        const streak = computeStreak(habit, doneSet)
+        const isMonthly = habit.schedule_type === 'monthdays'
 
-      {habits.length === 0 ? (
-        <EmptyState text={emptyText ?? 'Привычек пока нет — добавь первую через кнопку справа внизу'} />
-      ) : (
-        <div className="space-y-3">
-          {habits.map(habit => {
-            const doneSet = doneByHabit.get(habit.id) ?? new Set<string>()
-            const streak = computeStreak(habit, doneSet)
+        const periodDays = isMonthly ? monthDays : weekDays
+        const scheduled = periodDays.filter(d => isHabitScheduledOn(habit, d))
+        const doneCount = scheduled.filter(d => doneSet.has(fmtKey(d))).length
+        const unit = isMonthly ? 'за месяц' : 'на неделе'
 
-            const scheduled = weekDays.filter(d => isHabitScheduledOn(habit, d))
-            const doneCount = scheduled.filter(d => doneSet.has(fmtKey(d))).length
-
-            return (
-              <div key={habit.id} className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <button onClick={() => onOpen(habit)} className="block w-full text-left">
-                  <HabitCardHeader habit={habit} streak={streak} doneCount={doneCount} total={scheduled.length} />
-                </button>
-                {scheduled.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {scheduled.map(d => (
-                      <div key={fmtKey(d)} className="flex flex-col items-center gap-1">
-                        <span className={`text-[11px] uppercase ${isSameDay(d, today) ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
-                          {format(d, 'EEEEEE', { locale: ru })}
-                        </span>
-                        <DayCircle date={d} color={habit.color} today={today}
-                          done={doneSet.has(fmtKey(d))} future={isAfter(startOfDay(d), today)}
-                          onToggle={() => onToggle(habit.id, fmtKey(d))} />
-                        <span className={`text-[11px] ${isSameDay(d, today) ? 'font-medium text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
-                          {format(d, 'd')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs text-gray-400">На этой неделе нет запланированных дней</p>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
+        return (
+          <div key={habit.id} className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <button onClick={() => onOpen(habit)} className="block w-full text-left">
+              <HabitCardHeader habit={habit} streak={streak} doneCount={doneCount} total={scheduled.length} unit={unit} />
+            </button>
+            {isMonthly
+              ? <MonthGrid habit={habit} doneSet={doneSet} today={today} onToggle={(d) => onToggle(habit.id, d)} />
+              : <WeekStrip habit={habit} doneSet={doneSet} today={today} onToggle={(d) => onToggle(habit.id, d)} />}
+          </div>
+        )
+      })}
     </div>
   )
 }

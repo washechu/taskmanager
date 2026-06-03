@@ -102,7 +102,7 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
 
         <div className="col-span-2">
           <label className={LABEL_CLASS}>
-            Ответственные {form.category === 'family' && <span className="text-red-500">*</span>}
+            Участники {form.category === 'family' && <span className="text-red-500">*</span>}
           </label>
           <AssigneePicker
             value={form.assignees}
