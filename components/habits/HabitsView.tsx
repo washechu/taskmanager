@@ -71,10 +71,14 @@ function DayCircle({
 
   const content = label !== undefined ? label : (done ? '✓' : missed ? '·' : '')
 
+  // Пропущенные прошлые дни — read-only: нельзя задним числом отметить
+  // (если уже выполнил, можно снять; если был запланирован и пропустил —
+  //  кружок остаётся как «летопись», но недоступен для клика).
+  const disabled = future || missed
   return (
     <button
-      onClick={() => !future && onToggle()}
-      disabled={future}
+      onClick={() => !disabled && onToggle()}
+      disabled={disabled}
       aria-label={fmtKey(date)}
       className={`flex items-center justify-center rounded-full transition-all active:scale-90 disabled:cursor-default ${box} ${cls}`}
     >
