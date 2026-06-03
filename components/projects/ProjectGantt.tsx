@@ -82,14 +82,8 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
       out.push({ project, projectRange, taskRanges })
     }
 
-    // Unaffiliated tasks (no project_id) — show them under "Без проекта"
-    const orphans = tasks
-      .filter(t => !t.project_id)
-      .map(t => ({ task: t, range: rangeOf(t.start_date, t.due_date) }))
-      .filter((x): x is { task: Task; range: Range } => x.range !== null)
-    if (orphans.length > 0) {
-      out.push({ project: null, projectRange: null, taskRanges: orphans })
-    }
+    // Orphan-задачи (без project_id) намеренно скрыты в Ганте: пользователь
+    // хочет видеть только проекты и их задачи. Бесхозные сидят в Списке/Канбане.
 
     return out
   }, [projects, tasks])
@@ -106,9 +100,10 @@ export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }
     [projects, tasks]
   )
 
-  // Tasks without dates — show in sidebar (mirrors Calendar behavior)
+  // Задачи без дат — в сайдбар «Без дат». Только привязанные к проекту;
+  // бесхозные orphan-задачи в Ганте не показываются.
   const undatedTasks = useMemo(() =>
-    tasks.filter(t => !t.start_date && !t.due_date),
+    tasks.filter(t => t.project_id && !t.start_date && !t.due_date),
     [tasks]
   )
 
