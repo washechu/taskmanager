@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { TextArea } from '@/components/ui/TextArea'
 import { DateInput } from '@/components/ui/DateInput'
+import { AssigneePicker } from '@/components/ui/AssigneePicker'
 import {
   STATUSES, CATEGORIES, ASSIGNEES, STATUS_ORDER,
   type Project, type Status, type Category, type Assignee,
@@ -48,14 +49,14 @@ export function ProjectForm({
     description: initial?.description ?? null,
     status: initial?.status ?? 'todo',
     category: initial?.category ?? 'personal',
-    assignee: initial?.assignee ?? defaultAssignee ?? null,
+    assignees: initial?.assignees ?? (defaultAssignee ? [defaultAssignee] : []),
     start_date: initial?.start_date ?? null,
     due_date: initial?.due_date ?? null,
   })
   const [saving, setSaving] = useState(false)
   const set = <K extends keyof ProjectFormData>(k: K, v: ProjectFormData[K]) => setForm(f => ({ ...f, [k]: v }))
 
-  const needsAssignee = form.category === 'family' && !form.assignee
+  const needsAssignee = form.category === 'family' && form.assignees.length === 0
   const dateError = form.start_date && form.due_date && form.start_date > form.due_date
     ? 'Дата начала не может быть позже дедлайна'
     : null
@@ -94,23 +95,19 @@ export function ProjectForm({
             {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </Select>
         </div>
-        <div>
+        <div className="col-span-2">
           <label className={LABEL_CLASS}>
-            Ответственный {form.category === 'family' && <span className="text-red-500">*</span>}
+            Ответственные {form.category === 'family' && <span className="text-red-500">*</span>}
           </label>
-          <Select
-            value={form.assignee ?? ''}
-            onChange={e => set('assignee', (e.target.value as Assignee) || null)}
+          <AssigneePicker
+            value={form.assignees}
+            onChange={(next: Assignee[]) => set('assignees', next)}
             invalid={needsAssignee}
-            className="w-full"
-          >
-            <option value="">Не назначен</option>
-            {Object.entries(ASSIGNEES).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
-            ))}
-          </Select>
+          />
+          {needsAssignee && (
+            <p className="mt-0.5 text-xs text-red-500">Для семейных проектов отметь хотя бы одного</p>
+          )}
         </div>
-        <div />{/* spacer */}
         <div>
           <label className={LABEL_CLASS}>Начало</label>
           <DateInput
@@ -189,9 +186,9 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400 dark:bg-gray-800 dark:text-gray-400">
                   {CATEGORIES[project.category].label}
                 </span>
-                {project.assignee && (
+                {project.assignees.length > 0 && (
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400 dark:bg-gray-800 dark:text-gray-400">
-                    {ASSIGNEES[project.assignee].label}
+                    {project.assignees.map(a => ASSIGNEES[a].label).join(' + ')}
                   </span>
                 )}
               </div>

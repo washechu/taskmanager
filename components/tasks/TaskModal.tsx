@@ -85,11 +85,13 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                     <p className="font-medium text-gray-600 dark:text-gray-100">{task.start_date}</p>
                   </div>
                 )}
-                {task.assignee && (
+                {task.assignees.length > 0 && (
                   <div>
-                    <span className="text-xs text-gray-400">Ответственный</span>
+                    <span className="text-xs text-gray-400">
+                      {task.assignees.length > 1 ? 'Ответственные' : 'Ответственный'}
+                    </span>
                     <p className="font-medium text-gray-600 dark:text-gray-100">
-                      {task.assignee === 'nick' ? 'Никита' : 'Галочка'}
+                      {task.assignees.map(a => a === 'nick' ? 'Никита' : 'Галочка').join(' + ')}
                     </p>
                   </div>
                 )}

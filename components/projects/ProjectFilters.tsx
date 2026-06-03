@@ -73,7 +73,7 @@ export function ProjectFilters({ filters, currentUserAssignee, onChange }: Proje
   )
 }
 
-export function applyProjectFilters<T extends { category: string; assignee: string | null; created_at: string }>(
+export function applyProjectFilters<T extends { category: string; assignees: string[]; created_at: string }>(
   projects: T[],
   filters: ProjectFilterState,
   currentUserAssignee?: Assignee | null,
@@ -88,9 +88,9 @@ export function applyProjectFilters<T extends { category: string; assignee: stri
       if (filters.category !== 'all' && p.category !== filters.category) return false
       if (effectiveAssignee !== 'all') {
         if (p.category === 'personal') {
-          if (p.assignee !== null && p.assignee !== effectiveAssignee) return false
+          if (p.assignees.length > 0 && !p.assignees.includes(effectiveAssignee)) return false
         } else {
-          if (p.assignee !== effectiveAssignee) return false
+          if (!p.assignees.includes(effectiveAssignee)) return false
         }
       }
       return true

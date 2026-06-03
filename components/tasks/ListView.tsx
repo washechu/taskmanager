@@ -68,7 +68,7 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
         case 'title':    cmp = a.title.localeCompare(b.title); break
         case 'status':   cmp = STATUS_RANK[a.status] - STATUS_RANK[b.status]; break
         case 'priority': cmp = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]; break
-        case 'assignee': cmp = (a.assignee ?? '').localeCompare(b.assignee ?? ''); break
+        case 'assignee': cmp = a.assignees.join(',').localeCompare(b.assignees.join(',')); break
         case 'project':
           cmp = (projects.find(p => p.id === a.project_id)?.title ?? '')
             .localeCompare(projects.find(p => p.id === b.project_id)?.title ?? '')
@@ -147,7 +147,9 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
                     {project?.title ?? '—'}
                   </td>
                   <td className="hidden px-3 py-2 text-sm text-gray-400 md:table-cell">
-                    {task.assignee === 'nick' ? 'Никита' : task.assignee === 'galya' ? 'Галочка' : '—'}
+                    {task.assignees.length === 0
+                      ? '—'
+                      : task.assignees.map(a => a === 'nick' ? 'Никита' : 'Галочка').join(' + ')}
                   </td>
                   <td className={`px-3 py-2 text-sm ${overdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
                     {task.due_date ?? '—'}

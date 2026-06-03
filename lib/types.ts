@@ -11,7 +11,8 @@ export interface Task {
   priority: Priority
   category: Category
   project_id: string | null
-  assignee: Assignee | null
+  /** Список ответственных. Пустой массив = ничей (loose). м.008 */
+  assignees: Assignee[]
   due_date: string | null
   start_date: string | null
   tags: string[]
@@ -25,7 +26,8 @@ export interface Project {
   description: string | null
   status: Status
   category: Category
-  assignee: Assignee | null
+  /** Список ответственных. Пустой массив = ничей. м.008 */
+  assignees: Assignee[]
   start_date: string | null
   due_date: string | null
   created_at: string

@@ -101,7 +101,7 @@ export function TaskFilters({ filters, currentUserAssignee, onChange }: TaskFilt
   )
 }
 
-export function applyTaskFilters<T extends { category: string; assignee: string | null; tags: string[]; created_at: string }>(
+export function applyTaskFilters<T extends { category: string; assignees: string[]; tags: string[]; created_at: string }>(
   tasks: T[],
   filters: TaskFilterState,
   currentUserAssignee?: Assignee | null,
@@ -121,9 +121,9 @@ export function applyTaskFilters<T extends { category: string; assignee: string 
         // Личные задачи без ответственного считаем своими (loose personal).
         // Семейные без ответственного — нет (ответственного никто не взял).
         if (task.category === 'personal') {
-          if (task.assignee !== null && task.assignee !== effectiveAssignee) return false
+          if (task.assignees.length > 0 && !task.assignees.includes(effectiveAssignee)) return false
         } else {
-          if (task.assignee !== effectiveAssignee) return false
+          if (!task.assignees.includes(effectiveAssignee)) return false
         }
       }
 
