@@ -56,7 +56,7 @@ function ProjectsPageInner() {
     router.push(`/tasks?create=${projectId}`)
   }
 
-  const filtered = applyProjectFilters(projects, filters)
+  const filtered = applyProjectFilters(projects, filters, currentUser.assignee)
 
   return (
     <div className="flex h-full flex-col">
@@ -75,6 +75,7 @@ function ProjectsPageInner() {
         </div>
         <ProjectFilters
           filters={filters}
+          currentUserAssignee={currentUser.assignee}
           onChange={setFilters}
         />
       </div>
