@@ -8,6 +8,9 @@ import { SegmentedControl } from './SegmentedControl'
 interface SubItem {
   view: string
   label: string
+  /** Эмодзи-иконка для мобильного таб-бара (`MobileViewTabs`).
+   *  На десктопе в сайдбаре показывается только `label`. */
+  icon?: string
 }
 
 interface NavLink {
@@ -23,10 +26,10 @@ const links: NavLink[] = [
     label: 'Задачи',
     icon: '🎯',
     subs: [
-      { view: 'kanban',    label: 'Канбан'    },
-      { view: 'list',      label: 'Список'    },
-      { view: 'calendar',  label: 'Календарь' },
-      { view: 'analytics', label: 'Аналитика' },
+      { view: 'kanban',    label: 'Канбан',    icon: '📋' },
+      { view: 'list',      label: 'Список',    icon: '📃' },
+      { view: 'calendar',  label: 'Календарь', icon: '📅' },
+      { view: 'analytics', label: 'Аналитика', icon: '📊' },
     ],
   },
   {
@@ -34,8 +37,8 @@ const links: NavLink[] = [
     label: 'Проекты',
     icon: '📁',
     subs: [
-      { view: 'kanban', label: 'Канбан' },
-      { view: 'gantt',  label: 'Гант'   },
+      { view: 'kanban', label: 'Канбан', icon: '📋' },
+      { view: 'gantt',  label: 'Гант',   icon: '📈' },
     ],
   },
   {
@@ -162,7 +165,11 @@ export function MobileViewTabs({
       className="md:hidden"
       options={subs.map(sub => ({
         value: sub.view,
-        label: sub.label,
+        // На мобиле — эмодзи (короткие, влезают на 360px); fallback на label,
+        // если иконка не задана. aria-label держит доступность.
+        label: sub.icon
+          ? <span className="text-lg leading-none" aria-label={sub.label} title={sub.label}>{sub.icon}</span>
+          : sub.label,
         href: `${basePath}?view=${sub.view}`,
       }))}
     />
