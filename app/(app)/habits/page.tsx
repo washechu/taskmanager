@@ -9,7 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import { isoWeekday, type Habit } from '@/lib/types'
+import { isHabitScheduledOn, type Habit } from '@/lib/types'
 
 type Scope = 'today' | 'done' | 'all'
 
@@ -26,11 +26,11 @@ export default function HabitsPage() {
     ? habits.filter(h => h.assignee === currentUser.assignee)
     : habits
 
-  const todayIso = isoWeekday(new Date())
   const todayDate = format(new Date(), 'yyyy-MM-dd')
+  const today = new Date()
   const doneTodayIds = new Set(logs.filter(l => l.date === todayDate).map(l => l.habit_id))
 
-  const scheduledToday = mine.filter(h => h.weekdays.includes(todayIso))
+  const scheduledToday = mine.filter(h => isHabitScheduledOn(h, today))
   const filtered =
     scope === 'all'   ? mine :
     scope === 'done'  ? scheduledToday.filter(h => doneTodayIds.has(h.id)) :

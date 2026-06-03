@@ -71,7 +71,13 @@ export interface Tag {
   created_at: string
 }
 
-// Регулярные задачи / привычки. Расписание — конкретные дни недели (ISO 1..7).
+// Тип расписания привычки.
+// - daily      — каждый день; weekdays/monthdays игнорируются
+// - weekdays   — по конкретным дням недели (ISO 1=Пн … 7=Вс)
+// - monthdays  — по конкретным дням месяца (1..31)
+export type HabitScheduleType = 'daily' | 'weekdays' | 'monthdays'
+
+// Регулярные задачи / привычки.
 export interface Habit {
   id: string
   title: string
@@ -79,7 +85,9 @@ export interface Habit {
   icon: string | null  // эмодзи (зарезервировано; пикер в UI убран — рисуем цветную точку)
   category: Category   // всегда 'personal' — привычки индивидуальны, в UI не задаётся
   assignee: Assignee | null  // = тот, кто создал привычку
-  weekdays: number[]   // ISO weekday numbers 1=Пн … 7=Вс
+  schedule_type: HabitScheduleType
+  weekdays: number[]   // используется только для type='weekdays'
+  monthdays: number[]  // используется только для type='monthdays'
   color: string        // палитра TAG_COLORS
   archived: boolean
   created_at: string
@@ -103,6 +111,14 @@ export const WEEKDAYS: { value: number; short: string; label: string }[] = [
   { value: 6, short: 'Сб', label: 'Суббота'     },
   { value: 7, short: 'Вс', label: 'Воскресенье' },
 ]
+
+/** Запланирована ли привычка на эту дату по её расписанию. */
+export function isHabitScheduledOn(habit: Habit, date: Date): boolean {
+  if (habit.schedule_type === 'daily') return true
+  if (habit.schedule_type === 'monthdays') return habit.monthdays.includes(date.getDate())
+  // weekdays — дефолт и backwards-compat для существующих записей
+  return habit.weekdays.includes(isoWeekday(date))
+}
 
 /** JS Date → ISO weekday (1=Пн … 7=Вс) */
 export const isoWeekday = (d: Date): number => ((d.getDay() + 6) % 7) + 1
