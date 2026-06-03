@@ -115,9 +115,14 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
   }, [tasksInPeriod])
 
   /* ── Donut: assignee distribution (within period) ─────── */
+  // Задачи с несколькими ответственными считаются у каждого. Сумма
+  // секторов может превышать число задач в выборке.
   const assigneeData = useMemo(() => {
     const counts: Record<string, number> = { nick: 0, galya: 0, none: 0 }
-    for (const t of tasksInPeriod) counts[t.assignee ?? 'none']++
+    for (const t of tasksInPeriod) {
+      if (t.assignees.length === 0) counts.none++
+      else for (const a of t.assignees) counts[a]++
+    }
     return [
       { name: ASSIGNEES.nick.label,  value: counts.nick,  key: 'nick'  },
       { name: ASSIGNEES.galya.label, value: counts.galya, key: 'galya' },

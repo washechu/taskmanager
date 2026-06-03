@@ -78,6 +78,7 @@
 │       ├── Select.tsx            # Нативный <select> (h-10), invalid prop
 │       ├── TextArea.tsx          # Многострочный input, высота через rows
 │       ├── DateInput.tsx         # Input type=date + ✕ кнопка очистки (iOS Safari fix)
+│       ├── AssigneePicker.tsx    # Чип-тогглер множественных ответственных (м.008)
 │       ├── SegmentedControl.tsx  # Сегмент-контрол: variant view (iOS-пилюля) / filter (синяя заливка)
 │       ├── Fab.tsx               # Floating Action Button (создание задачи/проекта)
 │       ├── Navigation.tsx        # Sidebar/bottom nav (с эмодзи) + экспорт MobileViewTabs (использует SegmentedControl)
@@ -108,7 +109,8 @@
 │   ├── 004_comment_kind.sql      # comments.kind ('user'/'audit')
 │   ├── 005_habits.sql            # Таблицы habits + habit_logs (привычки)
 │   ├── 006_habit_icons.sql       # habits.icon (эмодзи) + дефолт category
-│   └── 007_habit_schedule_types.sql # habits.schedule_type + monthdays
+│   ├── 007_habit_schedule_types.sql # habits.schedule_type + monthdays
+│   └── 008_multi_assignee.sql    # tasks/projects: assignee → assignees text[]
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -163,7 +165,8 @@ create table projects (
   status text not null default 'todo'
     check (status in ('todo', 'in_progress', 'done', 'paused')),
   category text not null check (category in ('personal', 'family')),
-  assignee text check (assignee in ('nick', 'galya')),  -- м.003
+  assignees text[] not null default '{}'                -- м.008 (множественные)
+    check (assignees <@ array['nick','galya']::text[]),
   start_date date,
   due_date date,
   created_at timestamptz default now(),
@@ -181,7 +184,8 @@ create table tasks (
     check (priority in ('high', 'medium', 'low')),
   category text not null check (category in ('personal', 'family')),
   project_id uuid references projects(id) on delete set null,
-  assignee text check (assignee in ('nick', 'galya')),
+  assignees text[] not null default '{}'                -- м.008 (множественные)
+    check (assignees <@ array['nick','galya']::text[]),
   due_date date,
   start_date date,
   tags text[] default '{}',     -- массив имён тегов (метаданные цвета в таблице tags)
@@ -647,11 +651,17 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 - **Месяц**: текущий месяц, `DAY_WIDTH = 32px`
 - Бары клипуются к видимому диапазону, точки центрируются в свой день.
 
-### Логика ответственного
-- **Личные задачи** (category=personal) — assignee необязателен.
-- **Семейные задачи** (category=family) — assignee обязателен, форма не отправится без него (визуальный warn).
-- При создании новой задачи `assignee` по умолчанию = `currentUser.assignee` (тот, кто сейчас залогинен).
-- Та же логика для проектов: `ProjectForm` принимает `defaultAssignee`.
+### Логика ответственного (м.008 — множественные)
+
+Задачи и проекты имеют `assignees: Assignee[]` — можно отметить обоих, одного или никого. Привычки остаются с одним `assignee` (= создатель, индивидуально).
+
+- **Личные** (category=personal) — `assignees` необязательны. Loose-таски (пустой массив) видны как свои у каждого в его «Личное».
+- **Семейные** (category=family) — нужно отметить хотя бы одного. Если выбраны оба — задача появляется в «Личное» у каждого.
+- При создании новой задачи/проекта `assignees` по умолчанию = `[currentUser.assignee]` (тот, кто сейчас залогинен).
+- UI выбора — `<AssigneePicker>` (чип-тогглер): два чипа `Никита` / `Галочка`, click toggles.
+- Фильтр по ответственному в `applyTaskFilters`/`applyProjectFilters` использует `assignees.includes(effectiveAssignee)` вместо строгого `===`. Для personal-категории пустой массив всё ещё разрешён (loose).
+- Аудит-комментарии: `diffTask` выводит «Добавлен ответственный: …» / «Убран ответственный: …».
+- Display: `assignees.map(a => ASSIGNEES[a].label).join(' + ')` — например `Никита + Галочка`.
 
 ### Валидация дат
 - В `TaskForm` и `ProjectForm`: если `start_date > due_date` — выводится красная ошибка под полями, рамки полей красные, кнопка submit заблокирована.

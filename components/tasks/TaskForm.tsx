@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import {
-  STATUSES, PRIORITIES, CATEGORIES, ASSIGNEES, STATUS_ORDER,
+  STATUSES, PRIORITIES, CATEGORIES, STATUS_ORDER,
   type Task, type Status, type Priority, type Category, type Assignee
 } from '@/lib/types'
 import type { Project } from '@/lib/types'
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { TextArea } from '@/components/ui/TextArea'
 import { DateInput } from '@/components/ui/DateInput'
+import { AssigneePicker } from '@/components/ui/AssigneePicker'
 
 type TaskFormData = Omit<Task, 'id' | 'created_at' | 'updated_at'>
 
@@ -34,7 +35,7 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
     priority: initial?.priority ?? 'medium',
     category: initial?.category ?? 'personal',
     project_id: initial?.project_id ?? null,
-    assignee: initial?.assignee ?? defaultAssignee ?? null,
+    assignees: initial?.assignees ?? (defaultAssignee ? [defaultAssignee] : []),
     due_date: initial?.due_date ?? null,
     start_date: initial?.start_date ?? null,
     tags: initial?.tags ?? [],
@@ -57,7 +58,7 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
     setSaving(false)
   }
 
-  const needsAssignee = form.category === 'family' && !form.assignee
+  const needsAssignee = form.category === 'family' && form.assignees.length === 0
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -99,23 +100,20 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
           </Select>
         </div>
 
-        <div>
+        <div className="col-span-2">
           <label className={LABEL_CLASS}>
-            Ответственный {form.category === 'family' && <span className="text-red-500">*</span>}
+            Ответственные {form.category === 'family' && <span className="text-red-500">*</span>}
           </label>
-          <Select
-            value={form.assignee ?? ''}
-            onChange={e => set('assignee', (e.target.value as Assignee) || null)}
+          <AssigneePicker
+            value={form.assignees}
+            onChange={(next: Assignee[]) => set('assignees', next)}
             invalid={needsAssignee}
-            className="w-full"
-          >
-            <option value="">Не назначен</option>
-            {Object.entries(ASSIGNEES).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
-            ))}
-          </Select>
+          />
           {needsAssignee && (
-            <p className="mt-0.5 text-xs text-red-500">Для семейных задач укажите ответственного</p>
+            <p className="mt-0.5 text-xs text-red-500">Для семейных задач отметь хотя бы одного</p>
+          )}
+          {form.assignees.length > 1 && (
+            <p className="mt-0.5 text-xs text-gray-400">Задача видна у обоих — в «Личное» у каждого</p>
           )}
         </div>
 
