@@ -69,8 +69,8 @@ function ProjectsPageInner() {
         </div>
         <div className="mt-4">
           <MobileViewTabs basePath="/projects" subs={[
-            { view: 'kanban', label: 'Канбан' },
-            { view: 'gantt',  label: 'Гант'   },
+            { view: 'kanban', label: 'Канбан', icon: '📋' },
+            { view: 'gantt',  label: 'Гант',   icon: '📈' },
           ]} />
         </div>
         <ProjectFilters

@@ -119,10 +119,10 @@ function TasksPageInner() {
         )}
         <div className="mt-4">
           <MobileViewTabs basePath="/tasks" subs={[
-            { view: 'kanban',    label: 'Канбан'    },
-            { view: 'list',      label: 'Список'    },
-            { view: 'calendar',  label: 'Календарь' },
-            { view: 'analytics', label: 'Аналитика' },
+            { view: 'kanban',    label: 'Канбан',    icon: '📋' },
+            { view: 'list',      label: 'Список',    icon: '📃' },
+            { view: 'calendar',  label: 'Календарь', icon: '📅' },
+            { view: 'analytics', label: 'Аналитика', icon: '📊' },
           ]} />
         </div>
         <TaskFilters
