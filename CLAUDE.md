@@ -40,13 +40,14 @@
 ├── app/                          # Next.js App Router
 │   ├── (auth)/login/             # Страница входа
 │   ├── (app)/
+│   │   ├── today/page.tsx        # 🏠 Сегодня (просрочка + сегодняшние задачи + привычки)
 │   │   ├── tasks/page.tsx        # Задачи (Канбан / Список / Календарь / Аналитика)
 │   │   ├── projects/page.tsx     # Проекты (Канбан / Гант)
 │   │   ├── habits/page.tsx       # Привычки (недельный чеклист по дням недели)
 │   │   └── layout.tsx            # Layout с навигацией + auth guard
 │   ├── layout.tsx                # PWA metadata, viewport, icons
 │   ├── globals.css               # Кастомные стили селектов и пр.
-│   └── page.tsx                  # redirect → /tasks
+│   └── page.tsx                  # redirect → /today
 ├── components/
 │   ├── tasks/
 │   │   ├── KanbanBoard.tsx       # Канбан + DnD + state модалок
@@ -90,12 +91,13 @@
 ├── lib/
 │   ├── supabase/{client,server,middleware}.ts  # Supabase клиенты + auth middleware
 │   ├── hooks/
-│   │   ├── useTasks.ts           # CRUD + Realtime
-│   │   ├── useProjects.ts        # CRUD + Realtime
-│   │   ├── useComments.ts        # CRUD + Realtime (вкл. kind)
-│   │   ├── useTags.ts            # CRUD + Realtime
-│   │   ├── useHabits.ts          # CRUD привычек + habit_logs + toggleLog + Realtime
-│   │   └── useCurrentUser.ts     # email → assignee (по env vars)
+│   │   ├── useTasks.ts                # CRUD + Realtime
+│   │   ├── useProjects.ts             # CRUD + Realtime
+│   │   ├── useComments.ts             # CRUD + Realtime (вкл. kind)
+│   │   ├── useTags.ts                 # CRUD + Realtime
+│   │   ├── useHabits.ts               # CRUD привычек + habit_logs + toggleLog + Realtime
+│   │   ├── useCurrentUser.ts          # email → assignee (по env vars)
+│   │   └── useAuditedTaskUpdate.ts    # Обёртка updateTask с audit-комментариями (diffTask)
 │   ├── diffTask.ts               # Утилита: разница старой и новой задачи → audit-строки
 │   ├── dueStatus.ts              # dueStatus(task) → overdue/today/future/null + dueIcon (🔥/⚠️)
 │   └── types.ts                  # Type-ы и enum-словари (STATUSES, PRIORITIES, etc.)
@@ -528,6 +530,22 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 - Глобальное правило, отдельные классы не нужны.
 
 ## Ключевые решения
+
+### Экран «Сегодня» (`/today`)
+
+Дефолтная страница при заходе в приложение (`/` → `/today`). Единая точка входа в день — собирает задачи и привычки в одном месте, чтобы не приходилось обходить три раздела ради дневной картины.
+
+- **Скоуп** — auto-scope на текущего пользователя как в фильтре «Личное»: задачи где `assignees.includes(me)`, либо loose-personal (пустой массив + `category=personal`). Привычки — только `habit.assignee === me`.
+- **Три секции**, видимы только если непусты:
+  - 🔥 **Просрочено** — `due_date < startOfDay(today)`, не done. Сортировка по дедлайну. Акцент красный.
+  - ⚠️ **Задачи на сегодня** — `due_date === today`, не done. Сортировка по приоритету (high → low).
+  - 🔁 **Привычки** — запланированные на сегодня (`isHabitScheduledOn`). Группируются: pending (наверх) + Готово (внизу, с подзаголовком).
+- **Интеракции**:
+  - Чекбокс слева у задачи → `handleUpdate(id, { status: 'done' })` через `useAuditedTaskUpdate` (audit-комментарий сохраняется).
+  - Тап по тексту задачи → открывает `TaskModal` (с тем же handleUpdate).
+  - Тап по строке привычки → `toggleLog`. Read-only тут не нужен — кружок только сегодняшний.
+- **Пустое состояние** (нет ни просрочки, ни сегодняшних, ни привычек) — «Спокойный день — ничего на сегодня. Можно отдохнуть 🌿».
+- **Аудит-обёртка** `useAuditedTaskUpdate(tasks, updateTask, projects, currentUserAssignee)` — вытащена из `/tasks/page.tsx`, чтобы и Today, и страница задач писали одинаковые audit-комментарии при изменении задачи.
 
 ### Канбан
 - Drag & drop через `@dnd-kit` (работает на мобильном — через TouchSensor с delay).

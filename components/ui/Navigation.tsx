@@ -22,6 +22,11 @@ interface NavLink {
 
 const links: NavLink[] = [
   {
+    href: '/today',
+    label: 'Сегодня',
+    icon: '🏠',
+  },
+  {
     href: '/tasks',
     label: 'Задачи',
     icon: '🎯',
