@@ -45,6 +45,7 @@
 │   │   ├── projects/page.tsx     # Проекты (Канбан / Гант)
 │   │   ├── habits/page.tsx       # Привычки (недельный чеклист по дням недели)
 │   │   └── layout.tsx            # Layout с навигацией + auth guard
+│   ├── api/telegram/webhook/route.ts # Telegram Bot webhook (/start, /test, link callbacks)
 │   ├── layout.tsx                # PWA metadata, viewport, icons
 │   ├── globals.css               # Кастомные стили селектов и пр.
 │   └── page.tsx                  # redirect → /today
@@ -101,6 +102,7 @@
 │   ├── diffTask.ts               # Утилита: разница старой и новой задачи → audit-строки
 │   ├── dueStatus.ts              # dueStatus(task) → overdue/today/future/null + dueIcon (🔥/⚠️)
 │   ├── archive.ts                # isArchivedTask(t) — done + updated_at > 14 дней
+│   ├── telegram.ts               # Server-only helper: Telegram Bot API + лог
 │   └── types.ts                  # Type-ы и enum-словари (STATUSES, PRIORITIES, etc.)
 ├── middleware.ts                 # Next.js middleware → updateSession
 ├── scripts/
@@ -114,7 +116,8 @@
 │   ├── 005_habits.sql            # Таблицы habits + habit_logs (привычки)
 │   ├── 006_habit_icons.sql       # habits.icon (эмодзи) + дефолт category
 │   ├── 007_habit_schedule_types.sql # habits.schedule_type + monthdays
-│   └── 008_multi_assignee.sql    # tasks/projects: assignee → assignees text[]
+│   ├── 008_multi_assignee.sql    # tasks/projects: assignee → assignees text[]
+│   └── 009_telegram_notifications.sql # telegram_links + tasks.invited_by/invite_status + telegram_log
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -139,9 +142,11 @@ npm run dev
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=          # publishable key (формат sb_publishable_...)
-SUPABASE_SERVICE_ROLE_KEY=              # только для seed-скрипта
+SUPABASE_SERVICE_ROLE_KEY=              # seed-скрипт + Telegram webhook (server-only)
 NEXT_PUBLIC_NICK_EMAIL=                 # email Никиты для распознавания
 NEXT_PUBLIC_GALYA_EMAIL=                # email Галочки для распознавания
+TELEGRAM_BOT_TOKEN=                     # PR α: токен от @BotFather (server-only)
+TELEGRAM_WEBHOOK_SECRET=                # PR α: 64-hex для валидации входящих webhook (server-only)
 ```
 
 Переменные нужно дублировать в Vercel → Project Settings → Environment Variables.
@@ -531,6 +536,16 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 - Глобальное правило, отдельные классы не нужны.
 
 ## Ключевые решения
+
+### Telegram-уведомления (в разработке)
+
+Дизайн-док: `docs/notifications.md` (утверждён). Реализация по фазам:
+
+- **PR α (текущий):** инфраструктура. Миграция 009 (`telegram_links`, `tasks.invited_by/invite_status`, `telegram_log`). Webhook `app/api/telegram/webhook/route.ts` обрабатывает `/start` (выбор Никита/Галочка через inline-кнопки → upsert в `telegram_links`) и `/test` («Бот на связи»). Helper `lib/telegram.ts` оборачивает Telegram Bot API + лог. Server-only код через service_role (`SUPABASE_SERVICE_ROLE_KEY` в Vercel env).
+- **PR β:** расписание. SQL-функции `send_morning_digest()` / `send_evening_habits()`, pg_cron jobs 08:00 / 21:00 МСК, pg_net → Edge Function `send-telegram`.
+- **PR γ:** события и предложения. UI-блок «Принять / Думаю / Отклонить» в `TaskModal` для `invite_status='pending'`, DB-триггеры на `tasks`/`comments`, обработка `invite:*` callback_data в webhook.
+
+Безопасность: webhook валидирует `X-Telegram-Bot-Api-Secret-Token` против `TELEGRAM_WEBHOOK_SECRET`. RLS на `telegram_links`/`telegram_log` без политик — доступ только через service_role.
 
 ### Архив выполненных задач
 
