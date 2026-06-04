@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { KanbanBoard } from '@/components/tasks/KanbanBoard'
 import { CalendarView } from '@/components/tasks/CalendarView'
@@ -15,8 +15,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useTasks } from '@/lib/hooks/useTasks'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import { createClient } from '@/lib/supabase/client'
-import { diffTask } from '@/lib/diffTask'
+import { useAuditedTaskUpdate } from '@/lib/hooks/useAuditedTaskUpdate'
 import type { Task, Status } from '@/lib/types'
 
 const DEFAULT_FILTERS: TaskFilterState = {
@@ -35,7 +34,7 @@ function TasksPageInner() {
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks()
   const { projects } = useProjects()
   const currentUser = useCurrentUser()
-  const supabase = useMemo(() => createClient(), [])
+  const handleUpdate = useAuditedTaskUpdate(tasks, updateTask, projects, currentUser.assignee)
   const [filters, setFilters] = useState<TaskFilterState>(DEFAULT_FILTERS)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [creating, setCreating] = useState<{ projectId?: string | null } | null>(null)
@@ -69,24 +68,6 @@ function TasksPageInner() {
 
   const navigateToProject = (projectId: string) => {
     router.push(`/projects?open=${projectId}`)
-  }
-
-  /** Wrap updateTask to record audit comments on every successful edit */
-  const handleUpdate = async (id: string, updates: Partial<Task>) => {
-    const oldTask = tasks.find(t => t.id === id)
-    const result = await updateTask(id, updates)
-    if (!result.error && oldTask && currentUser.assignee) {
-      const changes = diffTask(oldTask, updates, projects)
-      if (changes.length > 0) {
-        await supabase.from('comments').insert({
-          task_id: id,
-          kind: 'audit',
-          author: currentUser.assignee,
-          text: changes.join('; '),
-        })
-      }
-    }
-    return result
   }
 
   /** Wrap moveTask (status-only update) — same audit treatment */
