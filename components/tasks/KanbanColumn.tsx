@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { TaskCard } from './TaskCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { STATUSES, type Status, type Task } from '@/lib/types'
 import type { Project } from '@/lib/types'
+import { isArchivedTask, ARCHIVE_DAYS } from '@/lib/archive'
 
 const headerColors: Record<Status, string> = {
   todo:        'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50',
@@ -32,10 +34,17 @@ export function KanbanColumn({
   onTaskOpen, onProjectOpen, onAddTask,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
+  const [showArchive, setShowArchive] = useState(false)
+
+  // Архив есть только в «Готово». В остальных колонках задачи не done — фильтр noop.
+  const archived = status === 'done' ? tasks.filter(t => isArchivedTask(t)) : []
+  const visibleTasks = status === 'done' && !showArchive
+    ? tasks.filter(t => !isArchivedTask(t))
+    : tasks
 
   const sortedTasks = prioritySort === 'none'
-    ? tasks
-    : [...tasks].sort((a, b) => {
+    ? visibleTasks
+    : [...visibleTasks].sort((a, b) => {
         const cmp = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
         return prioritySort === 'desc' ? cmp : -cmp
       })
@@ -49,7 +58,7 @@ export function KanbanColumn({
             {STATUSES[status].label}
           </h3>
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white/80 px-1.5 text-xs font-medium text-gray-400 dark:bg-gray-900/80">
-            {tasks.length}
+            {sortedTasks.length}
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -99,8 +108,20 @@ export function KanbanColumn({
           ))}
         </SortableContext>
 
-        {tasks.length === 0 && (
+        {sortedTasks.length === 0 && archived.length === 0 && (
           <EmptyState text="Задач нет" />
+        )}
+
+        {archived.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowArchive(s => !s)}
+            className="mt-1 rounded-md px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-white/60 hover:text-gray-600 dark:hover:bg-gray-900/60"
+          >
+            {showArchive
+              ? `Скрыть архив`
+              : `Показать архив (${archived.length}, старше ${ARCHIVE_DAYS} дней)`}
+          </button>
         )}
       </div>
     </div>

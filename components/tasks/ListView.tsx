@@ -8,6 +8,7 @@ import {
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { dueStatus, dueIcon } from '@/lib/dueStatus'
+import { isArchivedTask, ARCHIVE_DAYS } from '@/lib/archive'
 import {
   STATUSES, STATUS_ORDER, type Status, type Task, type Project,
 } from '@/lib/types'
@@ -37,6 +38,14 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
   const [sortKey, setSortKey] = useState<SortKey>('due_date')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [slice, setSlice] = useState<Slice>('today')
+  const [showArchive, setShowArchive] = useState(false)
+
+  // Архивные (done старше 14 дней) — считаем только когда slice=all (там
+  // показываем «всё»). В time-bounded срезах архив нерелевантен.
+  const archivedInAll = useMemo(
+    () => slice === 'all' ? tasks.filter(t => isArchivedTask(t)) : [],
+    [tasks, slice],
+  )
 
   const toggle = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -44,9 +53,12 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
   }
 
   // Slice по due_date: today/week/month — задачи без dl исключаются;
-  // all — показывает всё (включая без дедлайна).
+  // all — показывает всё (включая без дедлайна), и тут же скрывает архив
+  // (done старше 14 дней), пока пользователь не раскроет.
   const sliced = useMemo(() => {
-    if (slice === 'all') return tasks
+    if (slice === 'all') {
+      return showArchive ? tasks : tasks.filter(t => !isArchivedTask(t))
+    }
     const today = startOfDay(new Date())
     const weekStart = startOfWeek(today, { weekStartsOn: 1 })
     const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
@@ -59,7 +71,7 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
       if (slice === 'week')  return isWithinInterval(d, { start: weekStart, end: weekEnd })
       return isWithinInterval(d, { start: monthStart, end: monthEnd })
     })
-  }, [tasks, slice])
+  }, [tasks, slice, showArchive])
 
   const sorted = useMemo(() => {
     const arr = [...sliced]
@@ -91,13 +103,26 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
 
   return (
     <div className="flex flex-col gap-3">
-      <SegmentedControl
-        variant="view"
-        value={slice}
-        onChange={setSlice}
-        ariaLabel="Фильтр по дедлайну"
-        options={SLICE_OPTIONS}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SegmentedControl
+          variant="view"
+          value={slice}
+          onChange={(v) => { setSlice(v); setShowArchive(false) }}
+          ariaLabel="Фильтр по дедлайну"
+          options={SLICE_OPTIONS}
+        />
+        {slice === 'all' && archivedInAll.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowArchive(s => !s)}
+            className="text-xs text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+          >
+            {showArchive
+              ? `Скрыть архив`
+              : `Архив (${archivedInAll.length}, старше ${ARCHIVE_DAYS} дней)`}
+          </button>
+        )}
+      </div>
 
       <div className="overflow-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
