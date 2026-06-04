@@ -117,7 +117,8 @@
 │   ├── 006_habit_icons.sql       # habits.icon (эмодзи) + дефолт category
 │   ├── 007_habit_schedule_types.sql # habits.schedule_type + monthdays
 │   ├── 008_multi_assignee.sql    # tasks/projects: assignee → assignees text[]
-│   └── 009_telegram_notifications.sql # telegram_links + tasks.invited_by/invite_status + telegram_log
+│   ├── 009_telegram_notifications.sql # telegram_links + tasks.invited_by/invite_status + telegram_log
+│   └── 010_telegram_schedule.sql # app_settings + pg_cron/pg_net + утренний/вечерний дайджесты
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -541,8 +542,8 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 
 Дизайн-док: `docs/notifications.md` (утверждён). Реализация по фазам:
 
-- **PR α (текущий):** инфраструктура. Миграция 009 (`telegram_links`, `tasks.invited_by/invite_status`, `telegram_log`). Webhook `app/api/telegram/webhook/route.ts` обрабатывает `/start` (выбор Никита/Галочка через inline-кнопки → upsert в `telegram_links`) и `/test` («Бот на связи»). Helper `lib/telegram.ts` оборачивает Telegram Bot API + лог. Server-only код через service_role (`SUPABASE_SERVICE_ROLE_KEY` в Vercel env).
-- **PR β:** расписание. SQL-функции `send_morning_digest()` / `send_evening_habits()`, pg_cron jobs 08:00 / 21:00 МСК, pg_net → Edge Function `send-telegram`.
+- **PR α (готово):** инфраструктура. Миграция 009 (`telegram_links`, `tasks.invited_by/invite_status`, `telegram_log`). Webhook `app/api/telegram/webhook/route.ts` обрабатывает `/start` (выбор Никита/Галочка через inline-кнопки → upsert в `telegram_links`) и `/test`. Helper `lib/telegram.ts` оборачивает Telegram Bot API + лог. Server-only через service_role (`SUPABASE_SERVICE_ROLE_KEY` в Vercel env).
+- **PR β (текущий):** расписание. Миграция 010: таблица `app_settings` для хранения токена бота, расширения `pg_cron`/`pg_net`, SQL-функции `_send_telegram` / `send_morning_digest()` / `send_evening_habits()`, два cron job'а (`tg_morning_digest` 08:00 МСК = 05:00 UTC; `tg_evening_habits` 21:00 МСК = 18:00 UTC). Архитектурное упрощение: без Edge Function — SQL вызывает Telegram API напрямую через `pg_net.http_post`. Это асинхронно: лог фиксирует «отправлено в очередь», реальный ответ Telegram оседает в `net._http_response`.
 - **PR γ:** события и предложения. UI-блок «Принять / Думаю / Отклонить» в `TaskModal` для `invite_status='pending'`, DB-триггеры на `tasks`/`comments`, обработка `invite:*` callback_data в webhook.
 
 Безопасность: webhook валидирует `X-Telegram-Bot-Api-Secret-Token` против `TELEGRAM_WEBHOOK_SECRET`. RLS на `telegram_links`/`telegram_log` без политик — доступ только через service_role.
