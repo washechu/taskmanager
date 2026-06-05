@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 /**
@@ -11,19 +11,17 @@ import { createClient } from '@/lib/supabase/client'
  * recovery-письма, которое Supabase отправляет через
  * supabase.auth.resetPasswordForEmail(email, { redirectTo: '/auth/reset' }).
  *
- * Логика установки сессии:
- *   • supabase-js при создании клиента сам разбирает hash-токены из URL
- *     (`#access_token=...&type=recovery`) и эмитит событие PASSWORD_RECOVERY
- *   • PKCE-флоу: если в URL есть `?code=`, дополнительно зовём
- *     exchangeCodeForSession; SIGNED_IN-событие приедет когда успешно
+ * С `flowType: 'implicit'` в client.ts ссылка содержит hash-токены
+ * `#access_token=...&type=recovery&...`. supabase-js при загрузке клиента
+ * сам разбирает hash и эмитит событие PASSWORD_RECOVERY. Слушаем — и сразу
+ * показываем форму нового пароля. 5-секундный таймаут как страховка.
  *
- * Слушаем onAuthStateChange — это надёжнее чем сразу опрашивать getSession
- * (асинхронная обработка hash может ещё не завершиться к моменту useEffect).
- * После 5 секунд без события считаем ссылку битой.
+ * Implicit-flow вместо PKCE — потому что recovery cross-device:
+ * один пользователь запросил, другой получил письмо, кликает у себя.
+ * PKCE-верификатор остался у первого, exchange бы упал.
  */
 function ResetPasswordInner() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const [password, setPassword] = useState('')
@@ -43,7 +41,8 @@ function ResetPasswordInner() {
       if (timeoutId) { clearTimeout(timeoutId); timeoutId = null }
     }
 
-    // 1. Подписка на изменения авторизации
+    // Слушаем PASSWORD_RECOVERY — supabase-js эмитит его после успешного
+    // парсинга hash из URL.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
       if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
@@ -51,32 +50,19 @@ function ResetPasswordInner() {
       }
     })
 
-    // 2. Если код прилетел через PKCE, обмениваем — это триггернёт SIGNED_IN
-    const code = searchParams.get('code')
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (!mounted) return
-        if (error) {
-          // Не критично — может уже обменян supabase-js'ом автоматически
-          // Подождём onAuthStateChange или timeout
-        }
-      })
-    }
-
-    // 3. На всякий случай проверим, не была ли сессия установлена раньше
-    //    (например, пользователь уже был залогинен и тут recovery поверх)
+    // Если сессия уже была установлена раньше (например, обновили страницу) —
+    // сразу показываем форму.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return
       if (session) markReady()
     })
 
-    // 4. Если за 5 секунд ничего не произошло — считаем ссылку битой
+    // Если за 5 секунд supabase-js не успел установить сессию — ссылка
+    // битая или истёкшая.
     timeoutId = setTimeout(() => {
       if (!mounted) return
-      if (phase === 'waiting') {
-        setError('Ссылка недействительна или истекла. Попроси новое письмо со страницы входа.')
-        setPhase('expired')
-      }
+      setPhase(prev => prev === 'waiting' ? 'expired' : prev)
+      setError('Ссылка недействительна или истекла. Попроси новое письмо со страницы входа.')
     }, 5000)
 
     return () => {
