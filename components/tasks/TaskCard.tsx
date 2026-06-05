@@ -77,6 +77,16 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
           {CATEGORIES[task.category].label}
         </span>
+        {task.invite_status === 'pending' && (
+          <span className="rounded-full bg-yellow-50 px-2 py-0.5 text-xs text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300">
+            ⏳ Ждёт ответа
+          </span>
+        )}
+        {task.invite_status === 'tentative' && (
+          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+            🤔 Думает
+          </span>
+        )}
         {project && (
           <button
             onClick={e => { e.stopPropagation(); onProjectOpen?.(project.id) }}
