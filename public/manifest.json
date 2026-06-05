@@ -2,7 +2,7 @@
   "name": "Планировщик",
   "short_name": "Планировщик",
   "description": "Персональный планировщик Никиты и Галочки",
-  "start_url": "/tasks",
+  "start_url": "/today",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
