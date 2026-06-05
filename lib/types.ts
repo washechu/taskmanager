@@ -16,6 +16,10 @@ export interface Task {
   due_date: string | null
   start_date: string | null
   tags: string[]
+  /** Кто предложил задачу (для семейных с двумя участниками). м.009 */
+  invited_by: Assignee | null
+  /** Статус ответа на предложение. м.009 */
+  invite_status: 'none' | 'pending' | 'accepted' | 'tentative' | 'declined'
   created_at: string
   updated_at: string
 }

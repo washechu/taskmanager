@@ -49,5 +49,25 @@ export function diffTask(oldT: Task, updates: Partial<Task>, projects: Project[]
     if (added.length)   out.push(`Добавлен тег: ${added.map(t => `«${t}»`).join(', ')}`)
     if (removed.length) out.push(`Удалён тег: ${removed.map(t => `«${t}»`).join(', ')}`)
   }
+  if ('invite_status' in updates && updates.invite_status !== undefined && updates.invite_status !== oldT.invite_status) {
+    const inviteText = describeInvite(oldT.invite_status, updates.invite_status)
+    if (inviteText) out.push(inviteText)
+  }
   return out
+}
+
+function describeInvite(
+  oldStatus: Task['invite_status'],
+  newStatus: NonNullable<Task['invite_status']>,
+): string | null {
+  // pending → финальный
+  if (oldStatus === 'pending') {
+    if (newStatus === 'accepted')                return 'Принял предложение'
+    if (newStatus === 'tentative')               return 'Сказал: думаю'
+    if (newStatus === 'declined' || newStatus === 'none') return 'Отклонил предложение'
+  }
+  // Переключение между финальными (можно accepted ↔ tentative)
+  if ((oldStatus === 'accepted' && newStatus === 'tentative')) return 'Изменил ответ: думаю'
+  if ((oldStatus === 'tentative' && newStatus === 'accepted')) return 'Изменил ответ: принял'
+  return null
 }

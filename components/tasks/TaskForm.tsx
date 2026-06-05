@@ -39,6 +39,9 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
     due_date: initial?.due_date ?? null,
     start_date: initial?.start_date ?? null,
     tags: initial?.tags ?? [],
+    // Поля приглашения автозаполняются DB-триггером _auto_set_invite при INSERT.
+    invited_by:    initial?.invited_by    ?? null,
+    invite_status: initial?.invite_status ?? 'none',
   })
   const [saving, setSaving] = useState(false)
 

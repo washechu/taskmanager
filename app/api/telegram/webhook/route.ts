@@ -181,8 +181,13 @@ async function handleCallbackQuery(
     return
   }
 
-  // Прочие callback_data — для будущих фаз (invite:*, etc.). Заглушка.
-  await answerCallback(cb.id, 'Эта кнопка пока не реализована')
+  if (data.startsWith('invite:')) {
+    await handleInviteCallback(supabase, cb)
+    return
+  }
+
+  // Неизвестная кнопка
+  await answerCallback(cb.id, 'Эта кнопка пока не поддерживается')
 }
 
 async function handleLinkCallback(
@@ -230,4 +235,89 @@ async function handleLinkCallback(
     `✓ Чат привязан как <b>${displayName(assignee)}</b>.\nПроверить связь — /test`,
   )
   await logTelegram(supabase, { assignee, kind: 'start', result: editResult })
+}
+
+/* ── Invite callbacks (Принять / Думаю / Отклонить из Telegram) ─── */
+async function handleInviteCallback(
+  supabase: ReturnType<typeof makeSupabase>,
+  cb: TgCallbackQuery,
+) {
+  // Формат: invite:<task_id>:<accept|tentative|decline>
+  const parts = (cb.data ?? '').split(':')
+  if (parts.length !== 3 || parts[0] !== 'invite') {
+    await answerCallback(cb.id, 'Неверный формат')
+    return
+  }
+  const taskId = parts[1]
+  const response = parts[2]
+  if (response !== 'accept' && response !== 'tentative' && response !== 'decline') {
+    await answerCallback(cb.id, 'Неизвестное действие')
+    return
+  }
+
+  const chatId = cb.message?.chat.id
+  const messageId = cb.message?.message_id
+  if (!chatId || !messageId) {
+    await answerCallback(cb.id, 'Ошибка контекста')
+    return
+  }
+
+  // Кто нажал?
+  const { data: link } = await supabase
+    .from('telegram_links')
+    .select('assignee')
+    .eq('chat_id', chatId)
+    .maybeSingle()
+  if (!link) {
+    await answerCallback(cb.id, 'Сначала /start')
+    return
+  }
+  const responder = link.assignee as Assignee
+
+  // Зовём SQL RPC, которая обновит задачу + audit + триггеры уведомят инициатора
+  const { data, error } = await supabase.rpc('respond_to_invite_rpc', {
+    p_task_id: taskId,
+    p_response: response,
+    p_actor: responder,
+  })
+
+  if (error) {
+    await answerCallback(cb.id, 'Ошибка: ' + error.message.slice(0, 100))
+    await logTelegram(supabase, {
+      assignee: responder, kind: 'invite_reply',
+      result: { ok: false, status: 0, description: error.message },
+    })
+    return
+  }
+
+  // RPC возвращает { ok, error? } — проверим бизнес-логику
+  const rpcResult = data as { ok: boolean; error?: string } | null
+  if (rpcResult && rpcResult.ok === false) {
+    await answerCallback(cb.id, rpcResult.error ?? 'Не удалось ответить')
+    return
+  }
+
+  // Эмодзи + надпись по выбранному ответу
+  const summary =
+    response === 'accept'    ? '✅ Принято' :
+    response === 'tentative' ? '🤔 Подумаешь' :
+                                '❌ Отклонено'
+
+  await answerCallback(cb.id, summary)
+
+  // Заменяем сообщение: убираем кнопки, показываем итог.
+  // Достанем заголовок задачи, чтобы оставить контекст.
+  const { data: task } = await supabase
+    .from('tasks').select('title').eq('id', taskId).maybeSingle()
+  const title = task?.title ?? ''
+
+  const editResult: TgResult = await editMessage(
+    chatId, messageId,
+    `${summary}\n\n<b>${escapeHtml(title)}</b>`,
+  )
+  await logTelegram(supabase, { assignee: responder, kind: 'invite_reply', result: editResult })
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
