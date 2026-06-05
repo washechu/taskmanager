@@ -27,18 +27,23 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+  const pathname = request.nextUrl.pathname
+  const isLoginPage = pathname.startsWith('/login')
+  // /auth/* — flow восстановления пароля и т.п. Допуск и анонимам
+  // (приходят по ссылке из письма), и залогиненным (recovery-сессия
+  // установлена supabase-js'ом, дальше выбирают новый пароль).
+  const isAuthFlow = pathname.startsWith('/auth')
+  const isApiRoute = pathname.startsWith('/api')
 
-  if (!user && !isAuthPage && !isApiRoute) {
+  if (!user && !isLoginPage && !isAuthFlow && !isApiRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthPage) {
+  if (user && isLoginPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/tasks'
+    url.pathname = '/today'
     return NextResponse.redirect(url)
   }
 
