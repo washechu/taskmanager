@@ -52,7 +52,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 dark:bg-gray-950">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Таски</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Планировщик</h1>
           <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
             {mode === 'login' ? 'Персональный таск-менеджер' : 'Сброс пароля'}
           </p>
