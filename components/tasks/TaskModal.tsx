@@ -9,7 +9,8 @@ import { IconButton } from '@/components/ui/IconButton'
 import { TagChip } from '@/components/ui/TagChip'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
-import { CATEGORIES } from '@/lib/types'
+import { Button } from '@/components/ui/Button'
+import { CATEGORIES, ASSIGNEES } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import type { Task, Project, Assignee } from '@/lib/types'
 
@@ -59,6 +60,8 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
         />
       ) : (
             <div className="space-y-4">
+              <InviteBlock task={task} currentUser={currentUser} onUpdate={onUpdate} />
+
               {/* Status + Priority + Category badges row */}
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={task.status} />
@@ -131,4 +134,92 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
       />
     </Modal>
   )
+}
+
+/**
+ * Блок ответа на семейное предложение. Логика:
+ *   • invite_status='pending' и я НЕ инициатор → 3 кнопки (Принять / Думаю / Отклонить)
+ *   • invite_status='pending' и я инициатор → «Ждём ответа от …»
+ *   • invite_status='accepted'/'tentative' → чип со статусом + (если я отвечавший)
+ *     кнопка переключения между accepted ↔ tentative
+ *   • Иначе не рендерим ничего
+ */
+function InviteBlock({
+  task, currentUser, onUpdate,
+}: {
+  task: Task
+  currentUser: Assignee
+  onUpdate: (id: string, updates: Partial<Task>) => Promise<{ error: unknown }>
+}) {
+  const isInviter = task.invited_by === currentUser
+  const otherParticipant = task.assignees.find(a => a !== task.invited_by) ?? null
+
+  // Pending — поверх всего
+  if (task.invite_status === 'pending') {
+    if (isInviter) {
+      return (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
+          ⏳ Ждём ответа от <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b>
+        </div>
+      )
+    }
+    return (
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/40">
+        <p className="text-sm text-blue-900 dark:text-blue-100">
+          👋 <b>{task.invited_by ? ASSIGNEES[task.invited_by].label : 'Партнёр'}</b> предложил тебе задачу. Что скажешь?
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button variant="primary" onClick={() => onUpdate(task.id, { invite_status: 'accepted' })}>
+            ✅ Принять
+          </Button>
+          <Button variant="secondary" onClick={() => onUpdate(task.id, { invite_status: 'tentative' })}>
+            🤔 Думаю
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              // Отклонить = задача переходит к одному invited_by, статус сбрасывается на none
+              if (!task.invited_by) return
+              onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
+            }}
+          >
+            ❌ Отклонить
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Финальный статус — accepted / tentative
+  if (task.invite_status === 'accepted' || task.invite_status === 'tentative') {
+    const canSwitch = !isInviter
+    return (
+      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-800/40">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-gray-900 dark:text-gray-100">
+            {task.invite_status === 'accepted'
+              ? <>✅ <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> принял предложение</>
+              : <>🤔 <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> думает</>}
+          </span>
+          {canSwitch && (
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate(task.id, {
+                  invite_status: task.invite_status === 'accepted' ? 'tentative' : 'accepted',
+                })
+              }
+              className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+            >
+              {task.invite_status === 'accepted' ? 'Поменять на «думаю»' : 'Поменять на «принять»'}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // 'none' / 'declined' / отсутствие приглашения — ничего не показываем.
+  // История ответа всё равно видна в audit-комментариях ниже.
+  return null
 }
