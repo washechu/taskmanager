@@ -59,6 +59,19 @@ export default function TodayPage() {
       .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority])
   }, [tasks, todayIso, mine])
 
+  // Приглашения, ожидающие моего ответа (я приглашённый, статус pending).
+  const pendingInvites = useMemo(() => {
+    if (!currentUser.assignee) return []
+    return tasks
+      .filter(t =>
+        t.invite_status === 'pending' &&
+        t.invited_by !== null &&
+        t.invited_by !== currentUser.assignee &&
+        t.assignees.includes(currentUser.assignee!),
+      )
+      .sort((a, b) => (a.due_date ?? 'zzzz').localeCompare(b.due_date ?? 'zzzz'))
+  }, [tasks, currentUser.assignee])
+
   // Habits — только свои.
   const myHabits = currentUser.assignee
     ? habits.filter(h => h.assignee === currentUser.assignee)
@@ -75,7 +88,8 @@ export default function TodayPage() {
   const navigateToProject = (projectId: string) => router.push(`/projects?open=${projectId}`)
 
   const allClear =
-    overdueTasks.length === 0 && todayTasks.length === 0 && scheduledHabits.length === 0
+    overdueTasks.length === 0 && todayTasks.length === 0 &&
+    scheduledHabits.length === 0 && pendingInvites.length === 0
 
   return (
     <div className="flex h-full flex-col">
@@ -90,6 +104,20 @@ export default function TodayPage() {
             <EmptyState text="Спокойный день — ничего на сегодня. Можно отдохнуть 🌿" />
           ) : (
             <div className="space-y-6">
+              {pendingInvites.length > 0 && (
+                <Section title="Ждут твоего ответа" icon="👋" count={pendingInvites.length}>
+                  {pendingInvites.map(task => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      project={projects.find(p => p.id === task.project_id) ?? null}
+                      onOpen={() => setSelectedTask(task)}
+                      onComplete={() => completeTask(task.id)}
+                    />
+                  ))}
+                </Section>
+              )}
+
               {overdueTasks.length > 0 && (
                 <Section title="Просрочено" icon="🔥" count={overdueTasks.length} accent>
                   {overdueTasks.map(task => (
