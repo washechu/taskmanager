@@ -70,8 +70,7 @@
 │   │   └── ProjectGantt.tsx      # Иерархический Гант: проекты + вложенные задачи
 │   ├── habits/
 │   │   ├── HabitsView.tsx        # Карточки: WeekStrip для daily/weekdays, MonthGrid для monthdays
-│   │   ├── HabitModal.tsx        # Модалка привычки (view + edit) + HabitForm (эмодзи-иконка) + блок «Статистика»
-│   │   └── HabitAnalytics.tsx    # Сводная аналитика: период + KPI + leaderboard
+│   │   └── HabitModal.tsx        # Модалка привычки (view + edit) + HabitForm (эмодзи-иконка) + блок «Статистика»
 │   └── ui/                       # Базовые примитивы дизайн-системы
 │       ├── Modal.tsx             # Единый шелл диалогов: overlay+panel+header+body, layer/size/dismissable
 │       ├── ConfirmModal.tsx      # Поверх Modal: подтверждение действия, layer=confirm

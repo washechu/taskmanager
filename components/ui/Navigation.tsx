@@ -50,10 +50,6 @@ const links: NavLink[] = [
     href: '/habits',
     label: 'Привычки',
     icon: '🔁',
-    subs: [
-      { view: 'list',      label: 'Список',    icon: '📃' },
-      { view: 'analytics', label: 'Аналитика', icon: '📊' },
-    ],
   },
 ]
 
