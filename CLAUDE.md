@@ -128,7 +128,8 @@
 │   ├── 014_invite_delegation.sql # _auto_set_invite + _notify_partner_done для делегирования (assignees=1)
 │   ├── 015_invite_sent_timeout.sql # таймаут 15с в _notify_invite_sent + феминитив «предложила»
 │   ├── 016_done_url_button.sql   # URL-кнопка «Открыть задачу» в пуше done + _send_telegram(reply_markup)
-│   └── 017_invite_buttons_emoji_only.sql # эмодзи без подписей у callback-кнопок ответа в пуше invite
+│   ├── 017_invite_buttons_emoji_only.sql # эмодзи без подписей у callback-кнопок ответа в пуше invite
+│   └── 018_fix_send_telegram_overload.sql # фикс: drop устаревшей 4-арной сигнатуры _send_telegram (регрессия м.016)
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
