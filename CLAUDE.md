@@ -103,6 +103,7 @@
 │   │   └── useAuditedTaskUpdate.ts    # Обёртка updateTask с audit-комментариями (diffTask)
 │   ├── diffTask.ts               # Утилита: разница старой и новой задачи → audit-строки
 │   ├── dueStatus.ts              # dueStatus(task) → overdue/today/future/null + dueIcon (🔥/⚠️)
+│   ├── habitStats.ts             # Стат по привычке: текущая/лучшая серия, total, % за 30 дней
 │   ├── archive.ts                # isArchivedTask(t) — done + updated_at > 14 дней
 │   ├── telegram.ts               # Server-only helper: Telegram Bot API + лог
 │   └── types.ts                  # Type-ы и enum-словари (STATUSES, PRIORITIES, etc.)

@@ -102,6 +102,7 @@ export default function HabitsPage() {
       {selected && (
         <HabitModal
           habit={selected}
+          logs={logs}
           onUpdate={async (id, updates) => {
             const result = await updateHabit(id, updates)
             setSelected(prev => prev ? { ...prev, ...updates } : null)
