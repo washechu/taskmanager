@@ -7,6 +7,7 @@ import {
 import { ru } from 'date-fns/locale'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { isHabitScheduledOn, WEEKDAYS, type Habit, type HabitLog } from '@/lib/types'
+import { computeCurrentStreak } from '@/lib/habitStats'
 
 const HABIT_BG: Record<string, string> = {
   gray:   'bg-gray-500',
@@ -21,20 +22,6 @@ const HABIT_BG: Record<string, string> = {
 const HABIT_DOT: Record<string, string> = { ...HABIT_BG, yellow: 'bg-yellow-400', gray: 'bg-gray-400' }
 
 const fmtKey = (d: Date) => format(d, 'yyyy-MM-dd')
-
-/** Серия: подряд выполненных запланированных дней, считая назад от сегодня. */
-function computeStreak(habit: Habit, doneSet: Set<string>): number {
-  let streak = 0
-  let cursor = startOfDay(new Date())
-  for (let i = 0; i < 366; i++) {
-    if (isHabitScheduledOn(habit, cursor)) {
-      if (doneSet.has(fmtKey(cursor))) streak++
-      else break
-    }
-    cursor = addDays(cursor, -1)
-  }
-  return streak
-}
 
 /** Кружок одного дня. */
 function DayCircle({
@@ -219,7 +206,7 @@ export function HabitsView({
     <div className="mx-auto max-w-2xl space-y-3">
       {habits.map(habit => {
         const doneSet = doneByHabit.get(habit.id) ?? new Set<string>()
-        const streak = computeStreak(habit, doneSet)
+        const streak = computeCurrentStreak(habit, doneSet)
         const isMonthly = habit.schedule_type === 'monthdays'
 
         const periodDays = isMonthly ? monthDays : weekDays

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Modal } from '@/components/ui/Modal'
 import { IconButton } from '@/components/ui/IconButton'
@@ -10,8 +10,15 @@ import { TextArea } from '@/components/ui/TextArea'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import {
   ASSIGNEES, WEEKDAYS, TAG_COLORS,
-  type Habit, type Assignee, type HabitScheduleType,
+  type Habit, type HabitLog, type Assignee, type HabitScheduleType,
 } from '@/lib/types'
+import {
+  buildDoneSet,
+  computeBestStreak,
+  computeCompletionRate,
+  computeCurrentStreak,
+  computeTotalCompletions,
+} from '@/lib/habitStats'
 
 const LABEL_CLASS = 'mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300'
 
@@ -244,12 +251,13 @@ export function HabitForm({
 
 interface HabitModalProps {
   habit: Habit
+  logs: HabitLog[]
   onUpdate: (id: string, updates: Partial<Habit>) => Promise<{ error: unknown }>
   onDelete: (id: string) => Promise<{ error: unknown }>
   onClose: () => void
 }
 
-export function HabitModal({ habit, onUpdate, onDelete, onClose }: HabitModalProps) {
+export function HabitModal({ habit, logs, onUpdate, onDelete, onClose }: HabitModalProps) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -298,6 +306,7 @@ export function HabitModal({ habit, onUpdate, onDelete, onClose }: HabitModalPro
           {habit.description && (
             <p className="whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300">{habit.description}</p>
           )}
+          <HabitStats habit={habit} logs={logs} />
         </div>
       )}
 
@@ -309,5 +318,54 @@ export function HabitModal({ habit, onUpdate, onDelete, onClose }: HabitModalPro
         onCancel={() => setConfirmDelete(false)}
       />
     </Modal>
+  )
+}
+
+/**
+ * Базовая статистика по привычке. 4 числа:
+ *   • Текущая серия — подряд выполненных запланированных дней до сегодня
+ *   • Лучшая серия — самая длинная за всё время (capped 1 годом)
+ *   • % за 30 дней — completion rate за последние 30 дней
+ *   • Всего — суммарное число отметок
+ *
+ * Считается на клиенте поверх `habit_logs`. Дёшево, но обёрнуто в useMemo,
+ * чтобы пересчёт не дергался зря при ре-рендерах модалки.
+ */
+function HabitStats({ habit, logs }: { habit: Habit; logs: HabitLog[] }) {
+  // doneSet считаем один раз и переиспользуем в трёх метриках.
+  const stats = useMemo(() => {
+    const doneSet = buildDoneSet(habit.id, logs)
+    return {
+      current: computeCurrentStreak(habit, doneSet),
+      best:    computeBestStreak(habit, doneSet),
+      rate:    computeCompletionRate(habit, doneSet, 30),
+      total:   computeTotalCompletions(habit.id, logs),
+    }
+  }, [habit, logs])
+
+  return (
+    <div>
+      <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+        Статистика
+      </h4>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <StatCard label="Сейчас" value={stats.current} suffix="🔥" />
+        <StatCard label="Лучшая" value={stats.best} />
+        <StatCard label="За 30 дней" value={stats.rate === null ? '—' : `${stats.rate}%`} />
+        <StatCard label="Всего" value={stats.total} />
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ label, value, suffix }: { label: string; value: string | number; suffix?: string }) {
+  const isZero = value === 0 || value === '0' || value === '—'
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
+      <div className="text-[11px] uppercase tracking-wide text-gray-400">{label}</div>
+      <div className={`mt-1 text-xl font-semibold tabular-nums ${isZero ? 'text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+        {value}{suffix && !isZero && <span className="ml-1 text-base">{suffix}</span>}
+      </div>
+    </div>
   )
 }
