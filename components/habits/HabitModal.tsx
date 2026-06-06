@@ -343,28 +343,50 @@ function HabitStats({ habit, logs }: { habit: Habit; logs: HabitLog[] }) {
     }
   }, [habit, logs])
 
+  // Цвет для completion rate: ≥70% зелёный, ≥40% жёлтый, <40% красный
+  const rateColor = stats.rate === null ? 'muted'
+    : stats.rate >= 70 ? 'green'
+    : stats.rate >= 40 ? 'yellow'
+                       : 'red'
+
   return (
-    <div>
-      <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+    <div className="border-t border-gray-100 pt-4 dark:border-gray-800">
+      <h4 className="mb-3 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
         Статистика
       </h4>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <StatCard label="Сейчас" value={stats.current} suffix="🔥" />
-        <StatCard label="Лучшая" value={stats.best} />
-        <StatCard label="За 30 дней" value={stats.rate === null ? '—' : `${stats.rate}%`} />
-        <StatCard label="Всего" value={stats.total} />
+        <StatCard label="🔥 Серия" value={stats.current} color="orange" />
+        <StatCard label="Лучшая"   value={stats.best}    color="amber" />
+        <StatCard
+          label="За 30 дней"
+          value={stats.rate === null ? '—' : `${stats.rate}%`}
+          color={rateColor}
+        />
+        <StatCard label="Всего"    value={stats.total}   color="blue" />
       </div>
     </div>
   )
 }
 
-function StatCard({ label, value, suffix }: { label: string; value: string | number; suffix?: string }) {
-  const isZero = value === 0 || value === '0' || value === '—'
+const STAT_COLOR: Record<string, string> = {
+  orange: 'text-orange-600 dark:text-orange-400',
+  amber:  'text-amber-600  dark:text-amber-400',
+  green:  'text-green-600  dark:text-green-400',
+  yellow: 'text-yellow-600 dark:text-yellow-400',
+  red:    'text-red-600    dark:text-red-400',
+  blue:   'text-blue-600   dark:text-blue-400',
+  muted:  'text-gray-400',
+}
+
+function StatCard({ label, value, color }: { label: string; value: string | number; color: string }) {
+  // Нулевые/прочерк значения всегда серые — не визжат пустотой
+  const isEmpty = value === 0 || value === '0' || value === '—'
+  const valueCls = isEmpty ? STAT_COLOR.muted : STAT_COLOR[color]
   return (
     <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
       <div className="text-[11px] uppercase tracking-wide text-gray-400">{label}</div>
-      <div className={`mt-1 text-xl font-semibold tabular-nums ${isZero ? 'text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-        {value}{suffix && !isZero && <span className="ml-1 text-base">{suffix}</span>}
+      <div className={`mt-1 text-xl font-semibold tabular-nums ${valueCls}`}>
+        {value}
       </div>
     </div>
   )
