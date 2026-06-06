@@ -193,6 +193,7 @@ function InviteBlock({
   // Финальный статус — accepted / tentative
   if (task.invite_status === 'accepted' || task.invite_status === 'tentative') {
     const canSwitch = !isInviter
+    const isTentative = task.invite_status === 'tentative'
     return (
       <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-800/40">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -201,17 +202,37 @@ function InviteBlock({
               ? <>✅ <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> принял предложение</>
               : <>🤔 <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> думает</>}
           </span>
-          {canSwitch && (
+          {canSwitch && isTentative && (
+            <div className="flex items-center gap-1">
+              <IconButton
+                size="sm"
+                onClick={() => onUpdate(task.id, { invite_status: 'accepted' })}
+                title="Принять"
+                aria-label="Принять"
+              >
+                ✅
+              </IconButton>
+              <IconButton
+                size="sm"
+                tone="danger"
+                onClick={() => {
+                  if (!task.invited_by) return
+                  onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
+                }}
+                title="Отклонить"
+                aria-label="Отклонить"
+              >
+                ❌
+              </IconButton>
+            </div>
+          )}
+          {canSwitch && !isTentative && (
             <button
               type="button"
-              onClick={() =>
-                onUpdate(task.id, {
-                  invite_status: task.invite_status === 'accepted' ? 'tentative' : 'accepted',
-                })
-              }
+              onClick={() => onUpdate(task.id, { invite_status: 'tentative' })}
               className="text-xs text-blue-600 hover:underline dark:text-blue-400"
             >
-              {task.invite_status === 'accepted' ? 'Поменять на «думаю»' : 'Поменять на «принять»'}
+              Поменять на «думаю»
             </button>
           )}
         </div>
