@@ -119,7 +119,12 @@
 │   ├── 008_multi_assignee.sql    # tasks/projects: assignee → assignees text[]
 │   ├── 009_telegram_notifications.sql # telegram_links + tasks.invited_by/invite_status + telegram_log
 │   ├── 010_telegram_schedule.sql # app_settings + pg_cron/pg_net + утренний/вечерний дайджесты
-│   └── 011_telegram_events.sql   # триггеры событий + RPC respond_to_invite_rpc + send_evening_digest
+│   ├── 011_telegram_events.sql   # триггеры событий + RPC respond_to_invite_rpc + send_evening_digest
+│   ├── 012_invite_polish.sql     # app_url + URL-кнопка в пуше invite_sent + audit «Создано предложение»
+│   ├── 013_invite_polish_2.sql   # URL-кнопка в пуше invite_replied + таймаут pg_net 15с
+│   ├── 014_invite_delegation.sql # _auto_set_invite + _notify_partner_done для делегирования (assignees=1)
+│   ├── 015_invite_sent_timeout.sql # таймаут 15с в _notify_invite_sent + феминитив «предложила»
+│   └── 016_done_url_button.sql   # URL-кнопка «Открыть задачу» в пуше done + _send_telegram(reply_markup)
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons

@@ -131,27 +131,22 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
   }, [tasksInPeriod])
 
   /* ── Stacked bar: tasks created per bucket, by status ──── */
-  const { barData, bucketLabel } = useMemo(() => {
-    // Pick bucket size based on period span
+  const barData = useMemo(() => {
     const days = differenceInDays(rangeEnd, rangeStart)
     let buckets: Date[]
     let labelFmt: string
-    let bucketLabel: string
     if (days <= 14) {
       buckets = eachDayOfInterval({ start: rangeStart, end: rangeEnd })
       labelFmt = 'd MMM'
-      bucketLabel = 'день'
     } else if (days <= 100) {
       buckets = eachWeekOfInterval({ start: rangeStart, end: rangeEnd }, { weekStartsOn: 1 })
       labelFmt = 'd MMM'
-      bucketLabel = 'неделя'
     } else {
       buckets = eachMonthOfInterval({ start: rangeStart, end: rangeEnd })
       labelFmt = 'LLL yyyy'
-      bucketLabel = 'месяц'
     }
 
-    const data = buckets.map((bucketStart, idx) => {
+    return buckets.map((bucketStart, idx) => {
       const next = buckets[idx + 1] ?? rangeEnd
       const bucketEnd = next > rangeEnd ? rangeEnd : next
       const counts: Record<Status, number> = { todo: 0, in_progress: 0, done: 0, paused: 0 }
@@ -164,8 +159,6 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
         ...counts,
       }
     })
-
-    return { barData: data, bucketLabel }
   }, [tasks, period, rangeStart, rangeEnd])
 
   /* ── Top tags ─────────────────────────────────────────── */
@@ -271,7 +264,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
       </div>
 
       {/* Stacked bar chart */}
-      <Card title={`Создано задач (по ${bucketLabel}м)`}>
+      <Card title="Создано задач">
           {barData.length === 0 ? (
             <EmptyChart />
           ) : (

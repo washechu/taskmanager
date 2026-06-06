@@ -15,7 +15,7 @@ import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import type { Project } from '@/lib/types'
 
 const DEFAULT_FILTERS: ProjectFilterState = {
-  category: 'personal',
+  category: 'all',
   assignee: 'all',
 }
 
@@ -108,6 +108,7 @@ function ProjectsPageInner() {
         <ProjectModal
           project={selectedProject}
           tasks={tasks}
+          currentUser={currentUser.assignee}
           onUpdate={async (id, updates) => {
             const result = await updateProject(id, updates)
             setSelectedProject(prev => prev ? { ...prev, ...updates } : null)

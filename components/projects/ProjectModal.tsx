@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Modal } from '@/components/ui/Modal'
 import { IconButton } from '@/components/ui/IconButton'
@@ -22,6 +22,7 @@ type ProjectFormData = Omit<Project, 'id' | 'created_at' | 'updated_at'>
 interface ProjectModalProps {
   project: Project
   tasks: Task[]
+  currentUser?: Assignee | null
   onUpdate: (id: string, updates: Partial<Project>) => Promise<{ error: unknown }>
   onDelete: (id: string) => Promise<{ error: unknown }>
   onClose: () => void
@@ -55,6 +56,13 @@ export function ProjectForm({
   })
   const [saving, setSaving] = useState(false)
   const set = <K extends keyof ProjectFormData>(k: K, v: ProjectFormData[K]) => setForm(f => ({ ...f, [k]: v }))
+
+  // Личное всегда у текущего пользователя — пикер скрыт, схлопываем при свитче.
+  useEffect(() => {
+    if (form.category !== 'personal' || !defaultAssignee) return
+    if (form.assignees.length === 1 && form.assignees[0] === defaultAssignee) return
+    setForm(f => ({ ...f, assignees: [defaultAssignee] }))
+  }, [form.category, form.assignees, defaultAssignee])
 
   const needsAssignee = form.category === 'family' && form.assignees.length === 0
   const dateError = form.start_date && form.due_date && form.start_date > form.due_date
@@ -95,19 +103,21 @@ export function ProjectForm({
             {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </Select>
         </div>
-        <div className="col-span-2">
-          <label className={LABEL_CLASS}>
-            Участники {form.category === 'family' && <span className="text-red-500">*</span>}
-          </label>
-          <AssigneePicker
-            value={form.assignees}
-            onChange={(next: Assignee[]) => set('assignees', next)}
-            invalid={needsAssignee}
-          />
-          {needsAssignee && (
-            <p className="mt-0.5 text-xs text-red-500">Для семейных проектов отметь хотя бы одного</p>
-          )}
-        </div>
+        {form.category === 'family' && (
+          <div className="col-span-2">
+            <label className={LABEL_CLASS}>
+              Участники <span className="text-red-500">*</span>
+            </label>
+            <AssigneePicker
+              value={form.assignees}
+              onChange={(next: Assignee[]) => set('assignees', next)}
+              invalid={needsAssignee}
+            />
+            {needsAssignee && (
+              <p className="mt-0.5 text-xs text-red-500">Для семейных проектов отметь хотя бы одного</p>
+            )}
+          </div>
+        )}
         <div>
           <label className={LABEL_CLASS}>Начало</label>
           <DateInput
@@ -149,7 +159,7 @@ export function ProjectForm({
   )
 }
 
-export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTaskOpen, onCreateTask }: ProjectModalProps) {
+export function ProjectModal({ project, tasks, currentUser, onUpdate, onDelete, onClose, onTaskOpen, onCreateTask }: ProjectModalProps) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -178,7 +188,7 @@ export function ProjectModal({ project, tasks, onUpdate, onDelete, onClose, onTa
       )}
     >
       {editing ? (
-        <ProjectForm initial={project} onSubmit={handleUpdate} onCancel={() => setEditing(false)} />
+        <ProjectForm initial={project} defaultAssignee={currentUser ?? null} onSubmit={handleUpdate} onCancel={() => setEditing(false)} />
       ) : (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">

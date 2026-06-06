@@ -19,7 +19,7 @@ import { useAuditedTaskUpdate } from '@/lib/hooks/useAuditedTaskUpdate'
 import type { Task, Status } from '@/lib/types'
 
 const DEFAULT_FILTERS: TaskFilterState = {
-  category: 'personal',
+  category: 'all',
   assignee: 'all',
   tags: [],
 }
