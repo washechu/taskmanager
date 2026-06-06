@@ -129,7 +129,8 @@
 │   ├── 015_invite_sent_timeout.sql # таймаут 15с в _notify_invite_sent + феминитив «предложила»
 │   ├── 016_done_url_button.sql   # URL-кнопка «Открыть задачу» в пуше done + _send_telegram(reply_markup)
 │   ├── 017_invite_buttons_emoji_only.sql # эмодзи без подписей у callback-кнопок ответа в пуше invite
-│   └── 018_fix_send_telegram_overload.sql # фикс: drop устаревшей 4-арной сигнатуры _send_telegram (регрессия м.016)
+│   ├── 018_fix_send_telegram_overload.sql # фикс: drop устаревшей 4-арной сигнатуры _send_telegram (регрессия м.016)
+│   └── 019_digest_overdue_list_and_button.sql # дайджесты: просроченные списком + URL-кнопка «🏠 Открыть планировщик» + _html_escape для title
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
