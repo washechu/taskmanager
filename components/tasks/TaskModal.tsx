@@ -190,21 +190,21 @@ function InviteBlock({
       onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
     }
     return (
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-800/40">
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-800/40 md:flex md:items-center md:justify-between md:gap-3">
         <p className="text-gray-900 dark:text-gray-100">
           {task.invite_status === 'accepted'
             ? <>✅ <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> принял предложение</>
             : <>🤔 <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> думает</>}
         </p>
         {canSwitch && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-2 gap-2 md:mt-0 md:flex md:flex-shrink-0">
             {task.invite_status === 'tentative' && (
-              <InviteAction onClick={() => onUpdate(task.id, { invite_status: 'accepted' })} title="Принять">✅</InviteAction>
+              <InviteAction onClick={() => onUpdate(task.id, { invite_status: 'accepted' })} title="Принять" compactOnDesktop>✅</InviteAction>
             )}
             {task.invite_status === 'accepted' && (
-              <InviteAction onClick={() => onUpdate(task.id, { invite_status: 'tentative' })} title="Думаю">🤔</InviteAction>
+              <InviteAction onClick={() => onUpdate(task.id, { invite_status: 'tentative' })} title="Думаю" compactOnDesktop>🤔</InviteAction>
             )}
-            <InviteAction onClick={decline} title="Отклонить" tone="danger">❌</InviteAction>
+            <InviteAction onClick={decline} title="Отклонить" tone="danger" compactOnDesktop>❌</InviteAction>
           </div>
         )}
       </div>
@@ -222,12 +222,14 @@ function InviteBlock({
  * подсветку на hover, чтобы «отклонить» отличалось от «принять/думаю».
  */
 function InviteAction({
-  children, onClick, title, tone = 'default',
+  children, onClick, title, tone = 'default', compactOnDesktop = false,
 }: {
   children: React.ReactNode
   onClick: () => void
   title: string
   tone?: 'default' | 'danger'
+  /** Quadrate 40×40 на десктопе (для inline-режима accepted/tentative). */
+  compactOnDesktop?: boolean
 }) {
   const hover = tone === 'danger'
     ? 'hover:border-red-300 hover:bg-red-50 dark:hover:border-red-800 dark:hover:bg-red-950'
@@ -238,7 +240,7 @@ function InviteAction({
       onClick={onClick}
       title={title}
       aria-label={title}
-      className={`flex h-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg transition-colors dark:border-gray-700 dark:bg-gray-800 ${hover}`}
+      className={`flex h-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg transition-colors dark:border-gray-700 dark:bg-gray-800 ${compactOnDesktop ? 'md:w-10' : ''} ${hover}`}
     >
       {children}
     </button>
