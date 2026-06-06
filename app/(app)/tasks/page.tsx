@@ -12,6 +12,7 @@ import { TaskFilters, applyTaskFilters, type TaskFilterState } from '@/component
 import { MobileViewTabs } from '@/components/ui/Navigation'
 import { Fab } from '@/components/ui/Fab'
 import { Modal } from '@/components/ui/Modal'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { useTasks } from '@/lib/hooks/useTasks'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
@@ -116,9 +117,7 @@ function TasksPageInner() {
       {/* View body */}
       <div className="flex-1 overflow-auto p-4">
         {loading ? (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-gray-400">Загрузка...</p>
-          </div>
+          <KanbanSkeleton />
         ) : filteredTasks.length === 0 && hasFilters ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
@@ -194,6 +193,29 @@ function TasksPageInner() {
           />
         </Modal>
       )}
+    </div>
+  )
+}
+
+/**
+ * Скелет канбана: 4 колонки со «шапкой» и 2-3 карточками-плейсхолдерами.
+ * Используется и здесь, и в `/projects` (там колонок столько же).
+ */
+function KanbanSkeleton() {
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-4">
+      {[0, 1, 2, 3].map(col => (
+        <div key={col} className="flex w-[85vw] max-w-[18rem] flex-shrink-0 flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50/50 p-2 dark:border-gray-800 dark:bg-gray-950/50 md:w-72">
+          <Skeleton className="h-6 w-24 rounded-md" />
+          {[0, 1, 2].slice(0, 3 - col % 2).map(i => (
+            <div key={i} className="space-y-2 rounded-xl border border-gray-100 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+              <Skeleton className="h-4 w-3/4 rounded" />
+              <Skeleton className="h-3 w-full rounded" />
+              <Skeleton className="h-3 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   )
 }

@@ -1,10 +1,19 @@
-import { STATUSES, PRIORITIES, CATEGORIES, ASSIGNEES, type Task, type Project } from '@/lib/types'
+import { STATUSES, PRIORITIES, CATEGORIES, ASSIGNEES, type Task, type Project, type Assignee } from '@/lib/types'
 
 /**
  * Returns a list of human-readable change descriptions between an old task
  * and a partial update. Used to produce audit comments.
+ *
+ * `actor` нужен только для invite-переходов pending→none: одна и та же
+ * операция читается как «Отклонил предложение» если её сделал invitee, и
+ * как «Отозвал предложение» если её сделал инициатор.
  */
-export function diffTask(oldT: Task, updates: Partial<Task>, projects: Project[]): string[] {
+export function diffTask(
+  oldT: Task,
+  updates: Partial<Task>,
+  projects: Project[],
+  actor?: Assignee | null,
+): string[] {
   const out: string[] = []
   const projectTitle = (id: string | null | undefined) =>
     id ? projects.find(p => p.id === id)?.title ?? '—' : '—'
@@ -50,7 +59,7 @@ export function diffTask(oldT: Task, updates: Partial<Task>, projects: Project[]
     if (removed.length) out.push(`Удалён тег: ${removed.map(t => `«${t}»`).join(', ')}`)
   }
   if ('invite_status' in updates && updates.invite_status !== undefined && updates.invite_status !== oldT.invite_status) {
-    const inviteText = describeInvite(oldT.invite_status, updates.invite_status)
+    const inviteText = describeInvite(oldT.invite_status, updates.invite_status, oldT, actor)
     if (inviteText) out.push(inviteText)
   }
   return out
@@ -59,12 +68,19 @@ export function diffTask(oldT: Task, updates: Partial<Task>, projects: Project[]
 function describeInvite(
   oldStatus: Task['invite_status'],
   newStatus: NonNullable<Task['invite_status']>,
+  oldT: Task,
+  actor?: Assignee | null,
 ): string | null {
   // pending → финальный
   if (oldStatus === 'pending') {
     if (newStatus === 'accepted')                return 'Принял предложение'
     if (newStatus === 'tentative')               return 'Сказал: думаю'
-    if (newStatus === 'declined' || newStatus === 'none') return 'Отклонил предложение'
+    if (newStatus === 'declined' || newStatus === 'none') {
+      // Если триггерит инициатор приглашения — это «отозвал», иначе «отклонил»
+      return actor && oldT.invited_by === actor
+        ? 'Отозвал предложение'
+        : 'Отклонил предложение'
+    }
   }
   // Переключение между финальными (можно accepted ↔ tentative)
   if ((oldStatus === 'accepted' && newStatus === 'tentative')) return 'Изменил ответ: думаю'

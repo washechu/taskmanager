@@ -7,6 +7,7 @@ import { HabitModal, HabitForm } from '@/components/habits/HabitModal'
 import { Fab } from '@/components/ui/Fab'
 import { Modal } from '@/components/ui/Modal'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { isHabitScheduledOn, type Habit } from '@/lib/types'
@@ -70,8 +71,20 @@ export default function HabitsPage() {
 
       <div className="flex-1 overflow-auto p-4 pb-[calc(140px+env(safe-area-inset-bottom))] md:pb-24">
         {loading ? (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-gray-400">Загрузка...</p>
+          <div className="mx-auto max-w-2xl space-y-3">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-3 w-3 flex-shrink-0 rounded-full" />
+                  <Skeleton className="h-4 w-1/2 rounded" />
+                </div>
+                <div className="mt-3 flex gap-2">
+                  {[0, 1, 2, 3, 4, 5, 6].map(d => (
+                    <Skeleton key={d} className="h-8 w-8 rounded-full" />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <HabitsView

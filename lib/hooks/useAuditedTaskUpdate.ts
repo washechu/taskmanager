@@ -25,7 +25,7 @@ export function useAuditedTaskUpdate(
     const oldTask = tasks.find(t => t.id === id)
     const result = await updateTask(id, updates)
     if (!result.error && oldTask && currentUserAssignee) {
-      const changes = diffTask(oldTask, updates, projects)
+      const changes = diffTask(oldTask, updates, projects, currentUserAssignee)
       if (changes.length > 0) {
         await supabase.from('comments').insert({
           task_id: id,

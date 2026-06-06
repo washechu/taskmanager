@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { startOfDay, isBefore, parseISO, format } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -15,6 +15,7 @@ import { Fab } from '@/components/ui/Fab'
 import { Modal } from '@/components/ui/Modal'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { dueStatus, dueIcon } from '@/lib/dueStatus'
 import { isHabitScheduledOn, type Task, type Habit, type Project } from '@/lib/types'
 
@@ -33,9 +34,9 @@ const HABIT_BG: Record<string, string> = {
 
 export default function TodayPage() {
   const router = useRouter()
-  const { tasks, createTask, updateTask, deleteTask } = useTasks()
+  const { tasks, loading: tasksLoading, createTask, updateTask, deleteTask } = useTasks()
   const { projects } = useProjects()
-  const { habits, logs, toggleLog } = useHabits()
+  const { habits, logs, loading: habitsLoading, toggleLog } = useHabits()
   const currentUser = useCurrentUser()
   const handleUpdate = useAuditedTaskUpdate(tasks, updateTask, projects, currentUser.assignee)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -88,7 +89,27 @@ export default function TodayPage() {
   const pendingHabits = scheduledHabits.filter(h => !doneTodayIds.has(h.id))
   const doneHabits = scheduledHabits.filter(h => doneTodayIds.has(h.id))
 
-  const completeTask = (id: string) => handleUpdate(id, { status: 'done' })
+  // Last-completed для тоста «Готово · Отменить». Храним id + старый статус,
+  // чтобы можно было откатить. Авто-сброс через 5 секунд.
+  const [undoState, setUndoState] = useState<{ id: string; prevStatus: Task['status']; title: string } | null>(null)
+
+  const completeTask = (id: string) => {
+    const task = tasks.find(t => t.id === id)
+    if (!task) return
+    setUndoState({ id, prevStatus: task.status, title: task.title })
+    handleUpdate(id, { status: 'done' })
+  }
+  const undoComplete = () => {
+    if (!undoState) return
+    handleUpdate(undoState.id, { status: undoState.prevStatus })
+    setUndoState(null)
+  }
+  useEffect(() => {
+    if (!undoState) return
+    const t = setTimeout(() => setUndoState(null), 5000)
+    return () => clearTimeout(t)
+  }, [undoState])
+
   const navigateToProject = (projectId: string) => router.push(`/projects?open=${projectId}`)
 
   const allClear =
@@ -104,7 +125,9 @@ export default function TodayPage() {
 
       <div className="flex-1 overflow-auto p-4 pb-16 md:pb-4">
         <div className="mx-auto max-w-2xl">
-          {allClear ? (
+          {(tasksLoading || habitsLoading) ? (
+            <TodaySkeleton />
+          ) : allClear ? (
             <EmptyState text="Спокойный день — ничего на сегодня. Можно отдохнуть 🌿" />
           ) : (
             <div className="space-y-6">
@@ -116,7 +139,6 @@ export default function TodayPage() {
                       task={task}
                       project={projects.find(p => p.id === task.project_id) ?? null}
                       onOpen={() => setSelectedTask(task)}
-                      onComplete={() => completeTask(task.id)}
                     />
                   ))}
                 </Section>
@@ -220,6 +242,47 @@ export default function TodayPage() {
           />
         </Modal>
       )}
+
+      {/* Undo-тост на 5 секунд после завершения задачи через чекбокс */}
+      {undoState && (
+        <div
+          role="status"
+          className="fixed left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-gray-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-gray-100 dark:text-gray-900 bottom-[calc(80px+env(safe-area-inset-bottom))] md:bottom-6"
+        >
+          <span className="max-w-[200px] truncate">✓ {undoState.title}</span>
+          <button
+            type="button"
+            onClick={undoComplete}
+            className="font-medium text-blue-300 hover:underline dark:text-blue-700"
+          >
+            Отменить
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Скелет для первой загрузки: 2 секции по 3 строки. */
+function TodaySkeleton() {
+  return (
+    <div className="space-y-6">
+      {[0, 1].map(s => (
+        <section key={s}>
+          <Skeleton className="mb-2 h-5 w-40 rounded" />
+          <div className="space-y-2">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+                <Skeleton className="h-8 w-8 flex-shrink-0 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4 rounded" />
+                  <Skeleton className="h-3 w-1/3 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   )
 }
@@ -249,7 +312,9 @@ function TaskRow({ task, project, onOpen, onComplete }: {
   task: Task
   project: Project | null
   onOpen: () => void
-  onComplete: () => void
+  /** Опционально: если не передан, кружок завершения не рендерится. Для
+   *  pendingInvites чекбокс не нужен — сначала ответ на приглашение. */
+  onComplete?: () => void
 }) {
   const due = dueStatus(task)
   const dueCls =
@@ -259,13 +324,15 @@ function TaskRow({ task, project, onOpen, onComplete }: {
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-      <button
-        onClick={onComplete}
-        aria-label="Отметить выполненной"
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-300 text-transparent transition-colors hover:border-green-500 hover:bg-green-50 hover:text-green-500 dark:border-gray-600 dark:hover:bg-green-950"
-      >
-        ✓
-      </button>
+      {onComplete && (
+        <button
+          onClick={onComplete}
+          aria-label="Отметить выполненной"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-300 text-transparent transition-colors hover:border-green-500 hover:bg-green-50 hover:text-green-500 dark:border-gray-600 dark:hover:bg-green-950"
+        >
+          ✓
+        </button>
+      )}
       <button onClick={onOpen} className="min-w-0 flex-1 text-left">
         <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
           {task.title}

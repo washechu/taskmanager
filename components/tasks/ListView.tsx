@@ -37,7 +37,7 @@ const SLICE_OPTIONS = [
 export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>('due_date')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
-  const [slice, setSlice] = useState<Slice>('today')
+  const [slice, setSlice] = useState<Slice>('all')
   const [showArchive, setShowArchive] = useState(false)
 
   // Архивные (done старше 14 дней) — считаем только когда slice=all (там
