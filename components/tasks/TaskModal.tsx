@@ -7,7 +7,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Modal } from '@/components/ui/Modal'
 import { IconButton } from '@/components/ui/IconButton'
 import { TagChip } from '@/components/ui/TagChip'
-import { StatusBadge } from '@/components/ui/StatusBadge'
+import { StatusMenu } from '@/components/ui/StatusMenu'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { CATEGORIES, ASSIGNEES } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
@@ -62,9 +62,12 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
             <div className="space-y-4">
               <InviteBlock task={task} currentUser={currentUser} onUpdate={onUpdate} />
 
-              {/* Status + Priority + Category badges row */}
+              {/* Status (clickable, в 1 тап меняется) + Priority + Category */}
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={task.status} />
+                <StatusMenu
+                  value={task.status}
+                  onChange={s => onUpdate(task.id, { status: s })}
+                />
                 <PriorityBadge priority={task.priority} />
                 <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                   {CATEGORIES[task.category].label}
@@ -157,9 +160,22 @@ function InviteBlock({
   // Pending — поверх всего
   if (task.invite_status === 'pending') {
     if (isInviter) {
+      const withdraw = () => {
+        // Отзыв = инициатор остаётся один, invite_status='none'.
+        // Audit-коммент пишется через diffTask по actor (см. diffTask.ts).
+        if (!task.invited_by) return
+        onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
+      }
       return (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
-          ⏳ Ждём ответа от <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b>
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100 md:flex md:items-center md:justify-between md:gap-3">
+          <span>⏳ Ждём ответа от <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b></span>
+          <button
+            type="button"
+            onClick={withdraw}
+            className="mt-2 text-xs text-blue-700 underline-offset-2 hover:underline dark:text-blue-300 md:mt-0"
+          >
+            Отозвать
+          </button>
         </div>
       )
     }

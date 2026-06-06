@@ -85,8 +85,10 @@
 │       ├── Fab.tsx               # Floating Action Button (создание задачи/проекта)
 │       ├── Navigation.tsx        # Sidebar/bottom nav (с эмодзи) + экспорт MobileViewTabs (использует SegmentedControl)
 │       ├── StatusBadge.tsx       # С dark-вариантами для всех цветов
+│       ├── StatusMenu.tsx        # Кликабельный StatusBadge → выпадайка с 4 статусами (быстрая смена)
 │       ├── PriorityBadge.tsx     # С цветной точкой + контрастный фон
 │       ├── EmptyState.tsx
+│       ├── Skeleton.tsx          # Пульсирующий плейсхолдер для loading-состояний
 │       ├── TagChip.tsx           # Цветной тег (resolve color по name из allTags)
 │       └── TagPicker.tsx         # Мультиселект + создание нового тега + color picker
 ├── lib/
