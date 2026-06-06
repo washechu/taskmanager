@@ -124,7 +124,8 @@
 │   ├── 013_invite_polish_2.sql   # URL-кнопка в пуше invite_replied + таймаут pg_net 15с
 │   ├── 014_invite_delegation.sql # _auto_set_invite + _notify_partner_done для делегирования (assignees=1)
 │   ├── 015_invite_sent_timeout.sql # таймаут 15с в _notify_invite_sent + феминитив «предложила»
-│   └── 016_done_url_button.sql   # URL-кнопка «Открыть задачу» в пуше done + _send_telegram(reply_markup)
+│   ├── 016_done_url_button.sql   # URL-кнопка «Открыть задачу» в пуше done + _send_telegram(reply_markup)
+│   └── 017_invite_buttons_emoji_only.sql # эмодзи без подписей у callback-кнопок ответа в пуше invite
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
