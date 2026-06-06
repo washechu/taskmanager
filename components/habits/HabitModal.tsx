@@ -350,7 +350,7 @@ function HabitStats({ habit, logs }: { habit: Habit; logs: HabitLog[] }) {
                        : 'red'
 
   return (
-    <div className="border-t border-gray-100 pt-4 dark:border-gray-800">
+    <div className="pt-2">
       <h4 className="mb-3 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
         Статистика
       </h4>
