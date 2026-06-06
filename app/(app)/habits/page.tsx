@@ -1,27 +1,20 @@
 'use client'
 
-import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 import { format } from 'date-fns'
 import { HabitsView } from '@/components/habits/HabitsView'
 import { HabitModal, HabitForm } from '@/components/habits/HabitModal'
-import { HabitAnalytics } from '@/components/habits/HabitAnalytics'
 import { Fab } from '@/components/ui/Fab'
 import { Modal } from '@/components/ui/Modal'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { MobileViewTabs } from '@/components/ui/Navigation'
 import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { isHabitScheduledOn, type Habit } from '@/lib/types'
 
 type Scope = 'today' | 'done' | 'all'
-type View  = 'list' | 'analytics'
 
-function HabitsPageInner() {
-  const searchParams = useSearchParams()
-  const view = (searchParams.get('view') ?? 'list') as View
-
+export default function HabitsPage() {
   const { habits, logs, loading, createHabit, updateHabit, deleteHabit, toggleLog } = useHabits()
   const currentUser = useCurrentUser()
   const [creating, setCreating] = useState(false)
@@ -62,28 +55,18 @@ function HabitsPageInner() {
         </div>
 
         <div className="mt-4">
-          <MobileViewTabs basePath="/habits" subs={[
-            { view: 'list',      label: 'Список',    icon: '📃' },
-            { view: 'analytics', label: 'Аналитика', icon: '📊' },
-          ]} />
+          <SegmentedControl
+            variant="filter"
+            value={scope}
+            onChange={setScope}
+            ariaLabel="Какие привычки показывать"
+            options={[
+              { value: 'today', label: 'Сегодня' },
+              { value: 'done',  label: 'Готово'  },
+              { value: 'all',   label: 'Все'     },
+            ] as const}
+          />
         </div>
-
-        {/* Scope-фильтр живёт только в Списке. В Аналитике у нас свой период. */}
-        {view === 'list' && (
-          <div className="mt-3">
-            <SegmentedControl
-              variant="filter"
-              value={scope}
-              onChange={setScope}
-              ariaLabel="Какие привычки показывать"
-              options={[
-                { value: 'today', label: 'Сегодня' },
-                { value: 'done',  label: 'Готово'  },
-                { value: 'all',   label: 'Все'     },
-              ] as const}
-            />
-          </div>
-        )}
       </div>
 
       <div className="flex-1 overflow-auto p-4 pb-[calc(140px+env(safe-area-inset-bottom))] md:pb-24">
@@ -103,12 +86,6 @@ function HabitsPageInner() {
               </div>
             ))}
           </div>
-        ) : view === 'analytics' ? (
-          <HabitAnalytics
-            habits={mine}
-            logs={logs}
-            onHabitOpen={setSelected}
-          />
         ) : (
           <HabitsView
             habits={filtered}
@@ -150,13 +127,5 @@ function HabitsPageInner() {
         </Modal>
       )}
     </div>
-  )
-}
-
-export default function HabitsPage() {
-  return (
-    <Suspense fallback={<div className="p-8 text-sm text-gray-400">Загрузка...</div>}>
-      <HabitsPageInner />
-    </Suspense>
   )
 }
