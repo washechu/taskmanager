@@ -10,6 +10,9 @@ import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useAuditedTaskUpdate } from '@/lib/hooks/useAuditedTaskUpdate'
 import { TaskModal } from '@/components/tasks/TaskModal'
+import { TaskForm } from '@/components/tasks/TaskForm'
+import { Fab } from '@/components/ui/Fab'
+import { Modal } from '@/components/ui/Modal'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { dueStatus, dueIcon } from '@/lib/dueStatus'
@@ -30,12 +33,13 @@ const HABIT_BG: Record<string, string> = {
 
 export default function TodayPage() {
   const router = useRouter()
-  const { tasks, updateTask, deleteTask } = useTasks()
+  const { tasks, createTask, updateTask, deleteTask } = useTasks()
   const { projects } = useProjects()
   const { habits, logs, toggleLog } = useHabits()
   const currentUser = useCurrentUser()
   const handleUpdate = useAuditedTaskUpdate(tasks, updateTask, projects, currentUser.assignee)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [creating, setCreating] = useState(false)
 
   const today = useMemo(() => startOfDay(new Date()), [])
   const todayIso = format(today, 'yyyy-MM-dd')
@@ -183,6 +187,8 @@ export default function TodayPage() {
         </div>
       </div>
 
+      <Fab label="Задача" onClick={() => setCreating(true)} />
+
       {selectedTask && (
         <TaskModal
           task={selectedTask}
@@ -197,6 +203,22 @@ export default function TodayPage() {
           onClose={() => setSelectedTask(null)}
           onProjectOpen={navigateToProject}
         />
+      )}
+
+      {creating && (
+        <Modal onClose={() => setCreating(false)} title="Новая задача">
+          <TaskForm
+            initial={{ due_date: todayIso }}
+            projects={projects}
+            defaultAssignee={currentUser.assignee}
+            onSubmit={async (data) => {
+              await createTask(data)
+              setCreating(false)
+            }}
+            onCancel={() => setCreating(false)}
+            submitLabel="Создать"
+          />
+        </Modal>
       )}
     </div>
   )

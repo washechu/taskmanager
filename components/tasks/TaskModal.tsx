@@ -9,7 +9,6 @@ import { IconButton } from '@/components/ui/IconButton'
 import { TagChip } from '@/components/ui/TagChip'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
-import { Button } from '@/components/ui/Button'
 import { CATEGORIES, ASSIGNEES } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import type { Task, Project, Assignee } from '@/lib/types'
@@ -54,6 +53,7 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
         <TaskForm
           initial={task}
           projects={projects}
+          defaultAssignee={currentUser}
           onSubmit={handleUpdate}
           onCancel={() => setEditing(false)}
           submitLabel="Сохранить"
@@ -163,28 +163,20 @@ function InviteBlock({
         </div>
       )
     }
+    const decline = () => {
+      // Отклонить = задача возвращается одному invited_by, invite_status='none'
+      if (!task.invited_by) return
+      onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
+    }
     return (
       <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/40">
         <p className="text-sm text-blue-900 dark:text-blue-100">
           👋 <b>{task.invited_by ? ASSIGNEES[task.invited_by].label : 'Партнёр'}</b> предложил тебе задачу. Что скажешь?
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button variant="primary" onClick={() => onUpdate(task.id, { invite_status: 'accepted' })}>
-            ✅ Принять
-          </Button>
-          <Button variant="secondary" onClick={() => onUpdate(task.id, { invite_status: 'tentative' })}>
-            🤔 Думаю
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              // Отклонить = задача переходит к одному invited_by, статус сбрасывается на none
-              if (!task.invited_by) return
-              onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
-            }}
-          >
-            ❌ Отклонить
-          </Button>
+        <div className="mt-3 flex items-center gap-1">
+          <IconButton size="sm" onClick={() => onUpdate(task.id, { invite_status: 'accepted' })} title="Принять" aria-label="Принять">✅</IconButton>
+          <IconButton size="sm" onClick={() => onUpdate(task.id, { invite_status: 'tentative' })} title="Думаю" aria-label="Думаю">🤔</IconButton>
+          <IconButton size="sm" tone="danger" onClick={decline} title="Отклонить" aria-label="Отклонить">❌</IconButton>
         </div>
       </div>
     )
@@ -193,7 +185,10 @@ function InviteBlock({
   // Финальный статус — accepted / tentative
   if (task.invite_status === 'accepted' || task.invite_status === 'tentative') {
     const canSwitch = !isInviter
-    const isTentative = task.invite_status === 'tentative'
+    const decline = () => {
+      if (!task.invited_by) return
+      onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
+    }
     return (
       <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-800/40">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -202,38 +197,16 @@ function InviteBlock({
               ? <>✅ <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> принял предложение</>
               : <>🤔 <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> думает</>}
           </span>
-          {canSwitch && isTentative && (
+          {canSwitch && (
             <div className="flex items-center gap-1">
-              <IconButton
-                size="sm"
-                onClick={() => onUpdate(task.id, { invite_status: 'accepted' })}
-                title="Принять"
-                aria-label="Принять"
-              >
-                ✅
-              </IconButton>
-              <IconButton
-                size="sm"
-                tone="danger"
-                onClick={() => {
-                  if (!task.invited_by) return
-                  onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
-                }}
-                title="Отклонить"
-                aria-label="Отклонить"
-              >
-                ❌
-              </IconButton>
+              {task.invite_status === 'tentative' && (
+                <IconButton size="sm" onClick={() => onUpdate(task.id, { invite_status: 'accepted' })} title="Принять" aria-label="Принять">✅</IconButton>
+              )}
+              {task.invite_status === 'accepted' && (
+                <IconButton size="sm" onClick={() => onUpdate(task.id, { invite_status: 'tentative' })} title="Думаю" aria-label="Думаю">🤔</IconButton>
+              )}
+              <IconButton size="sm" tone="danger" onClick={decline} title="Отклонить" aria-label="Отклонить">❌</IconButton>
             </div>
-          )}
-          {canSwitch && !isTentative && (
-            <button
-              type="button"
-              onClick={() => onUpdate(task.id, { invite_status: 'tentative' })}
-              className="text-xs text-blue-600 hover:underline dark:text-blue-400"
-            >
-              Поменять на «думаю»
-            </button>
           )}
         </div>
       </div>

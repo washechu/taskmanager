@@ -58,16 +58,17 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
           onClick={() => onOpen(task)}
           className="flex-1 text-left"
         >
-          <span className="block min-h-[2.5rem] line-clamp-2 text-base font-medium leading-snug text-gray-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400 md:text-sm">
+          <span className="block line-clamp-2 text-base font-medium leading-snug text-gray-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400 md:text-sm">
             {task.title}
           </span>
-          {/* Description preview — same button, expanded tap area */}
-          <span
-            className="mt-1 block min-h-[3rem] line-clamp-3 text-sm text-gray-400 dark:text-gray-500 md:text-xs"
-            title={task.description ?? ''}
-          >
-            {task.description?.trim() || ''}
-          </span>
+          {task.description?.trim() && (
+            <span
+              className="mt-1 block line-clamp-3 text-sm text-gray-400 dark:text-gray-500 md:text-xs"
+              title={task.description}
+            >
+              {task.description.trim()}
+            </span>
+          )}
         </button>
       </div>
 

@@ -45,15 +45,17 @@ export function ProjectCard({ project, tasks, onOpen }: ProjectCardProps) {
           onClick={() => onOpen(project)}
           className="flex-1 text-left"
         >
-          <span className="block min-h-[2.5rem] line-clamp-2 text-base font-medium leading-snug text-gray-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400 md:text-sm">
+          <span className="block line-clamp-2 text-base font-medium leading-snug text-gray-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400 md:text-sm">
             {project.title}
           </span>
-          <span
-            className="mt-1 block min-h-[3rem] line-clamp-3 text-sm text-gray-400 dark:text-gray-500 md:text-xs"
-            title={project.description ?? ''}
-          >
-            {project.description?.trim() || ''}
-          </span>
+          {project.description?.trim() && (
+            <span
+              className="mt-1 block line-clamp-3 text-sm text-gray-400 dark:text-gray-500 md:text-xs"
+              title={project.description}
+            >
+              {project.description.trim()}
+            </span>
+          )}
         </button>
       </div>
 

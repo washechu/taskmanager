@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   STATUSES, PRIORITIES, CATEGORIES, STATUS_ORDER,
   type Task, type Status, type Priority, type Category, type Assignee
@@ -47,6 +47,14 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
 
   const set = <K extends keyof TaskFormData>(key: K, value: TaskFormData[K]) =>
     setForm(f => ({ ...f, [key]: value }))
+
+  // Личное всегда у текущего пользователя. Если переключился из «семейного»
+  // с двумя участниками — схлопываем в одного себя; пикер скрывается.
+  useEffect(() => {
+    if (form.category !== 'personal' || !defaultAssignee) return
+    if (form.assignees.length === 1 && form.assignees[0] === defaultAssignee) return
+    setForm(f => ({ ...f, assignees: [defaultAssignee] }))
+  }, [form.category, form.assignees, defaultAssignee])
 
   const dateError = form.start_date && form.due_date && form.start_date > form.due_date
     ? 'Дата начала не может быть позже дедлайна'
@@ -103,22 +111,24 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
           </Select>
         </div>
 
-        <div className="col-span-2">
-          <label className={LABEL_CLASS}>
-            Участники {form.category === 'family' && <span className="text-red-500">*</span>}
-          </label>
-          <AssigneePicker
-            value={form.assignees}
-            onChange={(next: Assignee[]) => set('assignees', next)}
-            invalid={needsAssignee}
-          />
-          {needsAssignee && (
-            <p className="mt-0.5 text-xs text-red-500">Для семейных задач отметь хотя бы одного</p>
-          )}
-          {form.assignees.length > 1 && (
-            <p className="mt-0.5 text-xs text-gray-400">Задача видна у обоих — в «Личное» у каждого</p>
-          )}
-        </div>
+        {form.category === 'family' && (
+          <div className="col-span-2">
+            <label className={LABEL_CLASS}>
+              Участники <span className="text-red-500">*</span>
+            </label>
+            <AssigneePicker
+              value={form.assignees}
+              onChange={(next: Assignee[]) => set('assignees', next)}
+              invalid={needsAssignee}
+            />
+            {needsAssignee && (
+              <p className="mt-0.5 text-xs text-red-500">Для семейных задач отметь хотя бы одного</p>
+            )}
+            {form.assignees.length > 1 && (
+              <p className="mt-0.5 text-xs text-gray-400">Задача видна у обоих — в «Личное» у каждого</p>
+            )}
+          </div>
+        )}
 
         <div>
           <label className={LABEL_CLASS}>Начало</label>
