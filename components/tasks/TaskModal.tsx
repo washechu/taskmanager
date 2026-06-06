@@ -173,10 +173,10 @@ function InviteBlock({
         <p className="text-sm text-blue-900 dark:text-blue-100">
           👋 <b>{task.invited_by ? ASSIGNEES[task.invited_by].label : 'Партнёр'}</b> предложил тебе задачу. Что скажешь?
         </p>
-        <div className="mt-3 flex items-center gap-1">
-          <IconButton size="sm" onClick={() => onUpdate(task.id, { invite_status: 'accepted' })} title="Принять" aria-label="Принять">✅</IconButton>
-          <IconButton size="sm" onClick={() => onUpdate(task.id, { invite_status: 'tentative' })} title="Думаю" aria-label="Думаю">🤔</IconButton>
-          <IconButton size="sm" tone="danger" onClick={decline} title="Отклонить" aria-label="Отклонить">❌</IconButton>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <InviteAction onClick={() => onUpdate(task.id, { invite_status: 'accepted' })} title="Принять">✅</InviteAction>
+          <InviteAction onClick={() => onUpdate(task.id, { invite_status: 'tentative' })} title="Думаю">🤔</InviteAction>
+          <InviteAction onClick={decline} title="Отклонить" tone="danger">❌</InviteAction>
         </div>
       </div>
     )
@@ -190,25 +190,23 @@ function InviteBlock({
       onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
     }
     return (
-      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-800/40">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-gray-900 dark:text-gray-100">
-            {task.invite_status === 'accepted'
-              ? <>✅ <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> принял предложение</>
-              : <>🤔 <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> думает</>}
-          </span>
-          {canSwitch && (
-            <div className="flex items-center gap-1">
-              {task.invite_status === 'tentative' && (
-                <IconButton size="sm" onClick={() => onUpdate(task.id, { invite_status: 'accepted' })} title="Принять" aria-label="Принять">✅</IconButton>
-              )}
-              {task.invite_status === 'accepted' && (
-                <IconButton size="sm" onClick={() => onUpdate(task.id, { invite_status: 'tentative' })} title="Думаю" aria-label="Думаю">🤔</IconButton>
-              )}
-              <IconButton size="sm" tone="danger" onClick={decline} title="Отклонить" aria-label="Отклонить">❌</IconButton>
-            </div>
-          )}
-        </div>
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-800/40">
+        <p className="text-gray-900 dark:text-gray-100">
+          {task.invite_status === 'accepted'
+            ? <>✅ <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> принял предложение</>
+            : <>🤔 <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b> думает</>}
+        </p>
+        {canSwitch && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {task.invite_status === 'tentative' && (
+              <InviteAction onClick={() => onUpdate(task.id, { invite_status: 'accepted' })} title="Принять">✅</InviteAction>
+            )}
+            {task.invite_status === 'accepted' && (
+              <InviteAction onClick={() => onUpdate(task.id, { invite_status: 'tentative' })} title="Думаю">🤔</InviteAction>
+            )}
+            <InviteAction onClick={decline} title="Отклонить" tone="danger">❌</InviteAction>
+          </div>
+        )}
       </div>
     )
   }
@@ -216,4 +214,33 @@ function InviteBlock({
   // 'none' / 'declined' / отсутствие приглашения — ничего не показываем.
   // История ответа всё равно видна в audit-комментариях ниже.
   return null
+}
+
+/**
+ * Кнопка-эмодзи без подписи, занимает всю ширину ячейки grid'а.
+ * Без подписи опираемся на цвет эмодзи; tone='danger' добавляет красную
+ * подсветку на hover, чтобы «отклонить» отличалось от «принять/думаю».
+ */
+function InviteAction({
+  children, onClick, title, tone = 'default',
+}: {
+  children: React.ReactNode
+  onClick: () => void
+  title: string
+  tone?: 'default' | 'danger'
+}) {
+  const hover = tone === 'danger'
+    ? 'hover:border-red-300 hover:bg-red-50 dark:hover:border-red-800 dark:hover:bg-red-950'
+    : 'hover:border-gray-300 hover:bg-gray-50 dark:hover:border-gray-600 dark:hover:bg-gray-700'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      className={`flex h-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg transition-colors dark:border-gray-700 dark:bg-gray-800 ${hover}`}
+    >
+      {children}
+    </button>
+  )
 }
