@@ -56,14 +56,11 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
     setForm(f => ({ ...f, assignees: [defaultAssignee] }))
   }, [form.category, form.assignees, defaultAssignee])
 
-  const dateError = form.start_date && form.due_date && form.start_date > form.due_date
-    ? 'Дата начала не может быть позже дедлайна'
-    : null
-
+  // Валидации «отсрочка ≤ дедлайн» намеренно нет: главный кейс «отложить до» —
+  // снузнуть уже просроченную задачу (start_date позже due_date).
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title.trim()) return
-    if (dateError) return
     setSaving(true)
     await onSubmit(form)
     setSaving(false)
@@ -143,11 +140,10 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
         )}
 
         <div>
-          <label className={LABEL_CLASS}>Начало</label>
+          <label className={LABEL_CLASS}>Отложить до</label>
           <DateInput
             value={form.start_date ?? ''}
             onChange={v => set('start_date', v || null)}
-            invalid={!!dateError}
           />
         </div>
 
@@ -156,11 +152,10 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
           <DateInput
             value={form.due_date ?? ''}
             onChange={v => set('due_date', v || null)}
-            invalid={!!dateError}
           />
         </div>
-        {dateError && (
-          <p className="col-span-2 -mt-2 text-xs text-red-500">{dateError}</p>
+        {form.start_date && (
+          <p className="col-span-2 -mt-2 text-xs text-gray-400">💤 До этой даты задача скрыта из «Сегодня» и дайджестов</p>
         )}
       </div>
 
@@ -194,7 +189,7 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="ghost" onClick={onCancel}>Отмена</Button>
-        <Button type="submit" disabled={saving || !form.title.trim() || !!dateError}>
+        <Button type="submit" disabled={saving || !form.title.trim()}>
           {saving ? 'Сохранение...' : submitLabel}
         </Button>
       </div>

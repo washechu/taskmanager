@@ -132,7 +132,8 @@
 │   ├── 018_fix_send_telegram_overload.sql # фикс: drop устаревшей 4-арной сигнатуры _send_telegram (регрессия м.016)
 │   ├── 019_digest_overdue_list_and_button.sql # дайджесты: просроченные списком + URL-кнопка «🏠 Открыть планировщик» + _html_escape для title (+фикс literal \n)
 │   ├── 020_decline_to_paused.sql # decline через Telegram-кнопку → status='paused'
-│   └── 021_remove_open_task_buttons.sql # убраны URL-кнопки «Открыть задачу» из пушей (webview без сессии)
+│   ├── 021_remove_open_task_buttons.sql # убраны URL-кнопки «Открыть задачу» из пушей (webview без сессии)
+│   └── 022_digests_skip_deferred.sql # дайджесты пропускают отложенные задачи (start_date в будущем)
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -729,8 +730,19 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 - Аудит-комментарии: `diffTask` выводит «Добавлен ответственный: …» / «Убран ответственный: …».
 - Display: `assignees.map(a => ASSIGNEES[a].label).join(' + ')` — например `Никита + Галочка`.
 
+### Поле `start_date` у задач = «Отложить до» (snooze)
+
+`start_date` у задач **перепрофилировано** из «дата начала» в «отложить до» (поле в БД то же, изменилась семантика в UI и фильтрах). Задача с `start_date` в будущем — «отложенная» (`isDeferred(task)` в `lib/dueStatus.ts`):
+- **Не показывается в «Сегодня»** (исключена из секций «Просрочено» и «На сегодня»).
+- **Не попадает в дайджесты** (м.022: фильтр `start_date is null or start_date <= current_date` в утреннем и вечернем).
+- **Помечена бейджем `💤 до DD.MM`** в `TaskCard`, `💤` в `ListView` и модалке.
+- Снова всплывает сама, когда наступает дата (`start_date <= today`).
+- **Валидации `start_date ≤ due_date` больше нет** — главный кейс это «снузнуть уже просроченную задачу» (отложить до позже дедлайна). Хелпер `formatDeferShort(start_date)` → «9 июн».
+
+У **проектов** `start_date` остаётся «началом» (для Ганта) — перепрофилирование только у задач.
+
 ### Валидация дат
-- В `TaskForm` и `ProjectForm`: если `start_date > due_date` — выводится красная ошибка под полями, рамки полей красные, кнопка submit заблокирована.
+- В `ProjectForm`: если `start_date > due_date` — красная ошибка под полями, submit заблокирован. (В `TaskForm` валидация убрана — см. «Отложить до» выше.)
 
 ### Теги
 - Хранятся в отдельной таблице `tags` (имя + цвет). У задачи в столбце `tags text[]` — массив имён.
