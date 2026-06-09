@@ -11,6 +11,7 @@ import { StatusMenu } from '@/components/ui/StatusMenu'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { CATEGORIES, ASSIGNEES } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
+import { isDeferred } from '@/lib/dueStatus'
 import type { Task, Project, Assignee } from '@/lib/types'
 
 interface TaskModalProps {
@@ -87,8 +88,10 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                 )}
                 {task.start_date && (
                   <div>
-                    <span className="text-xs text-gray-400">Начало</span>
-                    <p className="font-medium text-gray-600 dark:text-gray-100">{task.start_date}</p>
+                    <span className="text-xs text-gray-400">Отложить до</span>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">
+                      {isDeferred(task) && '💤 '}{task.start_date}
+                    </p>
                   </div>
                 )}
                 {task.assignees.length > 0 && (

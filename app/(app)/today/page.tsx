@@ -16,7 +16,7 @@ import { Modal } from '@/components/ui/Modal'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { dueStatus, dueIcon } from '@/lib/dueStatus'
+import { dueStatus, dueIcon, isDeferred } from '@/lib/dueStatus'
 import { isHabitScheduledOn, type Task, type Habit, type Project } from '@/lib/types'
 
 const PRIORITY_RANK = { high: 0, medium: 1, low: 2 } as const
@@ -52,15 +52,17 @@ export default function TodayPage() {
     return !!currentUser.assignee && t.assignees.includes(currentUser.assignee)
   }, [currentUser.assignee])
 
+  // Отложенные (start_date в будущем) не показываем в «Сегодня» — они снова
+  // всплывут, когда наступит дата.
   const overdueTasks = useMemo(() => {
     return tasks
-      .filter(t => t.due_date && t.status !== 'done' && isBefore(parseISO(t.due_date), today) && mine(t))
+      .filter(t => t.due_date && t.status !== 'done' && !isDeferred(t) && isBefore(parseISO(t.due_date), today) && mine(t))
       .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
   }, [tasks, today, mine])
 
   const todayTasks = useMemo(() => {
     return tasks
-      .filter(t => t.due_date === todayIso && t.status !== 'done' && mine(t))
+      .filter(t => t.due_date === todayIso && t.status !== 'done' && !isDeferred(t) && mine(t))
       .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority])
   }, [tasks, todayIso, mine])
 
