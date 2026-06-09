@@ -11,9 +11,18 @@ import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { IconButton } from '@/components/ui/IconButton'
 import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
 import type { Task, Project } from '@/lib/types'
 
 type Slice = 'today' | 'week' | 'month'
+
+// Цвет точки-индикатора задачи в мобильной ячейке месяца.
+const PRIORITY_DOT: Record<string, string> = {
+  high:   'bg-red-500',
+  medium: 'bg-amber-500',
+  low:    'bg-green-500',
+}
+const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 }
 
 const SLICE_OPTIONS = [
   { value: 'today' as const, label: 'Сегодня' },
@@ -30,6 +39,8 @@ interface CalendarViewProps {
 export function CalendarView({ tasks, projects, onTaskOpen }: CalendarViewProps) {
   const [slice, setSlice] = useState<Slice>('month')
   const [anchor, setAnchor] = useState(new Date()) // anchor date for navigation
+  // День-шит (мобайл): тап по ячейке месяца открывает список задач этого дня.
+  const [sheetDay, setSheetDay] = useState<Date | null>(null)
 
   // Group tasks by due date string (YYYY-MM-DD)
   const tasksByDate = useMemo(() => {
@@ -84,7 +95,7 @@ export function CalendarView({ tasks, projects, onTaskOpen }: CalendarViewProps)
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           {slice === 'today' && <TodayView anchor={anchor} tasksByDate={tasksByDate} tasks={tasks} onTaskOpen={onTaskOpen} />}
           {slice === 'week'  && <WeekView  anchor={anchor} tasksByDate={tasksByDate} onTaskOpen={onTaskOpen} />}
-          {slice === 'month' && <MonthView anchor={anchor} tasksByDate={tasksByDate} onTaskOpen={onTaskOpen} />}
+          {slice === 'month' && <MonthView anchor={anchor} tasksByDate={tasksByDate} onTaskOpen={onTaskOpen} onDayOpen={setSheetDay} />}
         </div>
 
         {/* Sidebar with undated tasks */}
@@ -115,15 +126,73 @@ export function CalendarView({ tasks, projects, onTaskOpen }: CalendarViewProps)
           </div>
         )}
       </div>
+
+      {sheetDay && (
+        <DaySheet
+          day={sheetDay}
+          tasks={tasksByDate.get(format(sheetDay, 'yyyy-MM-dd')) ?? []}
+          projects={projects}
+          onTaskOpen={onTaskOpen}
+          onClose={() => setSheetDay(null)}
+        />
+      )}
     </div>
   )
 }
 
+/* ── День-шит (мобайл): список задач выбранного дня ───────────────── */
+function DaySheet({ day, tasks, projects, onTaskOpen, onClose }: {
+  day: Date
+  tasks: Task[]
+  projects: Project[]
+  onTaskOpen: (task: Task) => void
+  onClose: () => void
+}) {
+  const sorted = [...tasks].sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority])
+  return (
+    <Modal
+      onClose={onClose}
+      size="md"
+      title={<span className="capitalize">{format(day, 'EEEE, d MMMM', { locale: ru })}</span>}
+    >
+      {sorted.length === 0 ? (
+        <p className="text-sm text-gray-400">Задач на этот день нет</p>
+      ) : (
+        <div className="space-y-1.5">
+          {sorted.map(t => (
+            <button
+              key={t.id}
+              onClick={() => { onClose(); onTaskOpen(t) }}
+              className="block w-full rounded-lg border border-gray-200 p-2.5 text-left hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+            >
+              <div className="flex items-center gap-2">
+                <span className={t.status === 'done' ? 'text-green-500' : 'text-gray-400'}>
+                  {t.status === 'done' ? '✓' : '○'}
+                </span>
+                <span className={`flex-1 truncate text-sm font-medium ${t.status === 'done' ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100'}`}>
+                  {t.title}
+                </span>
+                <PriorityBadge priority={t.priority} />
+              </div>
+              {t.project_id && (
+                <div className="mt-1 pl-6 text-xs text-gray-400">
+                  📁 {projects.find(p => p.id === t.project_id)?.title}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </Modal>
+  )
+}
+
 /* ── Month view (7×6 grid) ──────────────────────── */
-function MonthView({ anchor, tasksByDate, onTaskOpen }: {
+function MonthView({ anchor, tasksByDate, onTaskOpen, onDayOpen }: {
   anchor: Date
   tasksByDate: Map<string, Task[]>
   onTaskOpen: (task: Task) => void
+  onDayOpen: (day: Date) => void
 }) {
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(anchor), { weekStartsOn: 1 })
@@ -141,7 +210,7 @@ function MonthView({ anchor, tasksByDate, onTaskOpen }: {
       </div>
       <div className="grid flex-1 grid-cols-7 auto-rows-fr">
         {days.map(day => (
-          <DayCell key={day.toISOString()} day={day} anchor={anchor} tasksByDate={tasksByDate} onTaskOpen={onTaskOpen} compact />
+          <DayCell key={day.toISOString()} day={day} anchor={anchor} tasksByDate={tasksByDate} onTaskOpen={onTaskOpen} onDayOpen={onDayOpen} compact />
         ))}
       </div>
     </>
@@ -272,12 +341,15 @@ function AgendaItem({ task, onOpen, overdue }: { task: Task; onOpen: (t: Task) =
   )
 }
 
-/* ── Reusable single day cell (used by Month) ───── */
-function DayCell({ day, anchor, tasksByDate, onTaskOpen, compact }: {
+/* ── Reusable single day cell (used by Month) ─────
+ * Десктоп (md+): чипы с названием задачи, клик по чипу → задача.
+ * Мобайл (<md): тап по всей ячейке → день-шит; задачи показаны точками. */
+function DayCell({ day, anchor, tasksByDate, onTaskOpen, onDayOpen, compact }: {
   day: Date
   anchor: Date
   tasksByDate: Map<string, Task[]>
   onTaskOpen: (task: Task) => void
+  onDayOpen: (day: Date) => void
   compact?: boolean
 }) {
   const key = format(day, 'yyyy-MM-dd')
@@ -285,9 +357,10 @@ function DayCell({ day, anchor, tasksByDate, onTaskOpen, compact }: {
   const otherMonth = !isSameMonth(day, anchor)
   const today = isToday(day)
   const maxVisible = compact ? 3 : 5
+  const hasTasks = dayTasks.length > 0
 
   return (
-    <div className={`min-h-[80px] border-b border-r border-gray-100 p-1 dark:border-gray-800 ${
+    <div className={`relative min-h-[64px] border-b border-r border-gray-100 p-1 dark:border-gray-800 md:min-h-[80px] ${
       otherMonth ? 'bg-gray-50/50 dark:bg-gray-950/30' : ''
     }`}>
       <div className={`mb-1 flex h-5 w-5 items-center justify-center text-xs ${
@@ -299,7 +372,9 @@ function DayCell({ day, anchor, tasksByDate, onTaskOpen, compact }: {
       }`}>
         {format(day, 'd')}
       </div>
-      <div className="space-y-0.5">
+
+      {/* Desktop: чипы с названием */}
+      <div className="hidden space-y-0.5 md:block">
         {dayTasks.slice(0, maxVisible).map(t => (
           <button
             key={t.id}
@@ -320,6 +395,26 @@ function DayCell({ day, anchor, tasksByDate, onTaskOpen, compact }: {
           <div className="px-1 text-xs text-gray-400">+{dayTasks.length - maxVisible}</div>
         )}
       </div>
+
+      {/* Mobile: тап по ячейке → день-шит, задачи показаны точками */}
+      {hasTasks && (
+        <>
+          <button
+            type="button"
+            onClick={() => onDayOpen(day)}
+            aria-label={`Задачи на ${key}`}
+            className="absolute inset-0 md:hidden"
+          />
+          <div className="pointer-events-none flex flex-wrap gap-1 px-0.5 md:hidden">
+            {dayTasks.slice(0, 6).map(t => (
+              <span
+                key={t.id}
+                className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[t.priority] ?? 'bg-gray-400'} ${t.status === 'done' ? 'opacity-40' : ''}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
