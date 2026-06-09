@@ -118,6 +118,14 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
           </Select>
         </div>
 
+        <div>
+          <label className={LABEL_CLASS}>Дедлайн</label>
+          <DateInput
+            value={form.due_date ?? ''}
+            onChange={v => set('due_date', v || null)}
+          />
+        </div>
+
         {form.category === 'family' && (
           <div className="col-span-2">
             <label className={LABEL_CLASS}>
@@ -136,14 +144,6 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
             )}
           </div>
         )}
-
-        <div className="col-span-2">
-          <label className={LABEL_CLASS}>Дедлайн</label>
-          <DateInput
-            value={form.due_date ?? ''}
-            onChange={v => set('due_date', v || null)}
-          />
-        </div>
       </div>
 
       <div>
