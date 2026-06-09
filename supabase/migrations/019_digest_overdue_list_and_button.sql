@@ -1,9 +1,11 @@
 -- м.019 — улучшения дайджестов:
 --   1. Просроченные задачи показываются СПИСКОМ (топ-5 с названием и датой),
 --      а не только числом. Если больше 5 — «…и ещё N».
---   2. К дайджесту прикреплена URL-кнопка «🏠 Открыть планировщик» (на /today).
---   3. _html_escape применяется ко всем title задач (раньше только к привычкам)
+--   2. _html_escape применяется ко всем title задач (раньше только к привычкам)
 --      — фикс потенциального падения HTML-парсинга в Telegram.
+--
+-- (URL-кнопка «Открыть планировщик» убрана — переход из бота открывается во
+--  встроенном webview Telegram без сессии, каждый раз требует повторного логина.)
 --
 -- Затрагивает обе функции: send_morning_digest (м.010) и send_evening_digest (м.011).
 --
@@ -25,19 +27,7 @@ declare
   habits_text      text;
   body             text;
   display_name     text;
-  app_url          text;
-  kbd              jsonb;
 begin
-  -- Клавиатура — одна на все рассылки. Если app_url не задан, шлём без неё.
-  select value into app_url from app_settings where key = 'app_url';
-  if app_url is not null then
-    kbd := jsonb_build_object(
-      'inline_keyboard', jsonb_build_array(jsonb_build_array(
-        jsonb_build_object('text', '🏠 Открыть планировщик', 'url', app_url || '/today')
-      ))
-    );
-  end if;
-
   for link in select assignee, chat_id from telegram_links loop
     display_name := case link.assignee when 'nick' then 'Никита' else 'Галочка' end;
 
@@ -100,7 +90,7 @@ begin
 
     body := '🌅 Доброе утро, ' || display_name || '!';
     if overdue_count > 0 then
-      body := body || E'\n\n🔥 Просрочено (' || overdue_count || '):\n' || overdue_text;
+      body := body || E'\n\n🔥 Просрочено (' || overdue_count || E'):\n' || overdue_text;
       if overdue_count > 5 then
         body := body || E'\n   <i>…и ещё ' || (overdue_count - 5) || '</i>';
       end if;
@@ -112,7 +102,7 @@ begin
       body := body || E'\n\n🔁 Привычки:\n' || habits_text;
     end if;
 
-    perform _send_telegram(link.chat_id, body, link.assignee, 'morning', kbd);
+    perform _send_telegram(link.chat_id, body, link.assignee, 'morning');
   end loop;
 end;
 $$;
@@ -133,18 +123,7 @@ declare
   habits_text      text;
   body             text;
   display_name     text;
-  app_url          text;
-  kbd              jsonb;
 begin
-  select value into app_url from app_settings where key = 'app_url';
-  if app_url is not null then
-    kbd := jsonb_build_object(
-      'inline_keyboard', jsonb_build_array(jsonb_build_array(
-        jsonb_build_object('text', '🏠 Открыть планировщик', 'url', app_url || '/today')
-      ))
-    );
-  end if;
-
   for link in select assignee, chat_id from telegram_links loop
     display_name := case link.assignee when 'nick' then 'Никита' else 'Галочка' end;
 
@@ -204,7 +183,7 @@ begin
 
     body := '🌙 ' || display_name || ', вечер пришёл — что осталось:';
     if overdue_count > 0 then
-      body := body || E'\n\n🔥 Просрочено (' || overdue_count || '):\n' || overdue_text;
+      body := body || E'\n\n🔥 Просрочено (' || overdue_count || E'):\n' || overdue_text;
       if overdue_count > 5 then
         body := body || E'\n   <i>…и ещё ' || (overdue_count - 5) || '</i>';
       end if;
@@ -217,7 +196,7 @@ begin
     end if;
     body := body || E'\n\n<i>День ещё не закончился — успеешь.</i>';
 
-    perform _send_telegram(link.chat_id, body, link.assignee, 'evening', kbd);
+    perform _send_telegram(link.chat_id, body, link.assignee, 'evening');
   end loop;
 end;
 $$;

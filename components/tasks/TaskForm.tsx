@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   STATUSES, PRIORITIES, CATEGORIES, STATUS_ORDER,
   type Task, type Status, type Priority, type Category, type Assignee
@@ -70,6 +70,18 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
   }
 
   const needsAssignee = form.category === 'family' && form.assignees.length === 0
+
+  // Список проектов для привязки скоупится так же, как страница «Проекты»:
+  // личные (мои или ничьи) + семейные, где я участник. Чужие личные не показываем.
+  // Уже выбранный проект остаётся в списке всегда (чтобы edit не «терял» привязку).
+  const visibleProjects = useMemo(() => {
+    if (!defaultAssignee) return projects // email не распознан → fallback: показываем всё
+    return projects.filter(p => {
+      if (p.id === form.project_id) return true
+      if (p.category === 'family') return p.assignees.includes(defaultAssignee)
+      return p.assignees.length === 0 || p.assignees.includes(defaultAssignee)
+    })
+  }, [projects, defaultAssignee, form.project_id])
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -160,7 +172,7 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
           className="w-full"
         >
           <option value="">Без проекта</option>
-          {projects.map(p => (
+          {visibleProjects.map(p => (
             <option key={p.id} value={p.id}>{p.title}</option>
           ))}
         </Select>
