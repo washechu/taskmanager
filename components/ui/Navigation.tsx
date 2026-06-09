@@ -24,15 +24,15 @@ const links: NavLink[] = [
   {
     href: '/today',
     label: 'Сегодня',
-    icon: '🏠',
+    icon: '☀️',
   },
   {
     href: '/tasks',
     label: 'Задачи',
-    icon: '🎯',
+    icon: '☑️',
     subs: [
       { view: 'kanban',    label: 'Канбан',    icon: '📋' },
-      { view: 'list',      label: 'Список',    icon: '📃' },
+      { view: 'list',      label: 'Список',    icon: '📄' },
       { view: 'calendar',  label: 'Календарь', icon: '📅' },
       { view: 'analytics', label: 'Аналитика', icon: '📊' },
     ],
