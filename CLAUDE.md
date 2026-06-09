@@ -134,7 +134,8 @@
 │   ├── 020_decline_to_paused.sql # decline через Telegram-кнопку → status='paused'
 │   ├── 021_remove_open_task_buttons.sql # убраны URL-кнопки «Открыть задачу» из пушей (webview без сессии)
 │   ├── 022_digests_skip_deferred.sql # (устар.) дайджесты пропускали отложенные задачи — после м.023 no-op
-│   └── 023_drop_task_defer.sql   # отказ от «Отложить до»: обнуление tasks.start_date
+│   ├── 023_drop_task_defer.sql   # отказ от «Отложить до»: обнуление tasks.start_date
+│   └── 024_fix_withdraw_notification.sql # отзыв ≠ отклонение: _notify_invite_replied смотрит _actor() + род глаголов
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
