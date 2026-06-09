@@ -7,7 +7,7 @@ import { TagChip } from '@/components/ui/TagChip'
 import { CATEGORIES, ASSIGNEES, type Task, type Status } from '@/lib/types'
 import type { Project } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
-import { dueStatus, dueIcon, isDeferred, formatDeferShort } from '@/lib/dueStatus'
+import { dueStatus, dueIcon } from '@/lib/dueStatus'
 
 interface TaskCardProps {
   task: Task
@@ -100,11 +100,6 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
         {task.assignees.length > 0 && (
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
             {task.assignees.map(a => ASSIGNEES[a].label).join(' + ')}
-          </span>
-        )}
-        {isDeferred(task) && (
-          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
-            💤 до {formatDeferShort(task.start_date)}
           </span>
         )}
         {task.due_date && (
