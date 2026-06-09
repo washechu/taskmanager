@@ -170,11 +170,9 @@ function InviteBlock({
         onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by], status: 'paused' })
       }
       return (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100 md:flex md:items-center md:justify-between md:gap-3">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
           <span>⏳ Ждём ответа от <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b></span>
-          <div className="mt-3 md:mt-0 md:flex-shrink-0">
-            <InviteAction onClick={withdraw} title="Отозвать" tone="danger" compactOnDesktop>↩️</InviteAction>
-          </div>
+          <InviteAction onClick={withdraw} title="Отозвать" tone="danger" compact>↩️</InviteAction>
         </div>
       )
     }
@@ -237,7 +235,7 @@ function InviteBlock({
  * подсветку на hover, чтобы «отклонить» отличалось от «принять/думаю».
  */
 function InviteAction({
-  children, onClick, title, tone = 'default', compactOnDesktop = false,
+  children, onClick, title, tone = 'default', compactOnDesktop = false, compact = false,
 }: {
   children: React.ReactNode
   onClick: () => void
@@ -245,17 +243,20 @@ function InviteAction({
   tone?: 'default' | 'danger'
   /** Quadrate 40×40 на десктопе (для inline-режима accepted/tentative). */
   compactOnDesktop?: boolean
+  /** Quadrate 40×40 на всех экранах, не растягивается (для одиночной кнопки в строке). */
+  compact?: boolean
 }) {
   const hover = tone === 'danger'
     ? 'hover:border-red-300 hover:bg-red-50 dark:hover:border-red-800 dark:hover:bg-red-950'
     : 'hover:border-gray-300 hover:bg-gray-50 dark:hover:border-gray-600 dark:hover:bg-gray-700'
+  const width = compact ? 'w-10 flex-shrink-0' : compactOnDesktop ? 'md:w-10' : ''
   return (
     <button
       type="button"
       onClick={onClick}
       title={title}
       aria-label={title}
-      className={`flex h-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg transition-colors dark:border-gray-700 dark:bg-gray-800 ${compactOnDesktop ? 'md:w-10' : ''} ${hover}`}
+      className={`flex h-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg transition-colors dark:border-gray-700 dark:bg-gray-800 ${width} ${hover}`}
     >
       {children}
     </button>
