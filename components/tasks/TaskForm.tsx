@@ -56,8 +56,6 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
     setForm(f => ({ ...f, assignees: [defaultAssignee] }))
   }, [form.category, form.assignees, defaultAssignee])
 
-  // Валидации «отсрочка ≤ дедлайн» намеренно нет: главный кейс «отложить до» —
-  // снузнуть уже просроченную задачу (start_date позже due_date).
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title.trim()) return
@@ -139,24 +137,13 @@ export function TaskForm({ initial, projects, defaultAssignee, onSubmit, onCance
           </div>
         )}
 
-        <div>
-          <label className={LABEL_CLASS}>Отложить до</label>
-          <DateInput
-            value={form.start_date ?? ''}
-            onChange={v => set('start_date', v || null)}
-          />
-        </div>
-
-        <div>
+        <div className="col-span-2">
           <label className={LABEL_CLASS}>Дедлайн</label>
           <DateInput
             value={form.due_date ?? ''}
             onChange={v => set('due_date', v || null)}
           />
         </div>
-        {form.start_date && (
-          <p className="col-span-2 -mt-2 text-xs text-gray-400">💤 До этой даты задача скрыта из «Сегодня» и дайджестов</p>
-        )}
       </div>
 
       <div>

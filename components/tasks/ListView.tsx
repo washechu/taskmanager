@@ -7,7 +7,7 @@ import {
 } from 'date-fns'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
-import { dueStatus, dueIcon, isDeferred } from '@/lib/dueStatus'
+import { dueStatus, dueIcon } from '@/lib/dueStatus'
 import { isArchivedTask, ARCHIVE_DAYS } from '@/lib/archive'
 import {
   STATUSES, STATUS_ORDER, type Status, type Task, type Project,
@@ -155,7 +155,7 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
                       onClick={() => onTaskOpen(task)}
                       className="text-left text-sm font-medium text-gray-900 hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400"
                     >
-                      {isDeferred(task) && <span title="Отложена">💤 </span>}{task.title}
+                      {task.title}
                     </button>
                   </td>
                   <td className="px-3 py-2">
