@@ -161,28 +161,24 @@ function InviteBlock({
   if (task.invite_status === 'pending') {
     if (isInviter) {
       const withdraw = () => {
-        // Отзыв = инициатор остаётся один, invite_status='none'.
+        // Отзыв = инициатор остаётся один, invite_status='none', задача → «приостановлено».
         // Audit-коммент пишется через diffTask по actor (см. diffTask.ts).
         if (!task.invited_by) return
-        onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
+        onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by], status: 'paused' })
       }
       return (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100 md:flex md:items-center md:justify-between md:gap-3">
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100 md:flex md:items-center md:justify-between md:gap-3">
           <span>⏳ Ждём ответа от <b>{otherParticipant ? ASSIGNEES[otherParticipant].label : '…'}</b></span>
-          <button
-            type="button"
-            onClick={withdraw}
-            className="mt-2 text-xs text-blue-700 underline-offset-2 hover:underline dark:text-blue-300 md:mt-0"
-          >
-            Отозвать
-          </button>
+          <div className="mt-3 md:mt-0 md:flex-shrink-0">
+            <InviteAction onClick={withdraw} title="Отозвать" tone="danger" compactOnDesktop>↩️</InviteAction>
+          </div>
         </div>
       )
     }
     const decline = () => {
-      // Отклонить = задача возвращается одному invited_by, invite_status='none'
+      // Отклонить = задача возвращается одному invited_by, invite_status='none', статус → «приостановлено».
       if (!task.invited_by) return
-      onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
+      onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by], status: 'paused' })
     }
     return (
       <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/40">
@@ -203,7 +199,7 @@ function InviteBlock({
     const canSwitch = !isInviter
     const decline = () => {
       if (!task.invited_by) return
-      onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by] })
+      onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by], status: 'paused' })
     }
     return (
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-800/40 md:flex md:items-center md:justify-between md:gap-3">

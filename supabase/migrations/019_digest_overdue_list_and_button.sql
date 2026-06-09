@@ -100,7 +100,7 @@ begin
 
     body := '🌅 Доброе утро, ' || display_name || '!';
     if overdue_count > 0 then
-      body := body || E'\n\n🔥 Просрочено (' || overdue_count || '):\n' || overdue_text;
+      body := body || E'\n\n🔥 Просрочено (' || overdue_count || E'):\n' || overdue_text;
       if overdue_count > 5 then
         body := body || E'\n   <i>…и ещё ' || (overdue_count - 5) || '</i>';
       end if;
@@ -204,7 +204,7 @@ begin
 
     body := '🌙 ' || display_name || ', вечер пришёл — что осталось:';
     if overdue_count > 0 then
-      body := body || E'\n\n🔥 Просрочено (' || overdue_count || '):\n' || overdue_text;
+      body := body || E'\n\n🔥 Просрочено (' || overdue_count || E'):\n' || overdue_text;
       if overdue_count > 5 then
         body := body || E'\n   <i>…и ещё ' || (overdue_count - 5) || '</i>';
       end if;
