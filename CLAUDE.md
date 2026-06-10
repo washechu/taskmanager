@@ -136,7 +136,8 @@
 │   ├── 022_digests_skip_deferred.sql # (устар.) дайджесты пропускали отложенные задачи — после м.023 no-op
 │   ├── 023_drop_task_defer.sql   # отказ от «Отложить до»: обнуление tasks.start_date
 │   ├── 024_fix_withdraw_notification.sql # отзыв ≠ отклонение: _notify_invite_replied смотрит _actor() + род глаголов
-│   └── 025_auto_start_date.sql   # автозаполнение tasks.start_date при первом переводе в in_progress
+│   ├── 025_auto_start_date.sql   # автозаполнение tasks.start_date при первом переводе в in_progress
+│   └── 026_completed_at.sql      # tasks.completed_at + автозаполнение при первом переходе в done
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -749,6 +750,18 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 В Ганте: задачи `in_progress` теперь рисуются полосками `start → due` (раньше были ромбиками на дедлайне). Задачи `todo` без `start_date` остаются ромбиками на `due_date`.
 
 У **проектов** `start_date` сохранён («начало проекта», вручную в форме) — на проектах триггер не висит.
+
+### TTM-метрики: `completed_at` (м.026)
+
+Симметрично к `start_date` — колонка `tasks.completed_at timestamptz`, автозаполняемая DB-триггером `_auto_set_completed_at` (BEFORE INSERT OR UPDATE OF status) при первом переходе в `done`. Не перезаписывается при последующих переходах (вернули из done → не сбрасываем). Старые done-задачи не трогаем (backfill из `updated_at` был бы враньё).
+
+С этой парой триггеров можно честно мерить:
+- **Cycle time** = `completed_at - start_date` (время в работе)
+- **Lead time** = `completed_at - created_at` (от создания до закрытия)
+- **Время в очереди** = `start_date - created_at`
+- **Время в работе сейчас** (для in_progress) = `now() - start_date`
+
+UI пока не сделан — данные просто копятся. Аналитика в отдельном PR.
 
 ### Валидация дат
 - В `ProjectForm`: если `start_date > due_date` — красная ошибка под полями, submit заблокирован. У задач валидации нет — поле одно (дедлайн).

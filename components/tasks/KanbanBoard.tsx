@@ -26,7 +26,7 @@ interface KanbanBoardProps {
   onMove: (id: string, status: Status) => Promise<{ error: unknown }>
   onUpdate: (id: string, updates: Partial<Task>) => Promise<{ error: unknown }>
   onDelete: (id: string) => Promise<{ error: unknown }>
-  onCreate: (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => Promise<{ data: Task | null; error: unknown }>
+  onCreate: (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => Promise<{ data: Task | null; error: unknown }>
   onProjectOpen?: (projectId: string) => void
 }
 
@@ -76,7 +76,7 @@ export function KanbanBoard({
     }
   }
 
-  const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => {
     await onCreate(data)
     setCreatingStatus(null)
   }
