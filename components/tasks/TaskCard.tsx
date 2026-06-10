@@ -114,7 +114,7 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
         )}
         {task.status === 'in_progress' && task.start_date && (
           <span className="text-xs text-orange-600 dark:text-orange-400" title="В работе">
-            ⏱ {formatDays(computeTaskStats(task).inProgressDays)}
+            ⏱ {formatDays(computeTaskStats(task).inProgressDays)}д
           </span>
         )}
         {task.tags.slice(0, 3).map(tag => (
