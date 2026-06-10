@@ -91,6 +91,12 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                     <p className="font-medium text-gray-600 dark:text-gray-100">{task.due_date}</p>
                   </div>
                 )}
+                {task.completed_at && (
+                  <div>
+                    <span className="text-xs text-gray-400">Закрыто</span>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{task.completed_at.substring(0, 10)}</p>
+                  </div>
+                )}
                 {task.assignees.length > 0 && (
                   <div>
                     <span className="text-xs text-gray-400">
