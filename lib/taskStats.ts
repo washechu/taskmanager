@@ -2,13 +2,14 @@ import { differenceInCalendarDays, parseISO, startOfDay } from 'date-fns'
 import type { Task } from './types'
 
 /**
- * Короткий формат длительности в днях для бейджей: «<1д», «3д», «12д».
+ * Короткий формат длительности в днях для бейджей: «<1», «3», «12».
+ * Без суффикса «д» — единица измерения предполагается из заголовка раздела.
  * Отрицательные значения обрезаются до нуля.
  */
 export function formatDays(days: number | null): string {
   if (days === null) return '—'
-  if (days < 1) return '<1д'
-  return `${Math.max(0, Math.round(days))}д`
+  if (days < 1) return '<1'
+  return `${Math.max(0, Math.round(days))}`
 }
 
 /** Разница в днях между двумя date-like значениями (yyyy-MM-dd или ISO). */

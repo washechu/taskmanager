@@ -122,8 +122,6 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                 )}
               </div>
 
-              <TaskTtmBlock task={task} />
-
               {task.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {task.tags.map(tag => (
@@ -131,6 +129,8 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                   ))}
                 </div>
               )}
+
+              <TaskTtmBlock task={task} />
 
           <CommentSection taskId={task.id} currentUser={currentUser} />
         </div>
@@ -286,7 +286,7 @@ function TaskTtmBlock({ task }: { task: Task }) {
   const isInProgress = task.status === 'in_progress'
 
   // ── In_progress label/colour ──
-  const inProgressLabel = isDone ? '✓ Делали' : '⏱ В работе'
+  const inProgressLabel = isDone ? 'Делали' : 'В работе'
   const inProgressColor = isDone ? 'green' : 'orange'
 
   // ── due-delta: для done = опережение/опоздание, для остальных = до дедлайна / просрочка ──
@@ -296,21 +296,21 @@ function TaskTtmBlock({ task }: { task: Task }) {
   if (stats.dueDelta !== null) {
     if (isDone) {
       if (stats.dueDelta >= 0) {
-        dueLabel = '✅ Опередили'
-        dueValue = `на ${formatDays(stats.dueDelta)}`
+        dueLabel = 'Опередили на'
+        dueValue = formatDays(stats.dueDelta)
         dueColor = 'green'
       } else {
-        dueLabel = '⏰ Опоздали'
-        dueValue = `на ${formatDays(-stats.dueDelta)}`
+        dueLabel = 'Опоздали на'
+        dueValue = formatDays(-stats.dueDelta)
         dueColor = 'red'
       }
     } else if (stats.dueDelta >= 0) {
-      dueLabel = '🎯 До дедлайна'
+      dueLabel = 'До дедлайна'
       dueValue = formatDays(stats.dueDelta)
       dueColor = stats.dueDelta <= 1 ? 'red' : stats.dueDelta <= 3 ? 'yellow' : 'green'
     } else {
-      dueLabel = '⚠️ Просрочено'
-      dueValue = `на ${formatDays(-stats.dueDelta)}`
+      dueLabel = 'Просрочено на'
+      dueValue = formatDays(-stats.dueDelta)
       dueColor = 'red'
     }
   }
@@ -318,7 +318,7 @@ function TaskTtmBlock({ task }: { task: Task }) {
   return (
     <div className="pt-2">
       <h4 className="mb-3 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
-        Сроки
+        Сроки (в днях)
       </h4>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {/* В работе / Делали — только если был старт работы */}
@@ -327,7 +327,7 @@ function TaskTtmBlock({ task }: { task: Task }) {
         )}
         {/* От создания — всегда */}
         {stats.totalDays !== null && (
-          <TtmCard label="📅 От создания" value={formatDays(stats.totalDays)} color="blue" />
+          <TtmCard label="От создания" value={formatDays(stats.totalDays)} color="blue" />
         )}
         {/* До дедлайна / опережение / опоздание */}
         {dueLabel && (
@@ -348,7 +348,7 @@ const TTM_COLOR = {
 } as const
 
 function TtmCard({ label, value, color }: { label: string; value: string; color: keyof typeof TTM_COLOR }) {
-  const isEmpty = value === '—' || value === '0д'
+  const isEmpty = value === '—' || value === '0'
   const valueCls = isEmpty ? TTM_COLOR.muted : TTM_COLOR[color]
   return (
     <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
