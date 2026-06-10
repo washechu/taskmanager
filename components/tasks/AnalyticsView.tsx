@@ -17,7 +17,8 @@ import {
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
-import { aggregateTtm, topCycleTime, formatDays } from '@/lib/taskStats'
+import { Modal } from '@/components/ui/Modal'
+import { aggregateTtm } from '@/lib/taskStats'
 
 type Period = 'week' | 'month' | 'custom'
 
@@ -52,6 +53,8 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
   // ISO yyyy-MM-dd strings for the custom range pickers
   const todayIso = format(new Date(), 'yyyy-MM-dd')
   const monthAgoIso = format(startOfMonth(new Date()), 'yyyy-MM-dd')
+  // KPI drill-down: клик по KPI → модалка со списком задач за этим числом
+  const [drillDown, setDrillDown] = useState<{ title: string; tasks: Task[] } | null>(null)
   const [customFrom, setCustomFrom] = useState<string>(monthAgoIso)
   const [customTo,   setCustomTo]   = useState<string>(todayIso)
 
@@ -83,17 +86,18 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
   )
 
   /* ── KPIs ─────────────────────────────────────────────── */
-  const createdCount = tasksInPeriod.length
   const closedInPeriod = useMemo(() =>
     tasks.filter(t => {
       if (t.status !== 'done') return false
-      const updated = parseISO(t.updated_at)
-      return updated >= rangeStart && updated <= rangeEnd
-    }).length,
+      // Предпочитаем completed_at (точная дата закрытия из м.026), fallback на
+      // updated_at для старых задач без триггера.
+      const closedAt = t.completed_at ? parseISO(t.completed_at) : parseISO(t.updated_at)
+      return closedAt >= rangeStart && closedAt <= rangeEnd
+    }),
     [tasks, rangeStart, rangeEnd]
   )
   const activeNow = useMemo(() =>
-    tasks.filter(t => t.status === 'in_progress').length,
+    tasks.filter(t => t.status === 'in_progress'),
     [tasks]
   )
   const overdueNow = useMemo(() => {
@@ -213,10 +217,37 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <KpiCard label="Создано за период" value={createdCount} />
-        <KpiCard label="Закрыто за период" value={closedInPeriod} accent="green" />
-        <KpiCard label="В процессе сейчас" value={activeNow} accent="yellow" />
-        <KpiCard label="Просрочено сейчас" value={overdueNow.length} accent={overdueNow.length > 0 ? 'red' : undefined} />
+        <KpiCard
+          label="Создано за период"
+          value={tasksInPeriod.length}
+          onClick={tasksInPeriod.length > 0
+            ? () => setDrillDown({ title: 'Создано за период', tasks: tasksInPeriod })
+            : undefined}
+        />
+        <KpiCard
+          label="Закрыто за период"
+          value={closedInPeriod.length}
+          accent="green"
+          onClick={closedInPeriod.length > 0
+            ? () => setDrillDown({ title: 'Закрыто за период', tasks: closedInPeriod })
+            : undefined}
+        />
+        <KpiCard
+          label="В процессе сейчас"
+          value={activeNow.length}
+          accent="yellow"
+          onClick={activeNow.length > 0
+            ? () => setDrillDown({ title: 'В процессе сейчас', tasks: activeNow })
+            : undefined}
+        />
+        <KpiCard
+          label="Просрочено сейчас"
+          value={overdueNow.length}
+          accent={overdueNow.length > 0 ? 'red' : undefined}
+          onClick={overdueNow.length > 0
+            ? () => setDrillDown({ title: 'Просрочено сейчас', tasks: overdueNow })
+            : undefined}
+        />
       </div>
 
       {/* Donuts row */}
@@ -288,31 +319,9 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
           )}
         </Card>
 
-      {/* Lists row */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Card title={`Просроченные сейчас (${overdueNow.length})`}>
-          {overdueNow.length === 0 ? (
-            <p className="py-4 text-center text-sm text-gray-400">Нет просроченных задач</p>
-          ) : (
-            <ul className="space-y-1">
-              {overdueNow.slice(0, 8).map(t => (
-                <li key={t.id}>
-                  <button
-                    onClick={() => onTaskOpen(t)}
-                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs text-gray-600 hover:bg-red-50 dark:text-gray-300 dark:hover:bg-red-950/30"
-                  >
-                    <span className="flex-1 truncate">{t.title}</span>
-                    <span className="text-red-500">⚠ {t.due_date}</span>
-                  </button>
-                </li>
-              ))}
-              {overdueNow.length > 8 && (
-                <li className="px-2 text-xs text-gray-400">…ещё {overdueNow.length - 8}</li>
-              )}
-            </ul>
-          )}
-        </Card>
-
+      {/* Lists row (раньше тут была карточка «Просроченные сейчас», теперь
+          она доступна через клик по KPI выше). */}
+      <div className="grid grid-cols-1 gap-3">
         <Card title="Топ тегов">
           {topTags.length === 0 ? (
             <p className="py-4 text-center text-sm text-gray-400">Теги не использовались</p>
@@ -340,27 +349,65 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
         </Card>
       </div>
 
-      <TtmSection tasks={tasks} rangeStart={rangeStart} rangeEnd={rangeEnd} onTaskOpen={onTaskOpen} />
+      <TtmSection tasks={tasks} rangeStart={rangeStart} rangeEnd={rangeEnd} />
+
+      {drillDown && (
+        <DrillDownModal
+          title={drillDown.title}
+          tasks={drillDown.tasks}
+          onTaskOpen={(t) => { setDrillDown(null); onTaskOpen(t) }}
+          onClose={() => setDrillDown(null)}
+        />
+      )}
     </div>
   )
 }
 
 /**
- * Раздел «Сроки» в Аналитике: 3 KPI (cycle / lead / queue avg) + список
- * «Долго делали» (топ-5 по cycle time за период).
- *
- * Учитываются только done-задачи с completed_at в периоде и заполненным
- * start_date. Если данных < 1 задачи — секция показывает заглушку «недостаточно
- * данных».
+ * Drill-down: модалка со списком задач за конкретным KPI. Клик по задаче
+ * закрывает модалку и открывает задачу обычным `onTaskOpen`.
  */
-function TtmSection({ tasks, rangeStart, rangeEnd, onTaskOpen }: {
+function DrillDownModal({ title, tasks, onTaskOpen, onClose }: {
+  title: string
+  tasks: Task[]
+  onTaskOpen: (task: Task) => void
+  onClose: () => void
+}) {
+  return (
+    <Modal onClose={onClose} title={`${title} (${tasks.length})`}>
+      <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+        {tasks.map(t => (
+          <li key={t.id}>
+            <button
+              onClick={() => onTaskOpen(t)}
+              className="flex w-full items-center justify-between gap-3 px-1 py-2 text-left hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              <span className="flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
+                {t.title}
+              </span>
+              <span className="flex-shrink-0 text-xs text-gray-400">
+                {STATUSES[t.status].label}
+                {t.due_date && ` · ${t.due_date}`}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Modal>
+  )
+}
+
+/**
+ * Раздел «Сроки» в Аналитике: 3 KPI (cycle / lead / queue avg) за период.
+ * Учитываются только done-задачи с completed_at в периоде и заполненным
+ * start_date. Если данных = 0 — заглушка «недостаточно данных».
+ */
+function TtmSection({ tasks, rangeStart, rangeEnd }: {
   tasks: Task[]
   rangeStart: Date
   rangeEnd: Date
-  onTaskOpen: (task: Task) => void
 }) {
   const ttm = useMemo(() => aggregateTtm(tasks, rangeStart, rangeEnd), [tasks, rangeStart, rangeEnd])
-  const slow = useMemo(() => topCycleTime(tasks, rangeStart, rangeEnd, 5), [tasks, rangeStart, rangeEnd])
 
   return (
     <div className="mt-6">
@@ -373,70 +420,37 @@ function TtmSection({ tasks, rangeStart, rangeEnd, onTaskOpen }: {
         </p>
       ) : (
         <>
-          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <TtmKpi
-              label="Cycle time"
-              value={ttm.cycle}
-              hint="Среднее время от старта работы до закрытия"
-            />
-            <TtmKpi
-              label="Lead time"
-              value={ttm.lead}
-              hint="Среднее время от создания до закрытия"
-            />
-            <TtmKpi
-              label="В очереди"
-              value={ttm.queue}
-              hint="Среднее время от создания до старта работы"
-            />
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <TtmKpi label="Cycle time" value={ttm.cycle} />
+            <TtmKpi label="Lead time"  value={ttm.lead}  />
+            <TtmKpi label="В очереди"  value={ttm.queue} />
           </div>
-          <p className="mb-3 text-xs text-gray-400">По {ttm.count} закрытым задачам за период</p>
-
-          {slow.length > 0 && (
-            <Card title="Долго делали">
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                {slow.map(({ task, cycle }) => (
-                  <li key={task.id}>
-                    <button
-                      onClick={() => onTaskOpen(task)}
-                      className="flex w-full items-center justify-between gap-3 px-1 py-2 text-left hover:text-blue-600 dark:hover:text-blue-400"
-                    >
-                      <span className="flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
-                        {task.title}
-                      </span>
-                      <span className="flex-shrink-0 text-sm font-semibold tabular-nums text-orange-600 dark:text-orange-400">
-                        {formatDays(cycle)} д
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+          <p className="text-xs text-gray-400">По {ttm.count} закрытым задачам за период</p>
         </>
       )}
     </div>
   )
 }
 
-function TtmKpi({ label, value, hint }: { label: string; value: number | null; hint: string }) {
+function TtmKpi({ label, value }: { label: string; value: number | null }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900" title={hint}>
+    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       <div className="text-xs uppercase tracking-wide text-gray-400">{label}</div>
       <div className="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
         {value === null ? '—' : value}
       </div>
-      <div className="mt-1 text-xs text-gray-400">{hint}</div>
     </div>
   )
 }
 
 /* ── Sub-components ───────────────────────────────────────── */
 
-function KpiCard({ label, value, accent }: {
+function KpiCard({ label, value, accent, onClick }: {
   label: string
   value: number
   accent?: 'green' | 'blue' | 'yellow' | 'red'
+  /** Если задан — карточка кликабельная (откроет drill-down модалку). */
+  onClick?: () => void
 }) {
   const accentClass =
     accent === 'green'  ? 'text-green-600 dark:text-green-400'   :
@@ -444,10 +458,29 @@ function KpiCard({ label, value, accent }: {
     accent === 'yellow' ? 'text-yellow-600 dark:text-yellow-400' :
     accent === 'red'    ? 'text-red-600 dark:text-red-400'       :
                           'text-gray-900 dark:text-white'
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+  const interactive = onClick
+    ? 'cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/60'
+    : ''
+  const content = (
+    <>
       <p className="text-[11px] uppercase tracking-wide text-gray-400">{label}</p>
       <p className={`mt-1 text-2xl font-bold ${accentClass}`}>{value}</p>
+    </>
+  )
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`block w-full rounded-xl border border-gray-200 bg-white p-3 text-left dark:border-gray-800 dark:bg-gray-900 ${interactive}`}
+      >
+        {content}
+      </button>
+    )
+  }
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+      {content}
     </div>
   )
 }
