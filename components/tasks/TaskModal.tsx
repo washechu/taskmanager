@@ -79,6 +79,12 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
               )}
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {task.start_date && (
+                  <div>
+                    <span className="text-xs text-gray-400">Начало</span>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{task.start_date}</p>
+                  </div>
+                )}
                 {task.due_date && (
                   <div>
                     <span className="text-xs text-gray-400">Дедлайн</span>
