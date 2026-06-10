@@ -44,6 +44,70 @@ export interface TaskStats {
   dueDelta:       number | null
 }
 
+/**
+ * Агрегатные TTM-метрики по списку задач, закрытых в периоде.
+ *
+ * Задача учитывается если `completed_at` попадает в [start, end] и есть
+ * `start_date` (без него cycle/queue нельзя посчитать).
+ *
+ * Возвращает средние в днях (округление до 0.1):
+ *   • cycle — completed_at - start_date
+ *   • lead  — completed_at - created_at
+ *   • queue — start_date    - created_at
+ *
+ * Если в периоде нет ни одной квалифицирующей задачи → все три null.
+ * `count` — сколько задач реально попало в расчёт (для UI «по N задачам»).
+ */
+export interface AggregateTtm {
+  cycle: number | null
+  lead:  number | null
+  queue: number | null
+  count: number
+}
+
+export function aggregateTtm(tasks: Task[], rangeStart: Date, rangeEnd: Date): AggregateTtm {
+  let cycleSum = 0, leadSum = 0, queueSum = 0, count = 0
+  for (const t of tasks) {
+    if (t.status !== 'done' || !t.completed_at || !t.start_date) continue
+    const completed = parseISO(t.completed_at)
+    if (completed < rangeStart || completed > rangeEnd) continue
+    const cycle = differenceInCalendarDays(completed, parseISO(t.start_date))
+    const lead  = differenceInCalendarDays(completed, parseISO(t.created_at))
+    const queue = differenceInCalendarDays(parseISO(t.start_date), parseISO(t.created_at))
+    cycleSum += cycle
+    leadSum  += lead
+    queueSum += queue
+    count++
+  }
+  if (count === 0) return { cycle: null, lead: null, queue: null, count: 0 }
+  return {
+    cycle: Math.round((cycleSum / count) * 10) / 10,
+    lead:  Math.round((leadSum  / count) * 10) / 10,
+    queue: Math.round((queueSum / count) * 10) / 10,
+    count,
+  }
+}
+
+/**
+ * Топ-N задач за период с самым большим cycle time (для списка «Долго делали»).
+ */
+export interface TaskWithCycle {
+  task:  Task
+  cycle: number
+}
+
+export function topCycleTime(tasks: Task[], rangeStart: Date, rangeEnd: Date, limit = 5): TaskWithCycle[] {
+  const items: TaskWithCycle[] = []
+  for (const t of tasks) {
+    if (t.status !== 'done' || !t.completed_at || !t.start_date) continue
+    const completed = parseISO(t.completed_at)
+    if (completed < rangeStart || completed > rangeEnd) continue
+    const cycle = differenceInCalendarDays(completed, parseISO(t.start_date))
+    items.push({ task: t, cycle })
+  }
+  return items.sort((a, b) => b.cycle - a.cycle).slice(0, limit)
+}
+
 export function computeTaskStats(task: Task): TaskStats {
   const now    = todayIso()
   const endRef = task.status === 'done' && task.completed_at

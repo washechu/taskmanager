@@ -17,6 +17,7 @@ import {
 import { useTags } from '@/lib/hooks/useTags'
 import { TagChip } from '@/components/ui/TagChip'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { aggregateTtm, topCycleTime, formatDays } from '@/lib/taskStats'
 
 type Period = 'week' | 'month' | 'custom'
 
@@ -338,6 +339,94 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
           )}
         </Card>
       </div>
+
+      <TtmSection tasks={tasks} rangeStart={rangeStart} rangeEnd={rangeEnd} onTaskOpen={onTaskOpen} />
+    </div>
+  )
+}
+
+/**
+ * Раздел «Сроки» в Аналитике: 3 KPI (cycle / lead / queue avg) + список
+ * «Долго делали» (топ-5 по cycle time за период).
+ *
+ * Учитываются только done-задачи с completed_at в периоде и заполненным
+ * start_date. Если данных < 1 задачи — секция показывает заглушку «недостаточно
+ * данных».
+ */
+function TtmSection({ tasks, rangeStart, rangeEnd, onTaskOpen }: {
+  tasks: Task[]
+  rangeStart: Date
+  rangeEnd: Date
+  onTaskOpen: (task: Task) => void
+}) {
+  const ttm = useMemo(() => aggregateTtm(tasks, rangeStart, rangeEnd), [tasks, rangeStart, rangeEnd])
+  const slow = useMemo(() => topCycleTime(tasks, rangeStart, rangeEnd, 5), [tasks, rangeStart, rangeEnd])
+
+  return (
+    <div className="mt-6">
+      <h3 className="mb-3 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
+        Сроки (в днях, в среднем)
+      </h3>
+      {ttm.count === 0 ? (
+        <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-400 dark:border-gray-800 dark:bg-gray-900">
+          За период нет закрытых задач со старта работы — недостаточно данных
+        </p>
+      ) : (
+        <>
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <TtmKpi
+              label="Cycle time"
+              value={ttm.cycle}
+              hint="Среднее время от старта работы до закрытия"
+            />
+            <TtmKpi
+              label="Lead time"
+              value={ttm.lead}
+              hint="Среднее время от создания до закрытия"
+            />
+            <TtmKpi
+              label="В очереди"
+              value={ttm.queue}
+              hint="Среднее время от создания до старта работы"
+            />
+          </div>
+          <p className="mb-3 text-xs text-gray-400">По {ttm.count} закрытым задачам за период</p>
+
+          {slow.length > 0 && (
+            <Card title="Долго делали">
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {slow.map(({ task, cycle }) => (
+                  <li key={task.id}>
+                    <button
+                      onClick={() => onTaskOpen(task)}
+                      className="flex w-full items-center justify-between gap-3 px-1 py-2 text-left hover:text-blue-600 dark:hover:text-blue-400"
+                    >
+                      <span className="flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
+                        {task.title}
+                      </span>
+                      <span className="flex-shrink-0 text-sm font-semibold tabular-nums text-orange-600 dark:text-orange-400">
+                        {formatDays(cycle)} д
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function TtmKpi({ label, value, hint }: { label: string; value: number | null; hint: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900" title={hint}>
+      <div className="text-xs uppercase tracking-wide text-gray-400">{label}</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
+        {value === null ? '—' : value}
+      </div>
+      <div className="mt-1 text-xs text-gray-400">{hint}</div>
     </div>
   )
 }
