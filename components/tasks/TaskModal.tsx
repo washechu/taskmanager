@@ -11,6 +11,7 @@ import { StatusMenu } from '@/components/ui/StatusMenu'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { CATEGORIES, ASSIGNEES } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
+import { computeTaskStats, formatDays } from '@/lib/taskStats'
 import type { Task, Project, Assignee } from '@/lib/types'
 
 interface TaskModalProps {
@@ -120,6 +121,8 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                   </div>
                 )}
               </div>
+
+              <TaskTtmBlock task={task} />
 
               {task.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -262,5 +265,97 @@ function InviteAction({
     >
       {children}
     </button>
+  )
+}
+
+/**
+ * TTM-блок: 2-3 цветные карточки с метриками задачи. Состав адаптируется под
+ * статус (см. computeTaskStats). Не рендерится, если нет ни одной цифры
+ * (свежая задача без start_date и без due_date — totalDays будет, но
+ * показывать одну единицу бессмысленно).
+ */
+function TaskTtmBlock({ task }: { task: Task }) {
+  const stats = computeTaskStats(task)
+
+  // Если совсем пусто — не показываем (теоретически невозможно: created_at есть всегда)
+  if (stats.inProgressDays === null && stats.totalDays === null && stats.dueDelta === null) {
+    return null
+  }
+
+  const isDone = task.status === 'done'
+  const isInProgress = task.status === 'in_progress'
+
+  // ── In_progress label/colour ──
+  const inProgressLabel = isDone ? '✓ Делали' : '⏱ В работе'
+  const inProgressColor = isDone ? 'green' : 'orange'
+
+  // ── due-delta: для done = опережение/опоздание, для остальных = до дедлайна / просрочка ──
+  let dueLabel = ''
+  let dueValue = ''
+  let dueColor: keyof typeof TTM_COLOR = 'muted'
+  if (stats.dueDelta !== null) {
+    if (isDone) {
+      if (stats.dueDelta >= 0) {
+        dueLabel = '✅ Опередили'
+        dueValue = `на ${formatDays(stats.dueDelta)}`
+        dueColor = 'green'
+      } else {
+        dueLabel = '⏰ Опоздали'
+        dueValue = `на ${formatDays(-stats.dueDelta)}`
+        dueColor = 'red'
+      }
+    } else if (stats.dueDelta >= 0) {
+      dueLabel = '🎯 До дедлайна'
+      dueValue = formatDays(stats.dueDelta)
+      dueColor = stats.dueDelta <= 1 ? 'red' : stats.dueDelta <= 3 ? 'yellow' : 'green'
+    } else {
+      dueLabel = '⚠️ Просрочено'
+      dueValue = `на ${formatDays(-stats.dueDelta)}`
+      dueColor = 'red'
+    }
+  }
+
+  return (
+    <div className="pt-2">
+      <h4 className="mb-3 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
+        Сроки
+      </h4>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {/* В работе / Делали — только если был старт работы */}
+        {stats.inProgressDays !== null && (isDone || isInProgress) && (
+          <TtmCard label={inProgressLabel} value={formatDays(stats.inProgressDays)} color={inProgressColor} />
+        )}
+        {/* От создания — всегда */}
+        {stats.totalDays !== null && (
+          <TtmCard label="📅 От создания" value={formatDays(stats.totalDays)} color="blue" />
+        )}
+        {/* До дедлайна / опережение / опоздание */}
+        {dueLabel && (
+          <TtmCard label={dueLabel} value={dueValue} color={dueColor} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+const TTM_COLOR = {
+  orange: 'text-orange-600 dark:text-orange-400',
+  green:  'text-green-600  dark:text-green-400',
+  yellow: 'text-yellow-600 dark:text-yellow-400',
+  red:    'text-red-600    dark:text-red-400',
+  blue:   'text-blue-600   dark:text-blue-400',
+  muted:  'text-gray-400',
+} as const
+
+function TtmCard({ label, value, color }: { label: string; value: string; color: keyof typeof TTM_COLOR }) {
+  const isEmpty = value === '—' || value === '0д'
+  const valueCls = isEmpty ? TTM_COLOR.muted : TTM_COLOR[color]
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
+      <div className="text-[11px] uppercase tracking-wide text-gray-400">{label}</div>
+      <div className={`mt-1 text-xl font-semibold tabular-nums ${valueCls}`}>
+        {value}
+      </div>
+    </div>
   )
 }
