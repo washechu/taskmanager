@@ -178,10 +178,12 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
                       ? '—'
                       : task.assignees.map(a => a === 'nick' ? 'Никита' : 'Галочка').join(' + ')}
                   </td>
-                  <td className={`px-3 py-2 text-sm ${dueCls}`}>
-                    {task.due_date
-                      ? <>{due && due !== 'future' ? `${dueIcon(due)} ` : ''}{task.due_date}</>
-                      : '—'}
+                  <td className={`px-3 py-2 text-sm ${task.status === 'done' ? 'text-gray-400' : dueCls}`}>
+                    {task.status === 'done' && task.completed_at
+                      ? <>✓ {task.completed_at.substring(0, 10)}</>
+                      : task.due_date
+                        ? <>{due && due !== 'future' ? `${dueIcon(due)} ` : ''}{task.due_date}</>
+                        : '—'}
                   </td>
                 </tr>
               )

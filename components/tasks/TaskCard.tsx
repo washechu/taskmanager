@@ -102,7 +102,11 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
             {task.assignees.map(a => ASSIGNEES[a].label).join(' + ')}
           </span>
         )}
-        {task.due_date && (
+        {task.status === 'done' && task.completed_at ? (
+          <span className="text-xs text-gray-400">
+            ✓ {task.completed_at.substring(0, 10)}
+          </span>
+        ) : task.due_date && (
           <span className={`text-xs ${dueCls}`}>
             {due && due !== 'future' ? `${dueIcon(due)} ` : '📅 '}{task.due_date}
           </span>
