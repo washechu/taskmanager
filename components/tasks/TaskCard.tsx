@@ -8,6 +8,7 @@ import { CATEGORIES, ASSIGNEES, type Task, type Status } from '@/lib/types'
 import type { Project } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import { dueStatus, dueIcon } from '@/lib/dueStatus'
+import { computeTaskStats, formatDays } from '@/lib/taskStats'
 
 interface TaskCardProps {
   task: Task
@@ -109,6 +110,11 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
         ) : task.due_date && (
           <span className={`text-xs ${dueCls}`}>
             {due && due !== 'future' ? `${dueIcon(due)} ` : '📅 '}{task.due_date}
+          </span>
+        )}
+        {task.status === 'in_progress' && task.start_date && (
+          <span className="text-xs text-orange-600 dark:text-orange-400" title="В работе">
+            ⏱ {formatDays(computeTaskStats(task).inProgressDays)}
           </span>
         )}
         {task.tags.slice(0, 3).map(tag => (
