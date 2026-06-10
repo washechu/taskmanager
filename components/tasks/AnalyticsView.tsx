@@ -296,58 +296,56 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
       </div>
 
       {/* Stacked bar chart */}
-      <Card title="Создано задач">
-          {barData.length === 0 ? (
-            <EmptyChart />
-          ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={barData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb33" />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12 }}
-                  cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }}
-                />
-                <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
-                <Bar dataKey="todo"        stackId="a" fill={STATUS_HEX.todo}        name={STATUSES.todo.label}        radius={[0, 0, 0, 0]} />
-                <Bar dataKey="in_progress" stackId="a" fill={STATUS_HEX.in_progress} name={STATUSES.in_progress.label} />
-                <Bar dataKey="paused"      stackId="a" fill={STATUS_HEX.paused}      name={STATUSES.paused.label}      />
-                <Bar dataKey="done"        stackId="a" fill={STATUS_HEX.done}        name={STATUSES.done.label}        radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </Card>
+      <Section title="Создано задач">
+        {barData.length === 0 ? (
+          <EmptyChart />
+        ) : (
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={barData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb33" />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12 }}
+                cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} iconSize={10} />
+              <Bar dataKey="todo"        stackId="a" fill={STATUS_HEX.todo}        name={STATUSES.todo.label}        radius={[0, 0, 0, 0]} />
+              <Bar dataKey="in_progress" stackId="a" fill={STATUS_HEX.in_progress} name={STATUSES.in_progress.label} />
+              <Bar dataKey="paused"      stackId="a" fill={STATUS_HEX.paused}      name={STATUSES.paused.label}      />
+              <Bar dataKey="done"        stackId="a" fill={STATUS_HEX.done}        name={STATUSES.done.label}        radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Section>
 
-      {/* Lists row (раньше тут была карточка «Просроченные сейчас», теперь
-          она доступна через клик по KPI выше). */}
-      <div className="grid grid-cols-1 gap-3">
-        <Card title="Топ тегов">
-          {topTags.length === 0 ? (
-            <p className="py-4 text-center text-sm text-gray-400">Теги не использовались</p>
-          ) : (
-            <ul className="space-y-2">
-              {topTags.map(({ name, count }) => {
-                const max = topTags[0].count
-                return (
-                  <li key={name} className="flex items-center gap-3">
-                    <div className="w-28 flex-shrink-0">
-                      <TagChip name={name} tags={allTags} />
-                    </div>
-                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                      <div
-                        className="h-full rounded-full bg-blue-500"
-                        style={{ width: `${(count / max) * 100}%` }}
-                      />
-                    </div>
-                    <span className="w-6 text-right text-xs font-medium text-gray-400 dark:text-gray-500">{count}</span>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Card>
-      </div>
+      {/* Топ тегов (раньше тут же была карточка «Просроченные сейчас» — теперь
+          через клик по KPI выше). */}
+      <Section title="Топ тегов">
+        {topTags.length === 0 ? (
+          <p className="py-4 text-center text-sm text-gray-400">Теги не использовались</p>
+        ) : (
+          <ul className="space-y-2">
+            {topTags.map(({ name, count }) => {
+              const max = topTags[0].count
+              return (
+                <li key={name} className="flex items-center gap-3">
+                  <div className="w-28 flex-shrink-0">
+                    <TagChip name={name} tags={allTags} />
+                  </div>
+                  <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div
+                      className="h-full rounded-full bg-blue-500"
+                      style={{ width: `${(count / max) * 100}%` }}
+                    />
+                  </div>
+                  <span className="w-6 text-right text-xs font-medium text-gray-400 dark:text-gray-500">{count}</span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Section>
 
       <TtmSection tasks={tasks} rangeStart={rangeStart} rangeEnd={rangeEnd} />
 
@@ -410,10 +408,7 @@ function TtmSection({ tasks, rangeStart, rangeEnd }: {
   const ttm = useMemo(() => aggregateTtm(tasks, rangeStart, rangeEnd), [tasks, rangeStart, rangeEnd])
 
   return (
-    <div className="mt-6">
-      <h3 className="mb-3 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
-        Сроки (в днях, в среднем)
-      </h3>
+    <Section title="Сроки (в днях, в среднем)">
       {ttm.count === 0 ? (
         <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-400 dark:border-gray-800 dark:bg-gray-900">
           За период нет закрытых задач со старта работы — недостаточно данных
@@ -428,7 +423,7 @@ function TtmSection({ tasks, rangeStart, rangeEnd }: {
           <p className="text-xs text-gray-400">По {ttm.count} закрытым задачам за период</p>
         </>
       )}
-    </div>
+    </Section>
   )
 }
 
@@ -489,6 +484,21 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       <h3 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+/**
+ * Заголовок секции с линией снизу — для крупных блоков, как «Сроки» в TTM.
+ * Карточки/контент идут под ним без бордера-обёртки.
+ */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mt-6">
+      <h3 className="mb-3 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
+        {title}
+      </h3>
       {children}
     </div>
   )
