@@ -104,7 +104,6 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                       disabled={!onProjectOpen}
                     >
                       {projects.find(p => p.id === task.project_id)?.title ?? '—'}
-                      {onProjectOpen && ' →'}
                     </button>
                   </div>
                 )}

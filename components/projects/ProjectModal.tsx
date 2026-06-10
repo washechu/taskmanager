@@ -222,19 +222,22 @@ export function ProjectModal({ project, tasks, currentUser, onUpdate, onDelete, 
                 )}
               </div>
 
-              <div>
-                <p className="mb-1 text-xs text-gray-400">
-                  {projectTasks.length > 0 ? `Задачи: ${doneTasks}/${projectTasks.length}` : 'Задач пока нет'}
-                </p>
+              <div className="pt-2">
+                <h4 className="mb-3 flex items-baseline justify-between gap-2 border-b border-gray-100 pb-2 text-sm font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
+                  <span>Задачи</span>
+                  <span className="text-xs font-normal text-gray-400">
+                    {projectTasks.length > 0 ? `${doneTasks}/${projectTasks.length}` : 'пока нет'}
+                  </span>
+                </h4>
                 {projectTasks.length > 0 && (
                   <>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                       <div
                         className="h-full rounded-full bg-green-500"
                         style={{ width: `${(doneTasks / projectTasks.length) * 100}%` }}
                       />
                     </div>
-                    <ul className="mt-2 space-y-0.5">
+                    <ul className="space-y-0.5">
                       {projectTasks.slice(0, 15).map(t => (
                         <li key={t.id}>
                           <button
@@ -252,7 +255,6 @@ export function ProjectModal({ project, tasks, currentUser, onUpdate, onDelete, 
                             <span className="text-[11px] uppercase tracking-wide text-gray-400">
                               {STATUSES[t.status].label}
                             </span>
-                            {onTaskOpen && <span className="opacity-60">→</span>}
                           </button>
                         </li>
                       ))}
