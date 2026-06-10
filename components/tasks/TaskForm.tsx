@@ -14,7 +14,7 @@ import { TextArea } from '@/components/ui/TextArea'
 import { DateInput } from '@/components/ui/DateInput'
 import { AssigneePicker } from '@/components/ui/AssigneePicker'
 
-type TaskFormData = Omit<Task, 'id' | 'created_at' | 'updated_at'>
+type TaskFormData = Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>
 
 interface TaskFormProps {
   initial?: Partial<TaskFormData>

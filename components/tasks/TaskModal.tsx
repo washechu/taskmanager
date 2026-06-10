@@ -28,7 +28,7 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
   const [confirmDelete, setConfirmDelete] = useState(false)
   const { tags: allTags } = useTags()
 
-  const handleUpdate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleUpdate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => {
     await onUpdate(task.id, data)
     setEditing(false)
   }

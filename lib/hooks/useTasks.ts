@@ -31,12 +31,15 @@ export function useTasks() {
     return () => { supabase.removeChannel(channel) }
   }, [fetchTasks, supabase])
 
-  const createTask = useCallback(async (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+  const createTask = useCallback(async (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => {
     const optimisticTask: Task = {
       ...task,
       id: crypto.randomUUID(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      // Если задача создаётся со статусом 'done', DB-триггер выставит completed_at;
+      // оптимистично угадываем то же значение, иначе null.
+      completed_at: task.status === 'done' ? new Date().toISOString() : null,
     }
     setTasks(prev => [optimisticTask, ...prev])
 

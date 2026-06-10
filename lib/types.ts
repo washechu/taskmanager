@@ -20,6 +20,9 @@ export interface Task {
   invited_by: Assignee | null
   /** Статус ответа на предложение. м.009 */
   invite_status: 'none' | 'pending' | 'accepted' | 'tentative' | 'declined'
+  /** Когда задача была первый раз закрыта (status='done'). Выставляется
+   *  DB-триггером, не перезаписывается при повторных переходах. м.026 */
+  completed_at: string | null
   created_at: string
   updated_at: string
 }

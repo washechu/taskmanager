@@ -76,7 +76,7 @@ function TasksPageInner() {
     return handleUpdate(id, { status })
   }
 
-  const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => {
     await createTask(data)
     setCreating(null)
   }
