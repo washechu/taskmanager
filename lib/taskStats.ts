@@ -88,26 +88,6 @@ export function aggregateTtm(tasks: Task[], rangeStart: Date, rangeEnd: Date): A
   }
 }
 
-/**
- * Топ-N задач за период с самым большим cycle time (для списка «Долго делали»).
- */
-export interface TaskWithCycle {
-  task:  Task
-  cycle: number
-}
-
-export function topCycleTime(tasks: Task[], rangeStart: Date, rangeEnd: Date, limit = 5): TaskWithCycle[] {
-  const items: TaskWithCycle[] = []
-  for (const t of tasks) {
-    if (t.status !== 'done' || !t.completed_at || !t.start_date) continue
-    const completed = parseISO(t.completed_at)
-    if (completed < rangeStart || completed > rangeEnd) continue
-    const cycle = differenceInCalendarDays(completed, parseISO(t.start_date))
-    items.push({ task: t, cycle })
-  }
-  return items.sort((a, b) => b.cycle - a.cycle).slice(0, limit)
-}
-
 export function computeTaskStats(task: Task): TaskStats {
   const now    = todayIso()
   const endRef = task.status === 'done' && task.completed_at
