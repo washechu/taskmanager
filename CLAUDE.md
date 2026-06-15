@@ -159,6 +159,15 @@ cp .env.example .env.local
 npm run dev
 ```
 
+### Тесты
+```bash
+npm test          # vitest run — однократный прогон
+npm run test:watch # с автоповтором при изменениях
+```
+Покрывают чистые функции в `lib/`: `diffTask`, `dueStatus`, `archive`, `dates`,
+`taskStats` (включая `aggregateTtm`), `habitStats` (стрики, completion rate).
+Конфиг — `vitest.config.ts`, файлы — `lib/**/*.test.ts`.
+
 ### Переменные окружения
 ```
 NEXT_PUBLIC_SUPABASE_URL=
