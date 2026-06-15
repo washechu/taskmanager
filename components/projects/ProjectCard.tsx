@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CATEGORIES, ASSIGNEES, type Project } from '@/lib/types'
 import type { Task } from '@/lib/types'
+import { formatRelativeDate } from '@/lib/dates'
 
 interface ProjectCardProps {
   project: Project
@@ -76,7 +77,7 @@ export function ProjectCard({ project, tasks, onOpen }: ProjectCardProps) {
         )}
         {project.due_date && (
           <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-            {isOverdue ? '⚠️ ' : '📅 '}{project.due_date}
+            {isOverdue ? '⚠️ ' : '📅 '}{formatRelativeDate(project.due_date)}
           </span>
         )}
       </div>

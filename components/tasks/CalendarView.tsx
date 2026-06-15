@@ -7,6 +7,7 @@ import {
   addDays, subDays, isToday, startOfDay, parseISO, isBefore,
 } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { formatShortDate } from '@/lib/dates'
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { IconButton } from '@/components/ui/IconButton'
@@ -335,7 +336,7 @@ function AgendaItem({ task, onOpen, overdue }: { task: Task; onOpen: (t: Task) =
         <PriorityBadge priority={task.priority} />
       </div>
       {overdue && task.due_date && (
-        <p className="mt-1 pl-7 text-xs text-red-500">⚠ Дедлайн был: {task.due_date}</p>
+        <p className="mt-1 pl-7 text-xs text-red-500">⚠ Дедлайн был: {formatShortDate(task.due_date)}</p>
       )}
     </button>
   )

@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { TextArea } from '@/components/ui/TextArea'
 import { DateInput } from '@/components/ui/DateInput'
 import { AssigneePicker } from '@/components/ui/AssigneePicker'
+import { formatShortDate } from '@/lib/dates'
 import {
   STATUSES, CATEGORIES, ASSIGNEES, STATUS_ORDER,
   type Project, type Status, type Category, type Assignee,
@@ -211,13 +212,13 @@ export function ProjectModal({ project, tasks, currentUser, onUpdate, onDelete, 
                 {project.start_date && (
                   <div>
                     <span className="text-xs text-gray-400">Начало</span>
-                    <p className="font-medium text-gray-600 dark:text-gray-100">{project.start_date}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{formatShortDate(project.start_date)}</p>
                   </div>
                 )}
                 {project.due_date && (
                   <div>
                     <span className="text-xs text-gray-400">Дедлайн</span>
-                    <p className="font-medium text-gray-600 dark:text-gray-100">{project.due_date}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{formatShortDate(project.due_date)}</p>
                   </div>
                 )}
               </div>

@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Task, Status } from '@/lib/types'
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  // Мемоизируем клиент — иначе на каждый рендер создаётся новый instance и
+  // useEffect ниже пересоздаёт realtime-подписку, перерасходуя channels.
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchTasks = useCallback(async () => {
     const { data } = await supabase
