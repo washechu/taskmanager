@@ -1,11 +1,19 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { KanbanBoard } from '@/components/tasks/KanbanBoard'
 import { CalendarView } from '@/components/tasks/CalendarView'
 import { ListView } from '@/components/tasks/ListView'
-import { AnalyticsView } from '@/components/tasks/AnalyticsView'
+// AnalyticsView ленивый — recharts (~110 KB) грузится только при view=analytics.
+const AnalyticsView = dynamic(
+  () => import('@/components/tasks/AnalyticsView').then(m => m.AnalyticsView),
+  {
+    ssr: false,
+    loading: () => <div className="p-8 text-center text-sm text-gray-400">Загрузка аналитики…</div>,
+  },
+)
 import { TaskModal } from '@/components/tasks/TaskModal'
 import { TaskForm } from '@/components/tasks/TaskForm'
 import { TaskFilters, applyTaskFilters, type TaskFilterState } from '@/components/tasks/TaskFilters'

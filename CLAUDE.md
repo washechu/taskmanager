@@ -60,7 +60,14 @@
 │   │   ├── TaskFilters.tsx       # Фильтры + rightAction-слот для +Задача
 │   │   ├── ListView.tsx          # Вид таблицей с сортируемыми заголовками + slice по дедлайну (Сегодня/Неделя/Месяц/Все)
 │   │   ├── CalendarView.tsx      # Календарь со срезами Сегодня/Неделя/Месяц (месяц: десктоп чипы / мобайл точки + день-шит)
-│   │   ├── AnalyticsView.tsx     # Дашборд: KPI + донаты + стек-бар + списки
+│   │   ├── AnalyticsView.tsx     # Оркестратор Аналитики (dynamic import: recharts грузится при view=analytics)
+│   │   ├── analytics/            # Sub-компоненты Аналитики:
+│   │   │   ├── AnalyticsHeader.tsx   #   период selector + custom dates
+│   │   │   ├── KpiRow.tsx            #   4 KPI вверху + drill-down коллбек
+│   │   │   ├── Charts.tsx            #   StatusDonut + AssigneeDonut + CreatedBar (recharts)
+│   │   │   ├── TopTagsSection.tsx    #   список с барами
+│   │   │   ├── TtmSection.tsx        #   3 KPI cycle/lead/queue avg
+│   │   │   └── DrillDownModal.tsx    #   список задач по клику на KPI
 │   │   └── GanttView.tsx         # (НЕ используется на странице задач; зарезервирован)
 │   ├── projects/
 │   │   ├── ProjectKanban.tsx     # Канбан проектов (stateless)
@@ -89,6 +96,10 @@
 │       ├── PriorityBadge.tsx     # С цветной точкой + контрастный фон
 │       ├── EmptyState.tsx
 │       ├── Skeleton.tsx          # Пульсирующий плейсхолдер для loading-состояний
+│       ├── KanbanSkeleton.tsx    # 4 колонки скелета — общий для /tasks и /projects
+│       ├── Section.tsx           # Заголовок раздела с линией снизу (без обводки)
+│       ├── Card.tsx              # Контейнер-карточка с обводкой + EmptyChart
+│       ├── KpiCard.tsx           # KPI-карта с опциональным onClick (drill-down)
 │       ├── TagChip.tsx           # Цветной тег (resolve color по name из allTags)
 │       └── TagPicker.tsx         # Мультиселект + создание нового тега + color picker
 ├── lib/
