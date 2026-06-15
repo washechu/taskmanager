@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Project } from '@/lib/types'
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  // Мемоизируем клиент — иначе на каждый рендер создаётся новый instance и
+  // useEffect ниже пересоздаёт realtime-подписку.
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchProjects = useCallback(async () => {
     const { data } = await supabase

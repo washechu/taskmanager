@@ -19,6 +19,7 @@ import { TagChip } from '@/components/ui/TagChip'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Modal } from '@/components/ui/Modal'
 import { aggregateTtm } from '@/lib/taskStats'
+import { formatShortDate } from '@/lib/dates'
 
 type Period = 'week' | 'month' | 'custom'
 
@@ -385,7 +386,7 @@ function DrillDownModal({ title, tasks, onTaskOpen, onClose }: {
               </span>
               <span className="flex-shrink-0 text-xs text-gray-400">
                 {STATUSES[t.status].label}
-                {t.due_date && ` · ${t.due_date}`}
+                {t.due_date && ` · ${formatShortDate(t.due_date)}`}
               </span>
             </button>
           </li>

@@ -17,6 +17,7 @@ import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { dueStatus, dueIcon } from '@/lib/dueStatus'
+import { formatRelativeDate } from '@/lib/dates'
 import { isHabitScheduledOn, type Task, type Habit, type Project } from '@/lib/types'
 
 const PRIORITY_RANK = { high: 0, medium: 1, low: 2 } as const
@@ -341,7 +342,7 @@ function TaskRow({ task, project, onOpen, onComplete }: {
           {project && <span className="truncate">📁 {project.title}</span>}
           {task.due_date && (
             <span className={dueCls}>
-              {due && due !== 'future' ? `${dueIcon(due)} ` : '📅 '}{task.due_date}
+              {due && due !== 'future' ? `${dueIcon(due)} ` : '📅 '}{formatRelativeDate(task.due_date)}
             </span>
           )}
         </div>

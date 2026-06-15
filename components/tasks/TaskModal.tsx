@@ -12,6 +12,7 @@ import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { CATEGORIES, ASSIGNEES } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import { computeTaskStats, formatDays } from '@/lib/taskStats'
+import { formatShortDate } from '@/lib/dates'
 import type { Task, Project, Assignee } from '@/lib/types'
 
 interface TaskModalProps {
@@ -83,19 +84,19 @@ export function TaskModal({ task, projects, currentUser, onUpdate, onDelete, onC
                 {task.start_date && (
                   <div>
                     <span className="text-xs text-gray-400">Начало</span>
-                    <p className="font-medium text-gray-600 dark:text-gray-100">{task.start_date}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{formatShortDate(task.start_date)}</p>
                   </div>
                 )}
                 {task.due_date && (
                   <div>
                     <span className="text-xs text-gray-400">Дедлайн</span>
-                    <p className="font-medium text-gray-600 dark:text-gray-100">{task.due_date}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{formatShortDate(task.due_date)}</p>
                   </div>
                 )}
                 {task.completed_at && (
                   <div>
                     <span className="text-xs text-gray-400">Закрыто</span>
-                    <p className="font-medium text-gray-600 dark:text-gray-100">{task.completed_at.substring(0, 10)}</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-100">{formatShortDate(task.completed_at)}</p>
                   </div>
                 )}
                 {task.assignees.length > 0 && (

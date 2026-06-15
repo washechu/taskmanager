@@ -9,6 +9,7 @@ import type { Project } from '@/lib/types'
 import { useTags } from '@/lib/hooks/useTags'
 import { dueStatus, dueIcon } from '@/lib/dueStatus'
 import { computeTaskStats, formatDays } from '@/lib/taskStats'
+import { formatRelativeDate } from '@/lib/dates'
 
 interface TaskCardProps {
   task: Task
@@ -105,11 +106,11 @@ export function TaskCard({ task, projects, onOpen, onProjectOpen }: TaskCardProp
         )}
         {task.status === 'done' && task.completed_at ? (
           <span className="text-xs text-gray-400">
-            ✓ {task.completed_at.substring(0, 10)}
+            ✓ {formatRelativeDate(task.completed_at)}
           </span>
         ) : task.due_date && (
           <span className={`text-xs ${dueCls}`}>
-            {due && due !== 'future' ? `${dueIcon(due)} ` : '📅 '}{task.due_date}
+            {due && due !== 'future' ? `${dueIcon(due)} ` : '📅 '}{formatRelativeDate(task.due_date)}
           </span>
         )}
         {task.status === 'in_progress' && task.start_date && (

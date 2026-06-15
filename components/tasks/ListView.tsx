@@ -8,6 +8,7 @@ import {
 import { PriorityBadge } from '@/components/ui/PriorityBadge'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { dueStatus, dueIcon } from '@/lib/dueStatus'
+import { formatRelativeDate } from '@/lib/dates'
 import { isArchivedTask, ARCHIVE_DAYS } from '@/lib/archive'
 import {
   STATUSES, STATUS_ORDER, type Status, type Task, type Project,
@@ -180,9 +181,9 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
                   </td>
                   <td className={`px-3 py-2 text-sm ${task.status === 'done' ? 'text-gray-400' : dueCls}`}>
                     {task.status === 'done' && task.completed_at
-                      ? <>✓ {task.completed_at.substring(0, 10)}</>
+                      ? <>✓ {formatRelativeDate(task.completed_at)}</>
                       : task.due_date
-                        ? <>{due && due !== 'future' ? `${dueIcon(due)} ` : ''}{task.due_date}</>
+                        ? <>{due && due !== 'future' ? `${dueIcon(due)} ` : ''}{formatRelativeDate(task.due_date)}</>
                         : '—'}
                   </td>
                 </tr>
