@@ -1,79 +1,35 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useCallback } from 'react'
+import { useTable } from './useTable'
 import type { Task, Status } from '@/lib/types'
 
+type NewTask = Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>
+
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
-  // Мемоизируем клиент — иначе на каждый рендер создаётся новый instance и
-  // useEffect ниже пересоздаёт realtime-подписку, перерасходуя channels.
-  const supabase = useMemo(() => createClient(), [])
+  const { items, loading, fetchAll, insert, update, remove } =
+    useTable<Task>('tasks', { orderBy: { column: 'created_at', ascending: false } })
 
-  const fetchTasks = useCallback(async () => {
-    const { data } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (data) setTasks(data)
-    setLoading(false)
-  }, [supabase])
-
-  useEffect(() => {
-    fetchTasks()
-
-    const channel = supabase
-      .channel('tasks-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
-        fetchTasks()
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [fetchTasks, supabase])
-
-  const createTask = useCallback(async (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => {
-    const optimisticTask: Task = {
+  const createTask = useCallback(async (task: NewTask) => {
+    const now = new Date().toISOString()
+    const optimistic: Task = {
       ...task,
       id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      // Если задача создаётся со статусом 'done', DB-триггер выставит completed_at;
-      // оптимистично угадываем то же значение, иначе null.
-      completed_at: task.status === 'done' ? new Date().toISOString() : null,
+      created_at: now,
+      updated_at: now,
+      // DB-триггер выставит completed_at при создании со статусом 'done';
+      // оптимистично угадываем, иначе null.
+      completed_at: task.status === 'done' ? now : null,
     }
-    setTasks(prev => [optimisticTask, ...prev])
-
-    const { data, error } = await supabase.from('tasks').insert(task).select().single()
-    if (error) {
-      setTasks(prev => prev.filter(t => t.id !== optimisticTask.id))
-    } else {
-      setTasks(prev => prev.map(t => t.id === optimisticTask.id ? data : t))
-    }
-    return { data, error }
-  }, [supabase])
+    return insert(task as unknown as Record<string, unknown>, optimistic)
+  }, [insert])
 
   const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
-    const { error } = await supabase
-      .from('tasks')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-    if (error) fetchTasks()
-    return { error }
-  }, [supabase, fetchTasks])
+    return update(id, { ...updates, updated_at: new Date().toISOString() })
+  }, [update])
 
-  const deleteTask = useCallback(async (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id))
-    const { error } = await supabase.from('tasks').delete().eq('id', id)
-    if (error) fetchTasks()
-    return { error }
-  }, [supabase, fetchTasks])
+  const deleteTask = useCallback((id: string) => remove(id), [remove])
+  const moveTask = useCallback((id: string, status: Status) => updateTask(id, { status }), [updateTask])
 
-  const moveTask = useCallback(async (id: string, status: Status) => {
-    return updateTask(id, { status })
-  }, [updateTask])
-
-  return { tasks, loading, createTask, updateTask, deleteTask, moveTask }
+  return { tasks: items, loading, fetchAll, createTask, updateTask, deleteTask, moveTask }
 }
