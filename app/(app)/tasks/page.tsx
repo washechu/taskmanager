@@ -24,7 +24,6 @@ import { KanbanSkeleton } from '@/components/ui/KanbanSkeleton'
 import { useTasks } from '@/lib/hooks/useTasks'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import { useAuditedTaskUpdate } from '@/lib/hooks/useAuditedTaskUpdate'
 import type { Task, Status } from '@/lib/types'
 
 const DEFAULT_FILTERS: TaskFilterState = {
@@ -43,7 +42,8 @@ function TasksPageInner() {
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks()
   const { projects } = useProjects()
   const currentUser = useCurrentUser()
-  const handleUpdate = useAuditedTaskUpdate(tasks, updateTask, projects, currentUser.assignee)
+  // Audit-комментарии пишет DB-триггер trg_audit_task_changes (м.027) —
+  // здесь больше не нужна клиентская обёртка.
   const [filters, setFilters] = useState<TaskFilterState>(DEFAULT_FILTERS)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [creating, setCreating] = useState<{ projectId?: string | null } | null>(null)
@@ -81,7 +81,7 @@ function TasksPageInner() {
 
   /** Wrap moveTask (status-only update) — same audit treatment */
   const handleMove = async (id: string, status: Status) => {
-    return handleUpdate(id, { status })
+    return updateTask(id, { status })
   }
 
   const handleCreate = async (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => {
@@ -144,7 +144,7 @@ function TasksPageInner() {
             projects={projects}
             currentUser={currentUser.assignee ?? 'nick'}
             onMove={handleMove}
-            onUpdate={handleUpdate}
+            onUpdate={updateTask}
             onDelete={deleteTask}
             onCreate={createTask}
             onProjectOpen={navigateToProject}
@@ -179,7 +179,7 @@ function TasksPageInner() {
           projects={projects}
           currentUser={currentUser.assignee ?? 'nick'}
           onUpdate={async (id, updates) => {
-            const result = await handleUpdate(id, updates)
+            const result = await updateTask(id, updates)
             setSelectedTask(prev => prev ? { ...prev, ...updates } : null)
             return result
           }}
