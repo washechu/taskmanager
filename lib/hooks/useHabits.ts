@@ -36,9 +36,13 @@ export function useHabits() {
   useEffect(() => {
     fetchAll()
     let channel: ReturnType<typeof supabase.channel> | null = null
+    // Уникальное имя канала per-hook-instance — useHabits может вызываться
+    // одновременно на /habits и /today, и общее имя приводит к
+    // «cannot add postgres_changes callbacks after subscribe()».
+    const channelName = `habits-changes-${Math.random().toString(36).slice(2, 10)}`
     try {
       channel = supabase
-        .channel('habits-changes')
+        .channel(channelName)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'habits' }, (payload) => {
           if (payload.eventType === 'INSERT') {
             const row = payload.new as Habit
