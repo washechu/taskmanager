@@ -171,7 +171,7 @@ function InviteBlock({
     if (isInviter) {
       const withdraw = () => {
         // Отзыв = инициатор остаётся один, invite_status='none', задача → «приостановлено».
-        // Audit-коммент пишется через diffTask по actor (см. diffTask.ts).
+        // Audit-коммент пишется DB-триггером trg_audit_task_changes (м.027).
         if (!task.invited_by) return
         onUpdate(task.id, { invite_status: 'none', assignees: [task.invited_by], status: 'paused' })
       }

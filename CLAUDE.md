@@ -110,9 +110,7 @@
 │   │   ├── useComments.ts             # CRUD + Realtime (вкл. kind)
 │   │   ├── useTags.ts                 # CRUD + Realtime
 │   │   ├── useHabits.ts               # CRUD привычек + habit_logs + toggleLog + Realtime
-│   │   ├── useCurrentUser.ts          # email → assignee (по env vars)
-│   │   └── useAuditedTaskUpdate.ts    # Обёртка updateTask с audit-комментариями (diffTask)
-│   ├── diffTask.ts               # Утилита: разница старой и новой задачи → audit-строки
+│   │   └── useCurrentUser.ts          # email → assignee (по env vars)
 │   ├── dueStatus.ts              # dueStatus(task) → overdue/today/future/null + dueIcon (🔥/⚠️)
 │   ├── habitStats.ts             # Стат по привычке: текущая/лучшая серия, total, % за 30 дней
 │   ├── taskStats.ts              # TTM-метрики задачи: в работе, lead time, до/после дедлайна
@@ -149,7 +147,8 @@
 │   ├── 023_drop_task_defer.sql   # отказ от «Отложить до»: обнуление tasks.start_date
 │   ├── 024_fix_withdraw_notification.sql # отзыв ≠ отклонение: _notify_invite_replied смотрит _actor() + род глаголов
 │   ├── 025_auto_start_date.sql   # автозаполнение tasks.start_date при первом переводе в in_progress
-│   └── 026_completed_at.sql      # tasks.completed_at + автозаполнение при первом переходе в done
+│   ├── 026_completed_at.sql      # tasks.completed_at + автозаполнение при первом переходе в done
+│   └── 027_audit_in_trigger.sql  # audit-комментарии пишет DB-триггер; respond_to_invite_rpc больше не пишет
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -175,7 +174,7 @@ npm run dev
 npm test          # vitest run — однократный прогон
 npm run test:watch # с автоповтором при изменениях
 ```
-Покрывают чистые функции в `lib/`: `diffTask`, `dueStatus`, `archive`, `dates`,
+Покрывают чистые функции в `lib/`: `dueStatus`, `archive`, `dates`,
 `taskStats` (включая `aggregateTtm`), `habitStats` (стрики, completion rate).
 Конфиг — `vitest.config.ts`, файлы — `lib/**/*.test.ts`.
 
@@ -611,12 +610,10 @@ Body: flex-1 overflow-y-auto px-5 pt-4
   - ⚠️ **Задачи на сегодня** — `due_date === today`, не done. Сортировка по приоритету (high → low).
   - 🔁 **Привычки** — запланированные на сегодня (`isHabitScheduledOn`). Группируются: pending (наверх) + Готово (внизу, с подзаголовком).
 - **Интеракции**:
-  - Чекбокс слева у задачи → `handleUpdate(id, { status: 'done' })` через `useAuditedTaskUpdate` (audit-комментарий сохраняется).
-  - Тап по тексту задачи → открывает `TaskModal` (с тем же handleUpdate).
+  - Чекбокс слева у задачи → `updateTask(id, { status: 'done' })` (audit-комментарий пишет DB-триггер).
+  - Тап по тексту задачи → открывает `TaskModal`.
   - Тап по строке привычки → `toggleLog`. Read-only тут не нужен — кружок только сегодняшний.
 - **Пустое состояние** (нет ни просрочки, ни сегодняшних, ни привычек) — «Спокойный день — ничего на сегодня. Можно отдохнуть 🌿».
-- **Аудит-обёртка** `useAuditedTaskUpdate(tasks, updateTask, projects, currentUserAssignee)` — вытащена из `/tasks/page.tsx`, чтобы и Today, и страница задач писали одинаковые audit-комментарии при изменении задачи.
-
 ### Канбан
 - Drag & drop через `@dnd-kit` (работает на мобильном — через TouchSensor с delay).
 - Кнопка «+» в шапке колонки создаёт задачу с предустановленным статусом.
@@ -691,11 +688,11 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 - Страницы читают URL-параметр в `useEffect`, открывают модалку, затем чистят URL через `router.replace`.
 
 ### Audit-комментарии (история изменений)
-- Каждое изменение задачи через `handleUpdate` сравнивается с предыдущим состоянием через `diffTask.ts`.
-- Если есть отличия → автоматически вставляется комментарий с `kind: 'audit'`, автор — `currentUser.assignee`.
-- Audit-комментарии рендерятся курсивом, серее, без аватарки, без кнопки удаления.
-- В счётчике «Комментарии (N)» учитываются только user-комментарии.
-- Drag-and-drop статуса проходит через тот же wrapper → тоже логируется.
+- DB-триггер `trg_audit_task_changes` (м.027) висит AFTER UPDATE на `tasks`. Сравнивает OLD и NEW, формирует строку «дельта; дельта; дельта» и вставляет в `comments` с `kind='audit'`. Автор берётся из `_actor()` — той же функции, что используется в invite-логике (auth.email() в UI / app.actor в RPC из Telegram). Если actor null (прямой SQL без контекста) — audit пропускается.
+- Атомарно с UPDATE: если триггер упадёт, апдейт откатится.
+- Любой источник правки (UI, Telegram-бот, RPC) получает audit одинаково.
+- `respond_to_invite_rpc` больше не пишет audit-комменты сам — это делает триггер по факту изменения `invite_status`.
+- Audit-комментарии рендерятся курсивом, серее, без аватарки, без кнопки удаления. В счётчике «Комментарии (N)» учитываются только user-комментарии.
 
 ### Гант (иерархический)
 - Только на странице **Проектов** (на Задачах Ганта нет).
@@ -752,7 +749,7 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 - При создании новой задачи/проекта `assignees` по умолчанию = `[currentUser.assignee]` (тот, кто сейчас залогинен).
 - UI выбора — `<AssigneePicker>` (чип-тогглер): два чипа `Никита` / `Галочка`, click toggles.
 - Фильтр по ответственному в `applyTaskFilters`/`applyProjectFilters` использует `assignees.includes(effectiveAssignee)` вместо строгого `===`. Для personal-категории пустой массив всё ещё разрешён (loose).
-- Аудит-комментарии: `diffTask` выводит «Добавлен ответственный: …» / «Убран ответственный: …».
+- Аудит-комментарии: DB-триггер (м.027) выводит «Добавлен участник: …» / «Убран участник: …».
 - Display: `assignees.map(a => ASSIGNEES[a].label).join(' + ')` — например `Никита + Галочка`.
 
 ### Даты у задач — «Дедлайн» вручную + «Начало» автоматически

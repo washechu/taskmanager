@@ -8,7 +8,6 @@ import { useTasks } from '@/lib/hooks/useTasks'
 import { useProjects } from '@/lib/hooks/useProjects'
 import { useHabits } from '@/lib/hooks/useHabits'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import { useAuditedTaskUpdate } from '@/lib/hooks/useAuditedTaskUpdate'
 import { TaskModal } from '@/components/tasks/TaskModal'
 import { TaskForm } from '@/components/tasks/TaskForm'
 import { Fab } from '@/components/ui/Fab'
@@ -39,7 +38,7 @@ export default function TodayPage() {
   const { projects } = useProjects()
   const { habits, logs, loading: habitsLoading, toggleLog } = useHabits()
   const currentUser = useCurrentUser()
-  const handleUpdate = useAuditedTaskUpdate(tasks, updateTask, projects, currentUser.assignee)
+  // Audit-комментарии пишет DB-триггер trg_audit_task_changes (м.027).
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [creating, setCreating] = useState(false)
 
@@ -98,11 +97,11 @@ export default function TodayPage() {
     const task = tasks.find(t => t.id === id)
     if (!task) return
     setUndoState({ id, prevStatus: task.status, title: task.title })
-    handleUpdate(id, { status: 'done' })
+    updateTask(id, { status: 'done' })
   }
   const undoComplete = () => {
     if (!undoState) return
-    handleUpdate(undoState.id, { status: undoState.prevStatus })
+    updateTask(undoState.id, { status: undoState.prevStatus })
     setUndoState(null)
   }
   useEffect(() => {
@@ -218,7 +217,7 @@ export default function TodayPage() {
           projects={projects}
           currentUser={currentUser.assignee ?? 'nick'}
           onUpdate={async (id, updates) => {
-            const result = await handleUpdate(id, updates)
+            const result = await updateTask(id, updates)
             setSelectedTask(prev => prev ? { ...prev, ...updates } : null)
             return result
           }}
