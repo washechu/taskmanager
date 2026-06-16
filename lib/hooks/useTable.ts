@@ -99,37 +99,49 @@ export function useTable<T extends { id: string }>(
   useEffect(() => {
     fetchAll()
 
-    const ch = supabase
-      .channel(channel ?? `${table}-changes`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', schema: 'public', table,
-          ...(filter ? { filter: `${filter.column}=eq.${filter.value}` } : {}),
-        },
-        (payload) => {
-          // Payload-based incremental update. Типы Supabase отдают new/old
-          // как Record<string, unknown> — кастуем к T (контракт хука).
-          if (payload.eventType === 'INSERT') {
-            const row = payload.new as T
-            setItems(prev => {
-              if (prev.some(t => t.id === row.id)) return prev   // dedup
-              return defaultInsertPosition === 'end' ? [...prev, row] : [row, ...prev]
-            })
-          } else if (payload.eventType === 'UPDATE') {
-            const row = payload.new as T
-            setItems(prev => prev.map(t => (t.id === row.id ? row : t)))
-          } else if (payload.eventType === 'DELETE') {
-            const row = payload.old as Partial<T>
-            if (row.id) {
-              setItems(prev => prev.filter(t => t.id !== row.id))
-            }
-          }
-        },
-      )
-      .subscribe()
+    // Имя канала должно быть УНИКАЛЬНЫМ per-hook-instance: некоторые хуки
+    // (useTags) вызываются десятками раз на одной странице (в TaskCard,
+    // TagPicker, TagChip). Если два инстанса откроют канал с одним именем
+    // и оба попытаются добавить listener после subscribe() — Supabase JS
+    // бросает «cannot add postgres_changes callbacks after subscribe()».
+    const channelName = (channel ?? `${table}-changes`) + `-${Math.random().toString(36).slice(2, 10)}`
 
-    return () => { supabase.removeChannel(ch) }
+    let ch: ReturnType<typeof supabase.channel> | null = null
+    try {
+      ch = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: '*', schema: 'public', table,
+            ...(filter ? { filter: `${filter.column}=eq.${filter.value}` } : {}),
+          },
+          (payload) => {
+            // Payload-based incremental update. Типы Supabase отдают new/old
+            // как Record<string, unknown> — кастуем к T (контракт хука).
+            if (payload.eventType === 'INSERT') {
+              const row = payload.new as T
+              setItems(prev => {
+                if (prev.some(t => t.id === row.id)) return prev   // dedup
+                return defaultInsertPosition === 'end' ? [...prev, row] : [row, ...prev]
+              })
+            } else if (payload.eventType === 'UPDATE') {
+              const row = payload.new as T
+              setItems(prev => prev.map(t => (t.id === row.id ? row : t)))
+            } else if (payload.eventType === 'DELETE') {
+              const row = payload.old as Partial<T>
+              if (row.id) {
+                setItems(prev => prev.filter(t => t.id !== row.id))
+              }
+            }
+          },
+        )
+        .subscribe()
+    } catch (err) {
+      console.warn(`[useTable:${table}] subscription failed:`, err)
+    }
+
+    return () => { if (ch) supabase.removeChannel(ch) }
   }, [supabase, table, channel, filter, fetchAll, defaultInsertPosition])
 
   const insert = useCallback<UseTableResult<T>['insert']>(async (payload, optimistic, place) => {
