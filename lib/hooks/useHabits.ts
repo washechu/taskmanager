@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Habit, HabitLog } from '@/lib/types'
 
+/**
+ * Двойной хук — habits + habit_logs в одной realtime-подписке (один канал
+ * на оба postgres_changes-листенера). Не использует useTable<T>, потому что
+ * двойная таблица не вписывается без усложнения, но повторяет тот же
+ * payload-based incremental update.
+ */
 export function useHabits() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [logs, setLogs] = useState<HabitLog[]>([])
@@ -33,8 +39,42 @@ export function useHabits() {
     try {
       channel = supabase
         .channel('habits-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'habits' }, () => fetchAll())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'habit_logs' }, () => fetchAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'habits' }, (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const row = payload.new as Habit
+            if (row.archived) return
+            setHabits(prev => (prev.some(h => h.id === row.id) ? prev : [...prev, row]))
+          } else if (payload.eventType === 'UPDATE') {
+            const row = payload.new as Habit
+            if (row.archived) {
+              // Архивирование = убираем из видимого списка.
+              setHabits(prev => prev.filter(h => h.id !== row.id))
+            } else {
+              setHabits(prev => prev.map(h => (h.id === row.id ? row : h)))
+            }
+          } else if (payload.eventType === 'DELETE') {
+            const row = payload.old as Partial<Habit>
+            if (row.id) {
+              setHabits(prev => prev.filter(h => h.id !== row.id))
+              // Логи привычки пропадут через cascade-delete; страхуем стейт.
+              setLogs(prev => prev.filter(l => l.habit_id !== row.id))
+            }
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'habit_logs' }, (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const row = payload.new as HabitLog
+            setLogs(prev => (prev.some(l => l.id === row.id) ? prev : [...prev, row]))
+          } else if (payload.eventType === 'UPDATE') {
+            const row = payload.new as HabitLog
+            setLogs(prev => prev.map(l => (l.id === row.id ? row : l)))
+          } else if (payload.eventType === 'DELETE') {
+            const row = payload.old as Partial<HabitLog>
+            if (row.id) {
+              setLogs(prev => prev.filter(l => l.id !== row.id))
+            }
+          }
+        })
         .subscribe()
     } catch (err) {
       console.warn('[useHabits] subscription failed:', err)
@@ -43,12 +83,16 @@ export function useHabits() {
   }, [fetchAll, supabase])
 
   const createHabit = useCallback(async (habit: Omit<Habit, 'id' | 'created_at' | 'updated_at' | 'archived'>) => {
+    // id заранее — чтобы realtime INSERT не задвоил оптимистичную строку.
+    const id = crypto.randomUUID()
     const { data, error } = await supabase
       .from('habits')
-      .insert({ ...habit, archived: false })
+      .insert({ ...habit, id, archived: false })
       .select()
       .single()
-    if (data) setHabits(prev => [...prev, data as Habit])
+    if (data) {
+      setHabits(prev => (prev.some(h => h.id === id) ? prev : [...prev, data as Habit]))
+    }
     return { data, error }
   }, [supabase])
 
@@ -80,9 +124,10 @@ export function useHabits() {
       if (error) fetchAll()
       return { error }
     }
-    // поставить отметку (оптимистично)
+    // поставить отметку (оптимистично) — id заранее для realtime-dedup.
+    const id = crypto.randomUUID()
     const optimistic: HabitLog = {
-      id: crypto.randomUUID(),
+      id,
       habit_id: habitId,
       date,
       created_at: new Date().toISOString(),
@@ -90,14 +135,14 @@ export function useHabits() {
     setLogs(prev => [...prev, optimistic])
     const { data, error } = await supabase
       .from('habit_logs')
-      .insert({ habit_id: habitId, date })
+      .insert({ id, habit_id: habitId, date })
       .select()
       .single()
     if (error) {
-      setLogs(prev => prev.filter(l => l.id !== optimistic.id))
+      setLogs(prev => prev.filter(l => l.id !== id))
       fetchAll()
     } else if (data) {
-      setLogs(prev => prev.map(l => l.id === optimistic.id ? (data as HabitLog) : l))
+      setLogs(prev => prev.map(l => l.id === id ? (data as HabitLog) : l))
     }
     return { error }
   }, [supabase, fetchAll, logs])
