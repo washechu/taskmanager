@@ -9,6 +9,8 @@ export function useComments(taskId: string) {
     filter:  { column: 'task_id', value: taskId },
     orderBy: { column: 'created_at', ascending: true },
     channel: `comments-${taskId}`,
+    // ASC порядок → новые строки в конец списка.
+    defaultInsertPosition: 'end',
   })
 
   const addComment = useCallback(async (text: string, author: Assignee) => {
@@ -23,7 +25,6 @@ export function useComments(taskId: string) {
     const { error } = await insert(
       { task_id: taskId, author, text, kind: 'user' },
       optimistic,
-      'end',
     )
     return { error }
   }, [insert, taskId])

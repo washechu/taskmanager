@@ -8,25 +8,33 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 
 /**
- * Общий паттерн «строки таблицы + realtime + оптимистичный CRUD» вынесен
- * сюда из useTasks/useProjects/useTags/useComments. Каждый специфичный
- * хук строится поверх как тонкая обёртка: задаёт имя таблицы, опции
- * (фильтр, сортировка), и оборачивает базовые операции своей бизнес-логикой
- * (например, useTasks подкладывает `completed_at` если статус сразу `done`).
+ * Общий паттерн «строки таблицы + realtime + оптимистичный CRUD».
+ * Каждый специфичный хук (useTasks/useProjects/useTags/useComments)
+ * строится поверх как тонкая обёртка: задаёт имя таблицы, опции и
+ * оборачивает базовые операции своей бизнес-логикой.
  *
- * Сейчас полный re-fetch на каждое realtime-событие — это упрощает код
- * и не больно на текущих масштабах. Payload-based incremental update —
- * отдельный шаг (см. техдолг, P1).
+ * Realtime: payload-based incremental update. Раньше был full re-fetch
+ * на каждое событие → 1 правка задачи = SELECT * FROM tasks. Стало:
+ *   INSERT → добавить (dedup по id)
+ *   UPDATE → patch строки по id
+ *   DELETE → отфильтровать по id
+ *
+ * Защита от рассинхронизации с оптимистичным insert: мы передаём id
+ * в payload, поэтому DB-row имеет тот же id, что и optimistic. Когда
+ * realtime прилетит — dedup сработает по id.
  */
 
 export interface UseTableOptions {
-  /** WHERE для select и filter для realtime. Имеет смысл, например, для
-   *  `comments` (фильтр по task_id). */
+  /** WHERE для select и filter для realtime. */
   filter?: { column: string; value: string }
   /** ORDER BY для select. */
   orderBy?: { column: string; ascending?: boolean }
   /** Имя канала Supabase. По умолчанию `${table}-changes`. */
   channel?: string
+  /** Куда вставлять новые строки в стейт (для оптимистичного insert
+   *  и realtime INSERT, если строки ещё нет). По умолчанию 'start'
+   *  (соответствует DESC orderBy у большинства таблиц). */
+  defaultInsertPosition?: 'start' | 'end'
 }
 
 export interface UseTableResult<T extends { id: string }> {
@@ -37,15 +45,17 @@ export interface UseTableResult<T extends { id: string }> {
   supabase: SupabaseClient
   /** Прямой доступ к стейту для редких кейсов (toggleLog в useHabits). */
   setItems: Dispatch<SetStateAction<T[]>>
-  /** Перевыборка всех строк. */
+  /** Перевыборка всех строк — используется как fallback на ошибках. */
   fetchAll: () => Promise<void>
 
   /**
    * Оптимистичный insert. Вызывающий передаёт payload (без id) и
-   * optimistic-объект (с заглушкой id/created_at/updated_at).
-   * После успешного insert заменяем optimistic на возвращённую из БД строку.
+   * optimistic-объект (с заглушкой). Хук подмешивает `optimistic.id`
+   * в payload — DB сохранит row с тем же id, что в стейте, и
+   * realtime-событие будет дедуплицировано.
    *
-   * `place`: 'start' (default) для DESC-сортировок, 'end' для ASC.
+   * `place`: 'start' | 'end' — куда вставить оптимистично. По умолчанию
+   *   options.defaultInsertPosition ?? 'start'.
    */
   insert: (
     payload: Record<string, unknown>,
@@ -54,9 +64,9 @@ export interface UseTableResult<T extends { id: string }> {
   ) => Promise<{ data: T | null; error: unknown }>
 
   /**
-   * Оптимистичный update. Обновляет items{ ...patch }; на ошибке — fetchAll.
-   * Подкладывание updated_at — ответственность вызывающего (не все таблицы
-   * его имеют — comments/tags/habit_logs без).
+   * Оптимистичный update. Обновляет items{ ...patch }; на ошибке —
+   * fetchAll. Подкладывание updated_at — ответственность вызывающего
+   * (не все таблицы его имеют).
    */
   update: (
     id: string,
@@ -75,7 +85,7 @@ export function useTable<T extends { id: string }>(
   const [items, setItems] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
 
-  const { filter, orderBy, channel } = options
+  const { filter, orderBy, channel, defaultInsertPosition = 'start' } = options
 
   const fetchAll = useCallback(async () => {
     let q = supabase.from(table).select('*')
@@ -97,23 +107,48 @@ export function useTable<T extends { id: string }>(
           event: '*', schema: 'public', table,
           ...(filter ? { filter: `${filter.column}=eq.${filter.value}` } : {}),
         },
-        () => { fetchAll() },
+        (payload) => {
+          // Payload-based incremental update. Типы Supabase отдают new/old
+          // как Record<string, unknown> — кастуем к T (контракт хука).
+          if (payload.eventType === 'INSERT') {
+            const row = payload.new as T
+            setItems(prev => {
+              if (prev.some(t => t.id === row.id)) return prev   // dedup
+              return defaultInsertPosition === 'end' ? [...prev, row] : [row, ...prev]
+            })
+          } else if (payload.eventType === 'UPDATE') {
+            const row = payload.new as T
+            setItems(prev => prev.map(t => (t.id === row.id ? row : t)))
+          } else if (payload.eventType === 'DELETE') {
+            const row = payload.old as Partial<T>
+            if (row.id) {
+              setItems(prev => prev.filter(t => t.id !== row.id))
+            }
+          }
+        },
       )
       .subscribe()
 
     return () => { supabase.removeChannel(ch) }
-  }, [supabase, table, channel, filter, fetchAll])
+  }, [supabase, table, channel, filter, fetchAll, defaultInsertPosition])
 
-  const insert = useCallback<UseTableResult<T>['insert']>(async (payload, optimistic, place = 'start') => {
-    setItems(prev => (place === 'end' ? [...prev, optimistic] : [optimistic, ...prev]))
-    const { data, error } = await supabase.from(table).insert(payload).select().single()
+  const insert = useCallback<UseTableResult<T>['insert']>(async (payload, optimistic, place) => {
+    const pos = place ?? defaultInsertPosition
+    setItems(prev => (pos === 'end' ? [...prev, optimistic] : [optimistic, ...prev]))
+    // id из optimistic в payload — гарантия, что DB-row совпадёт по id.
+    // Это снимает рассинхрон, если realtime прилетит раньше ответа DB.
+    const { data, error } = await supabase
+      .from(table)
+      .insert({ ...payload, id: optimistic.id })
+      .select()
+      .single()
     if (error) {
       setItems(prev => prev.filter(t => t.id !== optimistic.id))
       return { data: null, error }
     }
     setItems(prev => prev.map(t => (t.id === optimistic.id ? (data as T) : t)))
     return { data: data as T, error: null }
-  }, [supabase, table])
+  }, [supabase, table, defaultInsertPosition])
 
   const update = useCallback<UseTableResult<T>['update']>(async (id, patch) => {
     setItems(prev => prev.map(t => (t.id === id ? ({ ...t, ...patch } as T) : t)))
