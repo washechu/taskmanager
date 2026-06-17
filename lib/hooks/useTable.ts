@@ -99,11 +99,12 @@ export function useTable<T extends { id: string }>(
   useEffect(() => {
     fetchAll()
 
-    // Имя канала должно быть УНИКАЛЬНЫМ per-hook-instance: некоторые хуки
-    // (useTags) вызываются десятками раз на одной странице (в TaskCard,
-    // TagPicker, TagChip). Если два инстанса откроют канал с одним именем
-    // и оба попытаются добавить listener после subscribe() — Supabase JS
-    // бросает «cannot add postgres_changes callbacks after subscribe()».
+    // Имя канала должно быть УНИКАЛЬНЫМ per-hook-instance: если на странице
+    // окажется два инстанса того же хука с одинаковым именем канала,
+    // Supabase JS бросает «cannot add postgres_changes callbacks after
+    // subscribe()». Для useTags эта коллизия штатная (вызывается в каждом
+    // TaskCard) — для неё есть TagsProvider (одна подписка через Context),
+    // но страховку сохраняем общую.
     const channelName = (channel ?? `${table}-changes`) + `-${Math.random().toString(36).slice(2, 10)}`
 
     let ch: ReturnType<typeof supabase.channel> | null = null
