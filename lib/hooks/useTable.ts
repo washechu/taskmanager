@@ -1,7 +1,7 @@
 'use client'
 
 import {
-  useCallback, useEffect, useMemo, useState,
+  useCallback, useEffect, useMemo, useRef, useState,
   type Dispatch, type SetStateAction,
 } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -85,41 +85,50 @@ export function useTable<T extends { id: string }>(
   const [items, setItems] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
 
-  const { filter, orderBy, channel, defaultInsertPosition = 'start' } = options
+  // ВАЖНО: options обычно приходит как inline object literal из вызывающего
+  // хука (`useTable<Task>('tasks', { orderBy: {...} })`). Без аккуратной
+  // мемоизации deps пересоздаются каждый рендер → useEffect ниже постоянно
+  // переподписывается → реалтайм-события теряются в окне unsub/sub, а
+  // fetchAll выполняется в гонке с оптимистичными правками. Поэтому
+  // разворачиваем options в ПРИМИТИВЫ — они стабильны между рендерами.
+  const filterColumn = options.filter?.column
+  const filterValue  = options.filter?.value
+  const orderByColumn = options.orderBy?.column
+  const orderByAsc    = options.orderBy?.ascending ?? true
+  const channelOpt    = options.channel
+  const defaultInsertPosition = options.defaultInsertPosition ?? 'start'
 
   const fetchAll = useCallback(async () => {
     let q = supabase.from(table).select('*')
-    if (filter)  q = q.eq(filter.column, filter.value)
-    if (orderBy) q = q.order(orderBy.column, { ascending: orderBy.ascending ?? true })
+    if (filterColumn && filterValue) q = q.eq(filterColumn, filterValue)
+    if (orderByColumn) q = q.order(orderByColumn, { ascending: orderByAsc })
     const { data } = await q
     if (data) setItems(data as T[])
     setLoading(false)
-  }, [supabase, table, filter, orderBy])
+  }, [supabase, table, filterColumn, filterValue, orderByColumn, orderByAsc])
+
+  // Имя канала стабильное per-mount (через useRef). Random suffix защищает
+  // от коллизий, если на странице вдруг окажется два инстанса хука с одним
+  // именем канала (см. историю с useTags до TagsProvider).
+  const channelNameRef = useRef<string | null>(null)
+  if (channelNameRef.current === null) {
+    channelNameRef.current = (channelOpt ?? `${table}-changes`) + `-${Math.random().toString(36).slice(2, 10)}`
+  }
 
   useEffect(() => {
     fetchAll()
 
-    // Имя канала должно быть УНИКАЛЬНЫМ per-hook-instance: если на странице
-    // окажется два инстанса того же хука с одинаковым именем канала,
-    // Supabase JS бросает «cannot add postgres_changes callbacks after
-    // subscribe()». Для useTags эта коллизия штатная (вызывается в каждом
-    // TaskCard) — для неё есть TagsProvider (одна подписка через Context),
-    // но страховку сохраняем общую.
-    const channelName = (channel ?? `${table}-changes`) + `-${Math.random().toString(36).slice(2, 10)}`
-
     let ch: ReturnType<typeof supabase.channel> | null = null
     try {
       ch = supabase
-        .channel(channelName)
+        .channel(channelNameRef.current!)
         .on(
           'postgres_changes',
           {
             event: '*', schema: 'public', table,
-            ...(filter ? { filter: `${filter.column}=eq.${filter.value}` } : {}),
+            ...(filterColumn && filterValue ? { filter: `${filterColumn}=eq.${filterValue}` } : {}),
           },
           (payload) => {
-            // Payload-based incremental update. Типы Supabase отдают new/old
-            // как Record<string, unknown> — кастуем к T (контракт хука).
             if (payload.eventType === 'INSERT') {
               const row = payload.new as T
               setItems(prev => {
@@ -143,13 +152,16 @@ export function useTable<T extends { id: string }>(
     }
 
     return () => { if (ch) supabase.removeChannel(ch) }
-  }, [supabase, table, channel, filter, fetchAll, defaultInsertPosition])
+    // ВАЖНО: deps — только примитивы. fetchAll осознанно убран — это
+    // ре-создаваемый callback, его реакт-deps уже учтены через примитивы
+    // ниже (filterColumn/filterValue/orderBy*). Иначе useEffect будет
+    // ре-подписываться каждый рендер и реалтайм будет терять события.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, table, filterColumn, filterValue, defaultInsertPosition])
 
   const insert = useCallback<UseTableResult<T>['insert']>(async (payload, optimistic, place) => {
     const pos = place ?? defaultInsertPosition
     setItems(prev => (pos === 'end' ? [...prev, optimistic] : [optimistic, ...prev]))
-    // id из optimistic в payload — гарантия, что DB-row совпадёт по id.
-    // Это снимает рассинхрон, если realtime прилетит раньше ответа DB.
     const { data, error } = await supabase
       .from(table)
       .insert({ ...payload, id: optimistic.id })
