@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { Navigation } from '@/components/ui/Navigation'
+import { TagsProvider } from '@/lib/contexts/TagsContext'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -10,11 +11,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect('/login')
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      <Navigation />
-      <main className="flex-1 overflow-hidden pt-[env(safe-area-inset-top)] pb-16 md:pb-0 md:pt-0">
-        {children}
-      </main>
-    </div>
+    <TagsProvider>
+      <div className="flex min-h-screen flex-col md:flex-row">
+        <Navigation />
+        <main className="flex-1 overflow-hidden pt-[env(safe-area-inset-top)] pb-16 md:pb-0 md:pt-0">
+          {children}
+        </main>
+      </div>
+    </TagsProvider>
   )
 }
