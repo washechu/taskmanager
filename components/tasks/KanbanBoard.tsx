@@ -16,7 +16,7 @@ import { TaskCard } from './TaskCard'
 import { TaskModal } from './TaskModal'
 import { TaskForm } from './TaskForm'
 import { Modal } from '@/components/ui/Modal'
-import { STATUS_ORDER, type Task, type Status, type Assignee } from '@/lib/types'
+import { KANBAN_STATUSES, type Task, type Status, type KanbanStatus, type Assignee } from '@/lib/types'
 import type { Project } from '@/lib/types'
 
 interface KanbanBoardProps {
@@ -32,7 +32,9 @@ interface KanbanBoardProps {
 
 type PrioritySort = 'none' | 'desc' | 'asc'
 
-const DEFAULT_SORTS: Record<Status, PrioritySort> = {
+// Сорты per-column храним только для тех колонок, что реально на доске
+// (см. KANBAN_STATUSES в lib/types). cancelled колонки нет — sort не нужен.
+const DEFAULT_SORTS: Record<KanbanStatus, PrioritySort> = {
   todo: 'none', in_progress: 'none', done: 'none', paused: 'none',
 }
 
@@ -42,9 +44,9 @@ export function KanbanBoard({
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [creatingStatus, setCreatingStatus] = useState<Status | null>(null)
-  const [prioritySorts, setPrioritySorts] = useState<Record<Status, PrioritySort>>(DEFAULT_SORTS)
+  const [prioritySorts, setPrioritySorts] = useState<Record<KanbanStatus, PrioritySort>>(DEFAULT_SORTS)
 
-  const cyclePrioritySort = (status: Status) => {
+  const cyclePrioritySort = (status: KanbanStatus) => {
     setPrioritySorts(cur => ({
       ...cur,
       [status]: cur[status] === 'none' ? 'desc' : cur[status] === 'desc' ? 'asc' : 'none',
@@ -67,7 +69,9 @@ export function KanbanBoard({
     const task = tasks.find(t => t.id === active.id)
     if (!task) return
 
-    const targetStatus = STATUS_ORDER.includes(over.id as Status)
+    // Цель дропа — либо колонка (KANBAN_STATUSES), либо другая задача в той
+    // же колонке. cancelled-задачу через DnD не получить — её колонки нет.
+    const targetStatus = (KANBAN_STATUSES as readonly string[]).includes(over.id as string)
       ? (over.id as Status)
       : tasks.find(t => t.id === over.id)?.status
 
@@ -85,7 +89,7 @@ export function KanbanBoard({
     <>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none">
-          {STATUS_ORDER.map(status => (
+          {KANBAN_STATUSES.map(status => (
             <KanbanColumn
               key={status}
               status={status}

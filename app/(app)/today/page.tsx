@@ -52,15 +52,26 @@ export default function TodayPage() {
     return !!currentUser.assignee && t.assignees.includes(currentUser.assignee)
   }, [currentUser.assignee])
 
+  // paused и cancelled — НЕ просрочены (м.028/м.029): пауза = «вернёмся,
+  // не торопит», cancelled = «решено не делать». Симметрично с dueStatus().
   const overdueTasks = useMemo(() => {
     return tasks
-      .filter(t => t.due_date && t.status !== 'done' && isBefore(parseISO(t.due_date), today) && mine(t))
+      .filter(t =>
+        t.due_date
+        && t.status !== 'done' && t.status !== 'paused' && t.status !== 'cancelled'
+        && isBefore(parseISO(t.due_date), today)
+        && mine(t),
+      )
       .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
   }, [tasks, today, mine])
 
   const todayTasks = useMemo(() => {
     return tasks
-      .filter(t => t.due_date === todayIso && t.status !== 'done' && mine(t))
+      .filter(t =>
+        t.due_date === todayIso
+        && t.status !== 'done' && t.status !== 'paused' && t.status !== 'cancelled'
+        && mine(t),
+      )
       .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority])
   }, [tasks, todayIso, mine])
 

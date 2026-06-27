@@ -25,7 +25,9 @@ interface ListViewProps {
   onStatusChange: (id: string, status: Status) => void
 }
 
-const STATUS_RANK: Record<Status, number> = { todo: 0, in_progress: 1, paused: 2, done: 3 }
+const STATUS_RANK: Record<Status, number> = {
+  todo: 0, in_progress: 1, paused: 2, done: 3, cancelled: 4,
+}
 const PRIORITY_RANK = { high: 0, medium: 1, low: 2 } as const
 
 const SLICE_OPTIONS = [
@@ -40,11 +42,20 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [slice, setSlice] = useState<Slice>('all')
   const [showArchive, setShowArchive] = useState(false)
+  const [showCancelled, setShowCancelled] = useState(false)
 
   // Архивные (done старше 14 дней) — считаем только когда slice=all (там
   // показываем «всё»). В time-bounded срезах архив нерелевантен.
   const archivedInAll = useMemo(
     () => slice === 'all' ? tasks.filter(t => isArchivedTask(t)) : [],
+    [tasks, slice],
+  )
+
+  // Отменённые (м.028) — счётчик показываем только в slice=all (как у
+  // архива: в time-bounded срезах cancelled нерелевантны — у них нет
+  // due_date или они не должны мелькать рядом с активными).
+  const cancelledInAll = useMemo(
+    () => slice === 'all' ? tasks.filter(t => t.status === 'cancelled') : [],
     [tasks, slice],
   )
 
@@ -54,11 +65,16 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
   }
 
   // Slice по due_date: today/week/month — задачи без dl исключаются;
-  // all — показывает всё (включая без дедлайна), и тут же скрывает архив
-  // (done старше 14 дней), пока пользователь не раскроет.
+  // all — показывает всё (включая без дедлайна), скрывает архив (done старше
+  // 14 дней) и отменённые до явного раскрытия toggle'ами.
+  // В time-bounded срезах отменённые/архивные не показываются никогда.
   const sliced = useMemo(() => {
     if (slice === 'all') {
-      return showArchive ? tasks : tasks.filter(t => !isArchivedTask(t))
+      return tasks.filter(t => {
+        if (!showArchive && isArchivedTask(t)) return false
+        if (!showCancelled && t.status === 'cancelled') return false
+        return true
+      })
     }
     const today = startOfDay(new Date())
     const weekStart = startOfWeek(today, { weekStartsOn: 1 })
@@ -67,12 +83,13 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
     const monthEnd = endOfMonth(today)
     return tasks.filter(t => {
       if (!t.due_date) return false
+      if (t.status === 'cancelled') return false
       const d = parseISO(t.due_date)
       if (slice === 'today') return isSameDay(d, today)
       if (slice === 'week')  return isWithinInterval(d, { start: weekStart, end: weekEnd })
       return isWithinInterval(d, { start: monthStart, end: monthEnd })
     })
-  }, [tasks, slice, showArchive])
+  }, [tasks, slice, showArchive, showCancelled])
 
   const sorted = useMemo(() => {
     const arr = [...sliced]
@@ -108,20 +125,35 @@ export function ListView({ tasks, projects, onTaskOpen, onStatusChange }: ListVi
         <SegmentedControl
           variant="view"
           value={slice}
-          onChange={(v) => { setSlice(v); setShowArchive(false) }}
+          onChange={(v) => { setSlice(v); setShowArchive(false); setShowCancelled(false) }}
           ariaLabel="Фильтр по дедлайну"
           options={SLICE_OPTIONS}
         />
-        {slice === 'all' && archivedInAll.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowArchive(s => !s)}
-            className="text-xs text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            {showArchive
-              ? `Скрыть архив`
-              : `Архив (${archivedInAll.length}, старше ${ARCHIVE_DAYS} дней)`}
-          </button>
+        {slice === 'all' && (archivedInAll.length > 0 || cancelledInAll.length > 0) && (
+          <div className="flex flex-wrap items-center gap-3">
+            {cancelledInAll.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowCancelled(s => !s)}
+                className="text-xs text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                {showCancelled
+                  ? 'Скрыть отменённые'
+                  : `Отменённые (${cancelledInAll.length})`}
+              </button>
+            )}
+            {archivedInAll.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowArchive(s => !s)}
+                className="text-xs text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                {showArchive
+                  ? 'Скрыть архив'
+                  : `Архив (${archivedInAll.length}, старше ${ARCHIVE_DAYS} дней)`}
+              </button>
+            )}
+          </div>
         )}
       </div>
 

@@ -21,6 +21,7 @@ const STATUS_COLORS: Record<Status, string> = {
   in_progress: 'bg-yellow-500',
   done:        'bg-green-500',
   paused:      'bg-orange-500',
+  cancelled:   'bg-slate-400 opacity-60',
 }
 
 interface Range {

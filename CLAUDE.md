@@ -148,7 +148,9 @@
 │   ├── 024_fix_withdraw_notification.sql # отзыв ≠ отклонение: _notify_invite_replied смотрит _actor() + род глаголов
 │   ├── 025_auto_start_date.sql   # автозаполнение tasks.start_date при первом переводе в in_progress
 │   ├── 026_completed_at.sql      # tasks.completed_at + автозаполнение при первом переходе в done
-│   └── 027_audit_in_trigger.sql  # audit-комментарии пишет DB-триггер; respond_to_invite_rpc больше не пишет
+│   ├── 027_audit_in_trigger.sql  # audit-комментарии пишет DB-триггер; respond_to_invite_rpc больше не пишет
+│   ├── 028_cancelled_status.sql  # 5-й статус 'cancelled' (Отменено) для tasks + projects
+│   └── 029_digests_skip_paused_cancelled.sql # дайджесты исключают paused/cancelled из «просрочки»
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -212,7 +214,7 @@ create table projects (
   title text not null,
   description text,
   status text not null default 'todo'
-    check (status in ('todo', 'in_progress', 'done', 'paused')),
+    check (status in ('todo', 'in_progress', 'done', 'paused', 'cancelled')),
   category text not null check (category in ('personal', 'family')),
   assignees text[] not null default '{}'                -- м.008 (множественные)
     check (assignees <@ array['nick','galya']::text[]),
@@ -228,7 +230,7 @@ create table tasks (
   title text not null,
   description text,
   status text not null default 'todo'
-    check (status in ('todo', 'in_progress', 'done', 'paused')),
+    check (status in ('todo', 'in_progress', 'done', 'paused', 'cancelled')),
   priority text not null default 'medium'
     check (priority in ('high', 'medium', 'low')),
   category text not null check (category in ('personal', 'family')),
@@ -330,6 +332,7 @@ export const STATUSES = {
   // чтобы отличаться от бледно-янтарного бейджа приоритета «Средний» (amber).
   done:        { label: 'Готово',      color: 'green'  },
   paused:      { label: 'Остановлено', color: 'orange' },
+  cancelled:   { label: 'Отменено',    color: 'slate'  },  // м.028
 }
 
 export const PRIORITIES = {
@@ -586,6 +589,27 @@ Body: flex-1 overflow-y-auto px-5 pt-4
 - **PR γ (текущий):** события + расширение вечернего дайджеста. Миграция 011: хелпер `_actor()` (через `auth.email()` + `app_settings.nick_email/galya_email` или fallback `current_setting('app.actor')`); BEFORE INSERT триггер `_auto_set_invite` авто-выставляет `invited_by`+`invite_status='pending'` при создании семейной с двумя участниками; AFTER INSERT/UPDATE/INSERT триггеры на `tasks` и `comments` шлют 4 типа уведомлений (предложено, ответ, выполнено партнёром, новый коммент); RPC `respond_to_invite_rpc` для webhook'а (использует `set_config('app.actor', ...)`); UI-блок `InviteBlock` в `TaskModal` (3 кнопки для приглашённого; переключение accepted ↔ tentative; «ждём ответа» для инициатора). Вечерняя SQL-функция переименована `send_evening_habits` → `send_evening_digest` и теперь шлёт также просрочку + сегодняшние задачи.
 
 Безопасность: webhook валидирует `X-Telegram-Bot-Api-Secret-Token` против `TELEGRAM_WEBHOOK_SECRET`. RLS на `telegram_links`/`telegram_log` без политик — доступ только через service_role.
+
+### Статус «Отменено» и его поведение (м.028 / м.029)
+
+Раньше было 4 статуса: `todo` / `in_progress` / `done` / `paused`. У `paused` смысл «отложено, вернёмся» — но многие задачи становятся неактуальными окончательно (передумали, решили не делать). Делать их `done` — ложь в аналитике («закрыто»). Удалять — теряется история. Решение — 5-й статус **`cancelled`** («Отменено», `slate` с зачёркиванием).
+
+**Где НЕ показывается:**
+- **Канбан задач и проектов:** колонки для `cancelled` нет (см. `KANBAN_STATUSES` в `lib/types.ts`). Отменить можно через `StatusMenu` (тап по бейджу → 5-я опция) или через форму редактирования.
+- **Календарь:** отменённые исключаются из `tasksByDate` и `undatedTasks` (нерелевантны при просмотре дедлайнов).
+- **Гант (ProjectGantt):** отменённые проекты и задачи отфильтрованы на входе.
+- **Today:** отменённые не попадают ни в «Просрочено», ни в «Сегодня».
+- **Аналитика:** `analyticsTasks = tasks.filter(t => t.status !== 'cancelled')`. Отменённые не считаются ни в «Создано», ни в «Закрыто», ни в донатах, ни в топ-тегах. Отдельного KPI «Отменено» НЕТ — осознанно (пользователь не хотел).
+
+**Где видны:**
+- **Список:** при `slice='all'` появляется тоггл «Отменённые (N)» рядом с тоггром архива. В time-bounded срезах (Сегодня/Неделя/Месяц) отменённые скрыты всегда.
+- **`StatusMenu`** и **`<select>` в форме**: пункт «Отменено» доступен — вернуть можно через тот же меню/форму.
+
+**`paused` и `cancelled` НЕ просрочены:**
+- `dueStatus()` возвращает `null` для всех трёх «не-активных» статусов (`done` / `paused` / `cancelled`). Симметрично — в `overdueTasks` на Today, в `overdueNow` в Аналитике, в overdue-секции Календаря.
+- SQL-дайджесты (м.029): `status not in ('done', 'paused', 'cancelled')` в обоих `send_morning_digest` / `send_evening_digest`. До этого `paused`-задачи с прошлым `due_date` улетали в утренний 🔥-пуш.
+
+Семантическая шкала: `ACTIVE_STATUSES = ['todo', 'in_progress']` — единственные, которые могут «гореть» дедлайном.
 
 ### Архив выполненных задач
 

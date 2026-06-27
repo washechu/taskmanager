@@ -32,6 +32,7 @@ const STATUS_COLORS: Record<Status, string> = {
   in_progress: 'bg-yellow-500',
   done:        'bg-green-500',
   paused:      'bg-orange-500',
+  cancelled:   'bg-slate-400 opacity-60',
 }
 
 interface Range {
@@ -49,7 +50,18 @@ function rangeOf(start: string | null, end: string | null): Range | null {
   return null
 }
 
-export function ProjectGantt({ projects, tasks = [], onProjectOpen, onTaskOpen }: ProjectGanttProps) {
+export function ProjectGantt({ projects: allProjects, tasks: allTasks = [], onProjectOpen, onTaskOpen }: ProjectGanttProps) {
+  // Отменённые проекты и задачи не показываем в Ганте: «решено не делать»,
+  // на таймлайне места не занимают (м.028).
+  const projects = useMemo(
+    () => allProjects.filter(p => p.status !== 'cancelled'),
+    [allProjects],
+  )
+  const tasks = useMemo(
+    () => allTasks.filter(t => t.status !== 'cancelled'),
+    [allTasks],
+  )
+
   const [slice, setSlice] = useState<Slice>('month')
   const [anchor, setAnchor] = useState(new Date())
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
