@@ -9,6 +9,7 @@ const colorMap: Record<string, string> = {
   yellow: 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900/70  dark:text-yellow-200',
   green:  'bg-green-100  text-green-700  dark:bg-green-950      dark:text-green-300',
   orange: 'bg-orange-100 text-orange-700 dark:bg-orange-950     dark:text-orange-300',
+  slate:  'bg-slate-100  text-slate-500  line-through dark:bg-slate-800  dark:text-slate-400',
 }
 
 interface StatusMenuProps {
@@ -85,4 +86,5 @@ const dotColor: Record<string, string> = {
   yellow: 'bg-yellow-500',
   green:  'bg-green-500',
   orange: 'bg-orange-500',
+  slate:  'bg-slate-400',
 }

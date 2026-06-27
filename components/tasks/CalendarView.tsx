@@ -43,11 +43,14 @@ export function CalendarView({ tasks, projects, onTaskOpen }: CalendarViewProps)
   // День-шит (мобайл): тап по ячейке месяца открывает список задач этого дня.
   const [sheetDay, setSheetDay] = useState<Date | null>(null)
 
-  // Group tasks by due date string (YYYY-MM-DD)
+  // Group tasks by due date string (YYYY-MM-DD).
+  // cancelled-задачи в календаре не показываем — они «решены не делать»,
+  // их дедлайн нерелевантен, а ячейки в месячном виде и так плотные.
   const tasksByDate = useMemo(() => {
     const map = new Map<string, Task[]>()
     for (const task of tasks) {
       if (!task.due_date) continue
+      if (task.status === 'cancelled') continue
       const arr = map.get(task.due_date) ?? []
       arr.push(task)
       map.set(task.due_date, arr)
@@ -55,7 +58,10 @@ export function CalendarView({ tasks, projects, onTaskOpen }: CalendarViewProps)
     return map
   }, [tasks])
 
-  const undatedTasks = useMemo(() => tasks.filter(t => !t.due_date), [tasks])
+  const undatedTasks = useMemo(
+    () => tasks.filter(t => !t.due_date && t.status !== 'cancelled'),
+    [tasks],
+  )
 
   const goPrev = () => setAnchor(d =>
     slice === 'month' ? subMonths(d, 1) :
@@ -277,10 +283,11 @@ function TodayView({ anchor, tasksByDate, tasks, onTaskOpen }: {
   const todayTasks = tasksByDate.get(dayKey) ?? []
   const overdue = useMemo(() => {
     // «Просрочено» = строго ДО сегодня (день не закончился — не просрочка).
+    // paused/cancelled — НЕ просрочены (м.028/м.029); симметрично с dueStatus().
     const today = startOfDay(new Date())
     return tasks.filter(t =>
       t.due_date &&
-      t.status !== 'done' &&
+      t.status !== 'done' && t.status !== 'paused' && t.status !== 'cancelled' &&
       isBefore(parseISO(t.due_date), today) &&
       t.due_date !== dayKey
     ).sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))

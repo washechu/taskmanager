@@ -9,11 +9,14 @@ import { STATUSES, type Status, type Task } from '@/lib/types'
 import type { Project } from '@/lib/types'
 import { isArchivedTask, ARCHIVE_DAYS } from '@/lib/archive'
 
+// cancelled-колонки в канбане нет (см. KANBAN_STATUSES); запись для
+// типобезопасности — никогда не отрисовывается.
 const headerColors: Record<Status, string> = {
   todo:        'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50',
   in_progress: 'border-yellow-300 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30',
   done:        'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30',
   paused:      'border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30',
+  cancelled:   'border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50',
 }
 
 const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 }

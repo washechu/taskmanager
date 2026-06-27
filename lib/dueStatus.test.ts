@@ -23,6 +23,20 @@ describe('dueStatus', () => {
     expect(dueStatus({ due_date: '2026-06-10', status: 'done' })).toBe(null)
   })
 
+  it('возвращает null для paused (м.029 — пауза ≠ провал)', () => {
+    // До м.029 paused-задачи с прошедшим due попадали в overdue и в утренний
+    // дайджест 🔥. Теперь paused считается «вернёмся позже» — не торопит.
+    expect(dueStatus({ due_date: '2026-06-10', status: 'paused' })).toBe(null)
+    expect(dueStatus({ due_date: '2026-06-15', status: 'paused' })).toBe(null)
+    expect(dueStatus({ due_date: '2026-12-31', status: 'paused' })).toBe(null)
+  })
+
+  it('возвращает null для cancelled (м.028)', () => {
+    // Отменённые задачи никогда не считаются просроченными.
+    expect(dueStatus({ due_date: '2026-06-10', status: 'cancelled' })).toBe(null)
+    expect(dueStatus({ due_date: '2026-06-15', status: 'cancelled' })).toBe(null)
+  })
+
   it('overdue: due_date раньше сегодня', () => {
     expect(dueStatus({ due_date: '2026-06-14', status: 'todo' })).toBe('overdue')
     expect(dueStatus({ due_date: '2026-06-10', status: 'in_progress' })).toBe('overdue')
@@ -34,7 +48,7 @@ describe('dueStatus', () => {
 
   it('future: due_date позже сегодня', () => {
     expect(dueStatus({ due_date: '2026-06-16', status: 'todo' })).toBe('future')
-    expect(dueStatus({ due_date: '2026-12-31', status: 'paused' })).toBe('future')
+    expect(dueStatus({ due_date: '2026-12-31', status: 'in_progress' })).toBe('future')
   })
 })
 

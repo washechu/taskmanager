@@ -1,4 +1,4 @@
-export type Status = 'todo' | 'in_progress' | 'done' | 'paused'
+export type Status = 'todo' | 'in_progress' | 'done' | 'paused' | 'cancelled'
 export type Priority = 'high' | 'medium' | 'low'
 export type Category = 'personal' | 'family'
 export type Assignee = 'nick' | 'galya'
@@ -55,6 +55,7 @@ export const STATUSES: Record<Status, { label: string; color: string }> = {
   in_progress: { label: 'В процессе',  color: 'yellow' },
   done:        { label: 'Готово',      color: 'green'  },
   paused:      { label: 'Остановлено', color: 'orange' },
+  cancelled:   { label: 'Отменено',    color: 'slate'  },
 }
 
 export const PRIORITIES: Record<Priority, { label: string; color: string }> = {
@@ -143,4 +144,28 @@ export const TAG_COLORS: Record<string, { label: string; bg: string; text: strin
   pink:   { label: 'Розовый',   bg: 'bg-pink-100   dark:bg-pink-950',   text: 'text-pink-700   dark:text-pink-300'   },
 }
 
-export const STATUS_ORDER: Status[] = ['todo', 'in_progress', 'done', 'paused']
+/**
+ * Все статусы в каноническом порядке — используется там, где cancelled
+ * тоже надо показывать (StatusMenu, селект в форме задачи/проекта, ListView).
+ */
+export const STATUS_ORDER: Status[] = ['todo', 'in_progress', 'done', 'paused', 'cancelled']
+
+/**
+ * Статусы, у которых есть колонка в Канбане. `cancelled` сюда НЕ входит:
+ * отменённые задачи не отображаются в канбане, доступ только через
+ * StatusMenu / форму / тоггл «Отменённые» в Списке.
+ *
+ * `as const` нужен, чтобы `(typeof KANBAN_STATUSES)[number]` сужался до
+ * литеральных значений (а не до Status), и Record<KanbanStatus, ...> в
+ * KanbanBoard.tsx не требовал ключ 'cancelled'.
+ */
+export const KANBAN_STATUSES = ['todo', 'in_progress', 'done', 'paused'] as const satisfies readonly Status[]
+export type KanbanStatus = (typeof KANBAN_STATUSES)[number]
+
+/**
+ * Статусы, у которых задача считается «активной» (требует внимания, может
+ * быть просроченной). `done`, `paused`, `cancelled` — НЕ активные:
+ * done сделан, paused «вернёмся, не торопит», cancelled решён как «нет».
+ * Используется в lib/dueStatus и в SQL-дайджестах (см. м.029).
+ */
+export const ACTIVE_STATUSES: Status[] = ['todo', 'in_progress']

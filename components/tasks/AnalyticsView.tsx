@@ -53,37 +53,52 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
     }
   }, [period, customFrom, customTo])
 
+  // Отменённые исключаем из всей аналитики целиком: не «закрыто», не часть
+  // «создано», не появляется в донатах. Отдельного KPI «Отменено» нет.
+  const analyticsTasks = useMemo(
+    () => tasks.filter(t => t.status !== 'cancelled'),
+    [tasks],
+  )
+
   /* ── Slices for KPI + drill-down ──────────────────────── */
   const tasksInPeriod = useMemo(() =>
-    tasks.filter(t => {
+    analyticsTasks.filter(t => {
       const created = parseISO(t.created_at)
       return created >= rangeStart && created <= rangeEnd
     }),
-    [tasks, rangeStart, rangeEnd]
+    [analyticsTasks, rangeStart, rangeEnd]
   )
 
   const closedInPeriod = useMemo(() =>
-    tasks.filter(t => {
+    analyticsTasks.filter(t => {
       if (t.status !== 'done') return false
       // Предпочитаем completed_at (м.026), fallback на updated_at для старых.
       const closedAt = t.completed_at ? parseISO(t.completed_at) : parseISO(t.updated_at)
       return closedAt >= rangeStart && closedAt <= rangeEnd
     }),
-    [tasks, rangeStart, rangeEnd]
+    [analyticsTasks, rangeStart, rangeEnd]
   )
 
-  const activeNow = useMemo(() => tasks.filter(t => t.status === 'in_progress'), [tasks])
+  const activeNow = useMemo(
+    () => analyticsTasks.filter(t => t.status === 'in_progress'),
+    [analyticsTasks],
+  )
 
   const overdueNow = useMemo(() => {
     const today = startOfDay(new Date())
-    return tasks.filter(t =>
-      t.due_date && t.status !== 'done' && parseISO(t.due_date) < today
+    // paused и cancelled — НЕ просрочены (м.028/м.029). Симметрично с dueStatus().
+    return analyticsTasks.filter(t =>
+      t.due_date
+      && t.status !== 'done' && t.status !== 'paused'
+      && parseISO(t.due_date) < today
     )
-  }, [tasks])
+  }, [analyticsTasks])
 
   /* ── Donut data: by status / by assignee (within period) ─ */
   const statusData = useMemo(() => {
-    const counts: Record<Status, number> = { todo: 0, in_progress: 0, done: 0, paused: 0 }
+    const counts: Record<Status, number> = {
+      todo: 0, in_progress: 0, done: 0, paused: 0, cancelled: 0,
+    }
     for (const t of tasksInPeriod) counts[t.status]++
     return (Object.keys(counts) as Status[])
       .map(s => ({ name: STATUSES[s].label, value: counts[s], status: s }))
@@ -122,14 +137,16 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
     return buckets.map((bucketStart, idx) => {
       const next = buckets[idx + 1] ?? rangeEnd
       const bucketEnd = next > rangeEnd ? rangeEnd : next
-      const counts: Record<Status, number> = { todo: 0, in_progress: 0, done: 0, paused: 0 }
-      for (const t of tasks) {
+      const counts: Record<Status, number> = {
+        todo: 0, in_progress: 0, done: 0, paused: 0, cancelled: 0,
+      }
+      for (const t of analyticsTasks) {
         const created = parseISO(t.created_at)
         if (created >= bucketStart && created < bucketEnd) counts[t.status]++
       }
       return { label: format(bucketStart, labelFmt, { locale: ru }), ...counts }
     })
-  }, [tasks, rangeStart, rangeEnd])
+  }, [analyticsTasks, rangeStart, rangeEnd])
 
   /* ── Top tags ─────────────────────────────────────────── */
   const { tags: allTags } = useTags()
@@ -170,7 +187,7 @@ export function AnalyticsView({ tasks, onTaskOpen }: AnalyticsViewProps) {
 
       <TopTagsSection topTags={topTags} allTags={allTags} />
 
-      <TtmSection tasks={tasks} rangeStart={rangeStart} rangeEnd={rangeEnd} />
+      <TtmSection tasks={analyticsTasks} rangeStart={rangeStart} rangeEnd={rangeEnd} />
 
       {drillDown && (
         <DrillDownModal

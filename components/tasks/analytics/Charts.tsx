@@ -13,6 +13,9 @@ export const STATUS_HEX: Record<Status, string> = {
   in_progress: '#eab308',
   done:        '#22c55e',
   paused:      '#f97316',
+  // slate-400 — для cancelled. В аналитике cancelled-задачи отфильтрованы
+  // ещё до данных (см. AnalyticsView), но запись нужна для типа Record<Status>.
+  cancelled:   '#94a3b8',
 }
 
 export const ASSIGNEE_HEX: Record<string, string> = {

@@ -8,7 +8,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { ProjectCard } from './ProjectCard'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { STATUSES, STATUS_ORDER, type Status, type Project } from '@/lib/types'
+import { STATUSES, KANBAN_STATUSES, type Status, type Project } from '@/lib/types'
 import type { Task } from '@/lib/types'
 
 const headerColors: Record<Status, string> = {
@@ -16,6 +16,7 @@ const headerColors: Record<Status, string> = {
   in_progress: 'border-yellow-300 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30',
   done:        'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30',
   paused:      'border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30',
+  cancelled:   'border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50',
 }
 
 function ProjectColumn({
@@ -79,7 +80,7 @@ export function ProjectKanban({ projects, tasks, onMove, onProjectOpen }: Projec
     if (!over) return
     const project = projects.find(p => p.id === active.id)
     if (!project) return
-    const targetStatus = STATUS_ORDER.includes(over.id as Status)
+    const targetStatus = (KANBAN_STATUSES as readonly string[]).includes(over.id as string)
       ? (over.id as Status)
       : projects.find(p => p.id === over.id)?.status
     if (targetStatus && targetStatus !== project.status) {
@@ -90,7 +91,7 @@ export function ProjectKanban({ projects, tasks, onMove, onProjectOpen }: Projec
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none">
-        {STATUS_ORDER.map(status => (
+        {KANBAN_STATUSES.map(status => (
           <ProjectColumn
             key={status}
             status={status}
