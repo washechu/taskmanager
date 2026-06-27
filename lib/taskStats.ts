@@ -89,10 +89,18 @@ export function aggregateTtm(tasks: Task[], rangeStart: Date, rangeEnd: Date): A
 }
 
 export function computeTaskStats(task: Task): TaskStats {
-  const now    = todayIso()
-  const endRef = task.status === 'done' && task.completed_at
-    ? task.completed_at
-    : now
+  const now = todayIso()
+
+  // Для done: reference = момент фактического закрытия. Если completed_at
+  // пуст (задача закрыта ДО применения м.026 — триггер не делал backfill),
+  // fallback на updated_at: неидеально (двигается от любой правки строки),
+  // но лучше, чем `now` — счётчик «Опоздали на» переставал бы тикать только
+  // у новых задач, а у старых рос бы каждый день. Та же логика fallback
+  // используется в lib/archive.ts:isArchivedTask.
+  const closedRef = task.status === 'done'
+    ? (task.completed_at ?? task.updated_at)
+    : null
+  const endRef = closedRef ?? now
 
   const inProgressDays = task.start_date
     ? daysBetween(endRef, task.start_date)
@@ -102,7 +110,7 @@ export function computeTaskStats(task: Task): TaskStats {
 
   // Для done: сравниваем дедлайн с фактическим закрытием. Для остальных —
   // с сегодня (отрицательное значение = просрочена).
-  const dueRef = task.status === 'done' && task.completed_at ? task.completed_at : now
+  const dueRef = closedRef ?? now
   const dueDelta = task.due_date ? daysBetween(task.due_date, dueRef) : null
 
   return { inProgressDays, totalDays, dueDelta }

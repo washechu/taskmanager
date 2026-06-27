@@ -86,6 +86,28 @@ describe('computeTaskStats', () => {
     expect(s.dueDelta).toBe(-2)
   })
 
+  it('done без completed_at (legacy ДО м.026) → fallback на updated_at', () => {
+    // Регрессия: задачи, закрытые ДО применения м.026, имеют completed_at=null
+    // (триггер не делает backfill). До фикса reference падал на now, и
+    // «Опоздали на» / «От создания» каждый день увеличивались — пользователь
+    // видел «задача давно done, а счётчик тикает». Fallback на updated_at
+    // не идеален (двигается от любой правки), но лучше now.
+    const s = computeTaskStats(task({
+      status: 'done',
+      created_at: '2026-05-15T00:00:00Z',
+      start_date: '2026-05-20',
+      due_date:   '2026-05-20',
+      completed_at: null,                       // ← legacy
+      updated_at: '2026-06-09T00:00:00Z',       // когда закрыли (приближение)
+    }))
+    // 9 июня - 15 мая = 25 дней (как у пользователя в скриншоте)
+    expect(s.totalDays).toBe(25)
+    // due 20 мая - completed (=updated_at 9 июня) = -20 → «опоздали на 20»
+    expect(s.dueDelta).toBe(-20)
+    // НЕ должно зависеть от текущего времени (NOW = 15 июня):
+    // total НЕ должен быть 31 (15 июня - 15 мая), а dueDelta НЕ -26.
+  })
+
   it('просрочена (todo с прошедшим due) → dueDelta < 0', () => {
     const s = computeTaskStats(task({
       status: 'todo',
