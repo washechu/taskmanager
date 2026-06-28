@@ -150,7 +150,8 @@
 │   ├── 026_completed_at.sql      # tasks.completed_at + автозаполнение при первом переходе в done
 │   ├── 027_audit_in_trigger.sql  # audit-комментарии пишет DB-триггер; respond_to_invite_rpc больше не пишет
 │   ├── 028_cancelled_status.sql  # 5-й статус 'cancelled' (Отменено) для tasks + projects
-│   └── 029_digests_skip_paused_cancelled.sql # дайджесты исключают paused/cancelled из «просрочки»
+│   ├── 029_digests_skip_paused_cancelled.sql # дайджесты исключают paused/cancelled из «просрочки»
+│   └── 030_app_users.sql         # identity-хребет app_users (telegram_id + legacy_assignee мост) — под Mini App / Фазу 2
 └── public/
     ├── manifest.json             # PWA manifest
     └── icons/                    # 192, 512, apple-touch (180), favicons
@@ -321,6 +322,16 @@ create index on habit_logs(date);
 Два пользователя в Supabase Auth. Соответствие email ↔ `assignee` (`nick` / `galya`) — через env vars `NEXT_PUBLIC_NICK_EMAIL` и `NEXT_PUBLIC_GALYA_EMAIL`. Хук `useCurrentUser` возвращает `{ assignee, email, loading }`.
 
 Если email авторизованного пользователя не совпал ни с одним из env vars — на странице задач показывается жёлтое предупреждение.
+
+### Переезд на Telegram Mini App + «ограниченный круг» (в разработке)
+
+Цель: вход через Telegram Mini App (`initData` вместо email/пароля) и потенциально несколько пользователей сверх двух (ограниченный круг, НЕ публичный SaaS). Решения по UX: **гибрид** (внутри Telegram — initData, в десктоп-браузере остаётся email-фоллбэк) + **allowlist** (доступ только заранее заведённым telegram_id).
+
+Реализация по фазам:
+
+- **Фаза 1 — identity-хребет (текущая).** Миграция 030: таблица `app_users (id uuid, telegram_id, username, display_name, legacy_assignee)`. `legacy_assignee` — мост к старому enum `nick|galya` на время переезда. Засеяна двумя каноническими + подтянут `telegram_id` из `telegram_links`. Прикладной код пока не тронут (всё ещё работает через enum). **Allowlist = наличие строки в `app_users` с непустым `telegram_id`** (отдельной таблицы нет). Дальше в Фазе 1: auth-эндпоинт `/api/telegram/auth` (валидирует initData по HMAC bot-токена → мапит telegram_id → app_users.id → минтит Supabase-совместимый JWT → cookie-сессия; RLS через `auth.uid()` продолжает работать). Незнакомый telegram_id → 403.
+- **Фаза 2 — data-refactor (под круг).** Заменить enum `assignee` на `user_id` (app_users.id) везде: `tasks.assignees`, `projects.assignees`, `comments.author`, `habits.assignee`, `telegram_links`. Колонку `legacy_assignee` можно убрать. Переписать RLS с пермиссивной («все authenticated видят всё») на per-user/ownership.
+- **Фаза 3 — модель видимости (под круг).** Сейчас все видят всё. На 4+ людях это неверно — нужно решить модель шеринга (личное приватно + явный шеринг с конкретными людьми / парами). Решается перед Фазой 2.
 
 ## Статусы и значения
 
