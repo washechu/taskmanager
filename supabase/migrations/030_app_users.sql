@@ -18,7 +18,9 @@
 -- в круг = вставить строку. Незнакомый telegram_id → auth-эндпоинт вернёт
 -- 403 (реализуется в следующем PR).
 
-create table app_users (
+-- Идемпотентно: миграцию можно прогонять повторно (если, например, кто-то
+-- ранее прогнал только её часть и теперь хочет «доехать»).
+create table if not exists app_users (
   id uuid primary key default gen_random_uuid(),
   -- Telegram user_id (для приватного чата == chat_id). Nullable: канонические
   -- пользователи могут существовать до привязки Telegram (вход по email).
@@ -31,7 +33,7 @@ create table app_users (
   created_at timestamptz default now()
 );
 
-create index on app_users(telegram_id);
+create index if not exists app_users_telegram_id_idx on app_users(telegram_id);
 
 -- ── Сид ───────────────────────────────────────────────────────────────
 -- 1. Гарантируем существование двух канонических пользователей, даже если
@@ -54,5 +56,6 @@ where tl.assignee = au.legacy_assignee
 -- Записи — только через service_role (auth-эндпоинт, добавление в круг).
 alter table app_users enable row level security;
 
+drop policy if exists "Authenticated read app_users" on app_users;
 create policy "Authenticated read app_users" on app_users
   for select using (auth.role() = 'authenticated');
